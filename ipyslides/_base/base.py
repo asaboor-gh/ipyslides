@@ -128,17 +128,18 @@ class BaseSlides:
             self.navigate_to(last_updated.index) # go to last edited slide
     
     def _process_citations(self, content):
-        matches = re.findall(r'^```citations.*?^```|^:::\s*citations.*?(?=^:::|\Z|^\S)', content, flags= re.DOTALL | re.MULTILINE)
-        if len(matches) > 1:
-            raise ValueError(f"Only a single block of citations is parsed, found {len(matches)} blocks\n{matches}")
+        blocks = re.split('^---\s*citations\s*---\s*', content, flags=re.IGNORECASE | re.MULTILINE)
+        if len(blocks) > 2:
+            raise ValueError(f"Only a single block of `--- citations ---` is parsed as last block in file, found {len(blocks)-1} blocks!")
         
-        match1 = matches[0] if matches else ''
-        content = content.replace(match1, '') # clean up
-        if getattr(self,'_bib_md','') != match1:
-            self._bib_md = match1 # set for next test
-            _, refs = match1.split('\n', 1) # split into mode and references
-            refs = refs.rstrip('` ') # remove trailing ` or space, 
-            self.set_citations(textwrap.dedent(refs))
+        if len(blocks) < 2:
+            return content # no citations block found, return as is
+        
+        content, refs = [bk.rstrip() for bk in blocks] # two blocks must be here using split
+
+        if getattr(self,'_bib_md','') != refs:
+            self._bib_md = refs # set for next test
+            self.set_citations(refs) # set citations from block content
         return content
     
     def sync_with_file(self, path, interval=500):
@@ -146,16 +147,18 @@ class BaseSlides:
         interval is in milliseconds, 500 ms default. Read `Slides.slide` docs about content of file.
         
         The variables inserted in file content are used from notebook's global scope.
+        
+        You can add citations at end of main synced file using `--- citations ---` block, which will be parsed and added to slides. This syntax is
+        exclusive to synced file only. Under that block, you can add plain citations or load a file as shown in below example.
 
-        You can add files inside linked file using include\\`file_path.md\\` syntax, which are also watched for changes.
+        You can add files inside synced file using include\\`file_path.md\\` syntax, which are also watched for changes.
         This helps modularity of content, and even you can link a citation file in markdown format as shown below. Read more in `Slides.xmd.syntax` about it.
 
         ```markdown
-         ```citations
+         --- citations ---
          @key1: Saboor et. al., 2025
          @key2: A citations can span multiple lines, but key should start on new line
          <!-- Or put this content in a file 'bib.md' and then inside citations block use include`bib.md` -->
-         ```
         ```
         
         ::: note-tip

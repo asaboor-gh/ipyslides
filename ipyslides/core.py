@@ -554,9 +554,9 @@ class Slides(BaseSlides,metaclass=Singleton):
         ```
 
         ::: note
-            - You should set citations in start if using voila or python script. Setting in start in notebook is useful as well.
+            - You should set citations at the start if using voila or python script. Setting at the start in notebook is useful as well.
             - Citations are replaced with new ones, so latest use of this function represents available citations.
-            - Makrdown equivalent of this function is a citation block only supported in `Slides.sync_with_file`'s context.
+            - Markdown equivalent of this function is a `--- citations ---` block only supported at the end of synced file via `Slides.sync_with_file`.
         """
         if isinstance(data, dict):
             self._set_ctns(data)

@@ -70,11 +70,12 @@ Citations
   Using [alert! [refs\! ncol_refs, "key1, key2, ..." \/] /] will show only citations for given keys on that place. It is useful on slides with frames to show relevant citations on each frame.
   Unused citations will be added automatically at end of slide.
 - Force citations to be shown inline by appending a !, such as [alert! \@key1! \@key2 /], where `@key2` will be shown in footnote style and `@key1!` will display inline citation in that order.
-- In the synced markdown file (also its included files) through `Slides.sync_with_file`, you can add citations with block syntax:                             
+- At the end of synced markdown file (through `Slides.sync_with_file`), you can add citations under `--- citations ---` which will be parsed and added to slides. This syntax is exclusive to 
+  synced file only. Under this block, you can add plain citations or load a file as shown in below example.
 [code!! "markdown" ..
- ::: citations
-    \@key1: Saboor et. al., 2025
-    \@key2: A citations can span multiple lines, but key should start on new line
+ --- citations ---
+ \@key1: Saboor et. al., 2025
+ \@key2: A citations can span multiple lines, but key should start on new line
 /]
 
 ++
@@ -104,9 +105,9 @@ The general block syntax is `::: type-or-classes [args] attributes`.
     | `::: code [focused lines]`  | Code block with syntax highlighting, parameters are passed to highlight function. |
     | `::: tag or classes` | tags are block level elements such as `p`, `details`, `summary`, `table`, `center`, etc. |
     | `::: columns [widths]` / `::: group` | Create columns with relative widths, e.g. `columns 4 6` for 40% and 60% width. `group` is a single-column display block (no widths or `+++` needed). Use `::: group snapshots=True` (optionally with `header='Header text'`) to reveal rows exclusively for that block. Use `++[isolate]` before the block to isolate previous content from this reveal sequence. |
+    | `::: columns.inline [widths]` | Create inline columns with relative widths, e.g. `columns.inline 4 6` for 40% and 60% width. This block does not support incremental or group features and does not require `+++`, distinct text blocks are automatically considered columns. |
     | `::: md-[before,after,var_name] [focused lines]` | Parse markdown in the block, with showing source code at before or after or assign a variable name and use as `[md-var_name/]`.|
     | `::: table [col widths]` | Create a table with optional column widths, e.g. `::: table 1 2` for 33% and 66% width. Use `caption-side=top/bottom` to place caption on top/bottom.|
-    | `::: citations` | Add citations in the block (only in `sync_with_file` context) instead of `Slides.set_citations`. Use `\@key: value` syntax on its own line to add citations in block. |
     | `::: display css_classes` | Create a block with specific CSS classes forcing display mode, it can break dom flow, but usefull to embed widget variables under blocks. |
 
 ::: details
@@ -120,20 +121,20 @@ The general block syntax is `::: type-or-classes [args] attributes`.
 **Layouts**{{.text-big}}
 
 Inline Columns
-: Inline columns/rows can be added by using [alert! [stack\! Column A || Column B \/] /] syntax. You can escape pipe `|` with `\\|` to use it as text inside stack. See at the end how to nest such stacking.
+: Inline columns/rows can be added by using `::: columns.inline` or [alert! [stack\! Column A || Column B \/] /] syntax. You can escape pipe `|` with `\\|` to use it as text inside stack. See at the end how to nest such stacking.
 
 Block Columns
-: You can create columns using `::: columns` syntax, or use `::: group` for a single-column display block.
-Column separator is triple plus `+++` for `::: columns` when intended in display mode; `::: group` does not need `+++` or widths.
-Use `::: group snapshots=True` to enable per-row iteration for that block.
+: You can create block columns using `::: columns` syntax.
+Column separator is triple plus `+++` for `::: columns` while `::: columns.inline` does not need `+++` and distinct content blocks are automatically resolved per column.
+Use `::: group snapshots=True` to enable per-row iteration for a block in columns or whole `::: group` outside of columns is a single column display block.
 Use `header='Header text'` in the same group header to keep a static header visible while rows reveal.
 Use `++[isolate]` before `::: columns` to separate previous content from first column reveal.
 
 ```md-before
-::: columns 6 1 4 block-blue 
+::: columns.inline 6 1 4 block-blue 
 : border="1px dashed red"
     ::: block-red
-        - `::: columns/muticol` with a +++ separator act like `write` command and reveal content incrementally when `++` is used before block.
+        - `::: columns` with a +++ separator act like `write` command and reveal content incrementally when `++` is used before block.
         - children inside `columns` picks relative width from parent's `columns` block evem if '+++' is not used.
           In thise children should be visually blocks themselves like headings, paragraphs, lists etc or wrapped in `::: block` to make them obvious blocks like this one.
         - CSS classes and attributes can be used to style columns besides relative widths.
@@ -220,7 +221,7 @@ Variables from Python code can be embedded directly into Markdown.
 
 Inline functions can be nested, thanks to new function call pattern that must end with `\/]` to avoid ambiguity with nested calls.
 ```md-src_var
-::: columns
+::: columns.inline
     [md-src_var/]
     
     [stack!! (6,4), css_class="block-blue" ..
@@ -392,7 +393,7 @@ Define `@keyframes` in Slides.css(...) or in a notebook cell.
 
 **Advanced Combinations**
 ```md-after.collapsed
-::: columns anim-group
+::: columns.inline anim-group
     ::: block anim-slide-left border="1px solid red" padding="10px"
         Slide in from left
     ::: block anim-zoom border="1px solid green" padding="10px"

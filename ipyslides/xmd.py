@@ -458,6 +458,13 @@ class XMarkdown(Markdown):
         else:
             return display(*outputs)
         
+    def _load_files(self, content):
+        # Parse stuff here
+        # Nested loading should be avoided, but move it inside so user know which included file has nested load inside
+        content = re.sub(r"(\[load\!.*?\/\])", error(r"Nested loading of files is not supported \1").value, content)
+        # after loading content, raise deprecation warning for old syntax instead of silently adopting it.
+        content = re.sub(r"(?<![\`\.\\])\bload\[?(.*?)\]?\`([^\`]*)\`", r"[alert! Use [load\! \2 \.. \1 \/] syntax instead! /]", content)
+        return content
 
     def _split_parts(self, content, delimited=False):
         "Split content at '++', optionally yielding Delimiter objects."
@@ -520,7 +527,7 @@ class XMarkdown(Markdown):
         node_attrs = ' '.join(f'{k}="{v}"' for k, v in node_attrs.items())
         
         if args:
-            typ, prop = args[0].split('.',1) if '.' in args[0] else (args[0], '')
+            typ, prop = [v.strip() for v in args[0].split('.',1)] if '.' in args[0] else (args[0], '')
             if typ == "multicol": typ = "columns" # backward-compatible alias
             return typ, prop, sizes, ' '.join(args[1:]), kwargs, node_attrs # block type, sizes, className, css_props, node_attrs
         return '', '', sizes, '', kwargs, node_attrs
@@ -630,22 +637,15 @@ class XMarkdown(Markdown):
         data = resolve_included_files(textwrap.dedent(data)) # clean up data  before processing 
         typ, prop, widths, _class, css_props, attrs = self._parse_params(header)
         
-        if typ == "citations" or header.lstrip(' :').startswith("citations"): # both kind of blocks
-            pre = '```' if typ == "citations" else '' # correct error message
-            return [error("ValueError", 
-                f"citations block is only parsed inside synced markdown file! "
-                f"Use `Slides.set_citations` otherwise.\n{pre}{header}\n{data}"
-            )]
+        if typ == "citations": # avoid using citations block
+            return [error("ValueError", f"Use '--- citations ---' syntax at the end of the synced markdown file instead of a citations block.")]
         elif typ == "display":
             with self.active_parser(), capture_content() as cap:
                 self._wr.write(data, css_class=_class, **css_props)
             return cap.outputs
         elif typ == "group":
             return self._parse_group(data, _class, css_props)
-        elif typ == "columns" and (
-            re.search(r'^\+\+\+\s*$', data, flags=re.MULTILINE)
-            or _PLUS_RE.search(data) # let ++ in single column works
-        ): # handle columns with display mode
+        elif typ == "columns" and not prop: # handle columns with display mode
             return self._parse_columns(data, widths, _class, css_props) # simple columns will be handled inline 
         elif "md-" in typ:
             return self._parse_md_src(data, header)
@@ -653,7 +653,7 @@ class XMarkdown(Markdown):
             return self._parse_table(data, widths, _class, css_props, attrs)
         elif typ == "code":
             return self._parse_code(data, prop, widths, _class, css_props, attrs)
-        elif header.strip().startswith(":::") or typ == "columns": # simple flex ```columns without +++ or ::: block
+        elif header.strip().startswith(":::") or typ == "columns": # simple columns.inline
             return self._parse_colon_block(header, data)
         else:
             out = XTML() # empty placeholder
@@ -670,7 +670,13 @@ class XMarkdown(Markdown):
         STRICT_TAGS = ("pre","raw") # code is handled separately
         CAPTURED_TAGS = ("p","details","summary","center","blockquote","ul","ol", "li", "nav", *STRICT_TAGS) # tags that are captured by this parser
         
-        tag, _, widths, _class, css_props, attrs = self._parse_params(header)
+        tag, prop, widths, _class, css_props, attrs = self._parse_params(header)
+        
+        if tag == "columns":
+            if prop != "inline": # columns with display mode were already handled
+                return [error("ValueError", f"Invalid block type '{tag}' with property '{prop}'. Use 'columns' for display columns and 'columns.inline' for inline columns.")]
+            if re.search(rf'^\+\+\+\s*$|{_PLUS_RE.pattern}', data, flags=re.MULTILINE): # nested columns with ++ is not allowed
+                return [error("ValueError", f"'columns.inline' directive does not support incremental(++) and columns(+++) separators.")]
         
         if tag in CAPTURED_TAGS:
             if tag in STRICT_TAGS: # keep as is from further processing
@@ -742,7 +748,7 @@ class XMarkdown(Markdown):
         - If a group block marker appears but does not occupy the whole column,
           return a group whose first item is a ValueError output.
         """
-        text = textwrap.dedent(col_text).strip()
+        text = textwrap.dedent(col_text).rstrip()
         if not text:
             return None
 
@@ -855,10 +861,7 @@ class XMarkdown(Markdown):
         with self.active_parser(), capture_content() as cap:
             self._wr.write(*cap_cols, widths=widths, css_class=_class, **css_props)
             
-        if not self._returns:
-            return cap.outputs
-        else:
-            return [XTML("\n".join(self._wr._fmt_html(out) for out in cap.outputs))]
+        return cap.outputs
     
     def convert(self, text):
         """Replaces variables with placeholder after conversion to respect all other extensions.
