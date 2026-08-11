@@ -103,11 +103,11 @@ The general block syntax is `::: type-or-classes [args] attributes`.
     | Block Syntax      | Description                                                                                                 |
     |:----------------- |:----------------------------------------------------------------------------------------------------------- |
     | `::: raw/pre`     | Raw text or preformatted text, no markdown parsing. Use `raw` or `pre` as first word in block. |
-    | `::: code [focused lines]`  | Code block with syntax highlighting, parameters are passed to highlight function. |
+    | `::: code [focused lines]`  | Code block with syntax highlighting, parameters are passed to highlight function. Use `code.inline` and `code.collapsed` for specific view. |
     | `::: tag or classes` | tags are block level elements such as `p`, `details`, `summary`, `table`, `center`, etc. |
     | `::: columns [widths]` | Create columns with relative widths, e.g. `columns 4 6` for 40% and 60% width. The columns separator is `--` and incremental reveal is supported via `++`. Use `++[isolate]` before the block to isolate previous content from this reveal sequence. |
     | `::: columns.inline [widths]` | Create inline columns with relative widths, e.g. `columns.inline 4 6` for 40% and 60% width. This block does not support incremental reveal and `--` separator is optional (but superceded if used) because distinct text blocks are automatically considered columns. |
-    | `::: md-[before,after,var_name] [focused lines]` | Parse markdown in the block, with showing source code at before or after or assign a variable name and use as `[md-var_name/]`.|
+    | `::: md-[before,after,var_name] [focused lines]` | Parse markdown in the block, with showing source code at before or after or assign a variable name and use as `[md-var_name/]`. Use `md-[name].inline` and `md-[name].collapsed` for specific view. |
     | `::: table [col widths]` | Create a table with optional column widths, e.g. `::: table 1 2` for 33% and 66% width. Use `caption-side=top/bottom` to place caption on top/bottom.|
     | `::: display css_classes` | Create a block with specific CSS classes forcing display mode, it can break dom flow, but usefull to embed widget variables under blocks. |
 
@@ -226,8 +226,8 @@ Variables from Python code can be embedded directly into Markdown.
 Inline functions can be nested, thanks to new function call pattern that must end with `\/]` to avoid ambiguity with nested calls.
 
 ::: columns 1 3
-    ```md-src
-    [color!! "skyblue" .. [alert! Nested alert /] inside colored text! /]
+    ```md-src.inline
+    [color!! "skyblue" .. [alert! Alert /] inside colored text! /]
     ```
     --
     [md-src/]
