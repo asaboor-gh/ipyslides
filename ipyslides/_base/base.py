@@ -128,6 +128,7 @@ class BaseSlides:
             self.navigate_to(last_updated.index) # go to last edited slide
     
     def _process_citations(self, content):
+        # This is exclusive to synced file only, so do not make it a block or something else
         blocks = re.split('^---\s*citations\s*---\s*', content, flags=re.IGNORECASE | re.MULTILINE)
         if len(blocks) > 2:
             raise ValueError(f"Only a single block of `--- citations ---` is parsed as last block in file, found {len(blocks)-1} blocks!")

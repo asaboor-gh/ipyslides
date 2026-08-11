@@ -34,7 +34,7 @@ with slides.slide(-1):
 **Markdown here with extended options (see `slides.xmd.syntax` for info). Nested blocks are not supported**
  ```columns 30 70 .success
  less content
- +++
+ --
  more content
  ```
 ```

@@ -12,6 +12,7 @@ from contextlib import contextmanager
 from PIL import Image as PImage
 import pygments
 import ipywidgets as ipw
+import dashlab.widgets as dlw
 
 from IPython.display import display, HTML, Audio, Video, Image as IPyImage
 from IPython.display import __dict__ as _all
@@ -458,6 +459,9 @@ class Serializer:
         if not isinstance(box_widget, ipw.Box):
             raise TypeError(f"Expects ipywidget's Box and subclasses, got {type(box_widget)}")
         
+        if isinstance(box_widget, dlw.TabsWidget) and box_widget.children:
+            box_widget = box_widget.children[-1] # Last child is the Stack there
+        
         kwargs = dict(width='100%', gap="0.2em") # avoid collapse in export, defult layouts are None there
         if isinstance(box_widget,ipw.HBox):
             kwargs.update(dict(display="flex",flex_flow="row nowrap"))
@@ -466,7 +470,14 @@ class Serializer:
         
         kwargs.update({k:v for k,v in box_widget.layout.get_state().items() if v and k[0]!='_'}) # only those if not None
         css_class = ' '.join(box_widget._dom_classes) # To keep style of HTML widget, latest as well
-        content = '\n'.join(self.get_html(child) for child in box_widget.children)
+        cs_html = [self.get_html(child) for child in box_widget.children]
+        
+        if isinstance(box_widget, (ipw.Stack, ipw.Accordion, ipw.Tab)):        
+            kwargs['grid_template_columns'] = f'repeat({len(box_widget.children)}, 16px) auto' # This makes the radios on top
+            css_class += ' ips-stack-group' # Add stack class for styling
+            cs_html = [f'<input type="radio" name="radio-group-{id(box_widget)}" class="stack-radio">\n{c}' for c in cs_html] 
+            
+        content = '\n'.join(cs_html)
         return f'<div class="{css_class}" {_inline_style(kwargs)}>{content}</div>'
     
     def _alt_html(self, html_widget):

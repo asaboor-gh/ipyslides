@@ -40,7 +40,7 @@ Extended syntax on top of [Python-Markdown](https://python-markdown.github.io/) 
 
 Slides and Parts Separators
 : Double plus `++` (`pause` in Python) can be used to increment objects in parts on a slide.
-A `++` on its own line before `columns` block will make it reveal content incrementally, provided that columns are separated by `+++` or single column only with `++` inside.
+A `++` on its own line before `columns` block (not `columns.inline`) will make it reveal content incrementally.
 Use `++[isolate]` before a `::: columns/::: group` blocks to isolate previous content from column reveal.
 Note that only `++` allows content on same line after it and following lines.
 Triple dashes `---` separator is used to split text in slides inside markdown content of synced markdown file.
@@ -72,6 +72,7 @@ Citations
 - Force citations to be shown inline by appending a !, such as [alert! \@key1! \@key2 /], where `@key2` will be shown in footnote style and `@key1!` will display inline citation in that order.
 - At the end of synced markdown file (through `Slides.sync_with_file`), you can add citations under `--- citations ---` which will be parsed and added to slides. This syntax is exclusive to 
   synced file only. Under this block, you can add plain citations or load a file as shown in below example.
+
 [code!! "markdown" ..
  --- citations ---
  \@key1: Saboor et. al., 2025
@@ -104,8 +105,8 @@ The general block syntax is `::: type-or-classes [args] attributes`.
     | `::: raw/pre`     | Raw text or preformatted text, no markdown parsing. Use `raw` or `pre` as first word in block. |
     | `::: code [focused lines]`  | Code block with syntax highlighting, parameters are passed to highlight function. |
     | `::: tag or classes` | tags are block level elements such as `p`, `details`, `summary`, `table`, `center`, etc. |
-    | `::: columns [widths]` / `::: group` | Create columns with relative widths, e.g. `columns 4 6` for 40% and 60% width. `group` is a single-column display block (no widths or `+++` needed). Use `::: group snapshots=True` (optionally with `header='Header text'`) to reveal rows exclusively for that block. Use `++[isolate]` before the block to isolate previous content from this reveal sequence. |
-    | `::: columns.inline [widths]` | Create inline columns with relative widths, e.g. `columns.inline 4 6` for 40% and 60% width. This block does not support incremental or group features and does not require `+++`, distinct text blocks are automatically considered columns. |
+    | `::: columns [widths]` | Create columns with relative widths, e.g. `columns 4 6` for 40% and 60% width. The columns separator is `--` and incremental reveal is supported via `++`. Use `++[isolate]` before the block to isolate previous content from this reveal sequence. |
+    | `::: columns.inline [widths]` | Create inline columns with relative widths, e.g. `columns.inline 4 6` for 40% and 60% width. This block does not support incremental reveal and `--` separator is optional (but superceded if used) because distinct text blocks are automatically considered columns. |
     | `::: md-[before,after,var_name] [focused lines]` | Parse markdown in the block, with showing source code at before or after or assign a variable name and use as `[md-var_name/]`.|
     | `::: table [col widths]` | Create a table with optional column widths, e.g. `::: table 1 2` for 33% and 66% width. Use `caption-side=top/bottom` to place caption on top/bottom.|
     | `::: display css_classes` | Create a block with specific CSS classes forcing display mode, it can break dom flow, but usefull to embed widget variables under blocks. |
@@ -121,11 +122,11 @@ The general block syntax is `::: type-or-classes [args] attributes`.
 **Layouts**{{.text-big}}
 
 Inline Columns
-: Inline columns/rows can be added by using `::: columns.inline` or [alert! [stack\! Column A || Column B \/] /] syntax. You can escape pipe `|` with `\\|` to use it as text inside stack. See at the end how to nest such stacking.
+: Inline columns/rows can be added by using `::: columns.inline` directive.
 
 Block Columns
 : You can create block columns using `::: columns` syntax.
-Column separator is triple plus `+++` for `::: columns` while `::: columns.inline` does not need `+++` and distinct content blocks are automatically resolved per column.
+Column separator is double minus `--` for `::: columns` and it's optional for `::: columns.inline` where distinct content blocks are automatically resolved per column, but `--` can be used for explicit separation and it is superceded if used.
 Use `::: group snapshots=True` to enable per-row iteration for a block in columns or whole `::: group` outside of columns is a single column display block.
 Use `header='Header text'` in the same group header to keep a static header visible while rows reveal.
 Use `++[isolate]` before `::: columns` to separate previous content from first column reveal.
@@ -134,10 +135,13 @@ Use `++[isolate]` before `::: columns` to separate previous content from first c
 ::: columns.inline 6 1 4 block-blue 
 : border="1px dashed red"
     ::: block-red
-        - `::: columns` with a +++ separator act like `write` command and reveal content incrementally when `++` is used before block.
-        - children inside `columns` picks relative width from parent's `columns` block evem if '+++' is not used.
-          In thise children should be visually blocks themselves like headings, paragraphs, lists etc or wrapped in `::: block` to make them obvious blocks like this one.
+        - `::: columns` act like `write` command and reveal content incrementally when `++` is used before and inside the block.
+        - children inside `columns.inline` pick relative width from parent's `columns.inline` block.
+          Children should be visually blocks themselves like headings, paragraphs, lists etc or wrapped in `::: block` to make them obvious 
+          blocks like this one or use `--` separator to create explicit columns.
         - CSS classes and attributes can be used to style columns besides relative widths.
+        - Single line content with '--' inline separator is supported for short content, e.g. 
+        ::: columns.inline 1 1 1 | Column A -- Column B -- Column C
     
     ::: block-blue border="1px solid red" | [alert! inline [color! block text /] /]
     
@@ -163,7 +167,7 @@ Code Blocks
 ::: columns
     ::: block-green
         [md-src/]
-    +++
+    --
     ::: block-red
         ```python
         print('Hello, I was highlighted from a code block!')
@@ -220,18 +224,13 @@ Variables from Python code can be embedded directly into Markdown.
     This should be rarely used when your markdown contains a lot of $ \LaTeX $ equations to avoid excessively escaping them with curly braces in favor of few escaped variables.
 
 Inline functions can be nested, thanks to new function call pattern that must end with `\/]` to avoid ambiguity with nested calls.
-```md-src_var
-::: columns.inline
-    [md-src_var/]
-    
-    [stack!! (6,4), css_class="block-blue" ..
-        This always parse markdown in `returns=True` mode. 
-        ||
-        [stack!! css_class="info" ..
-            B || [color!! "skyblue" .. [alert! Alerted Text /] Colored Text /]
-        /]
-    /]
-```
+
+::: columns 1 3
+    ```md-src
+    [color!! "skyblue" .. [alert! Nested alert /] inside colored text! /]
+    ```
+    --
+    [md-src/]
 
 ++
 **General Syntax**{{.text-big}}
@@ -250,7 +249,7 @@ Inline functions can be nested, thanks to new function call pattern that must en
 ```md-src.inline
 ::: columns
     [md-src/] 
-    +++
+    --
     Item 1 Header
     : Item 1 details [sup!1/]
     Item 1 Header

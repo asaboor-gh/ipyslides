@@ -957,7 +957,7 @@ class Slides(BaseSlides,metaclass=Singleton):
         Can use in place of `write` commnad for strings.
         When using `%xmd`, you can pass variables as \%{var} (slash for escap here) which will substitute HTML representation
         if no other formatting specified.
-        Inline columns are supported with `[stack\! C1 || C2 /]` syntax."""
+        Inline columns are supported via `::: columns.inline` block."""
         if cell is None:
             return xmd(line, returns = False)
         else:
@@ -1031,7 +1031,7 @@ class Slides(BaseSlides,metaclass=Singleton):
         - Adjacent pause delimiters are ignored, so no empty parts are created in normal flow.
         - A call [code! pause() /] before `write` command adds parts inside columns and rows. 
             - Use [code! pause(isolate=True) /] to isolate previous content from a following `write(...columns...)` reveal.
-            - In markdown, use `++[isolate]` before `::: columns` (with `+++` separators) for the same behavior.
+            - In markdown, use `++[isolate]` before `::: columns` for the same behavior while `::: columns.inline` does not support incremental reveal.
                     See [code! write /] command for more details.
         - Use [code! pause.iter(iterable) /] to create multiple parts from iterable automatically.
         - Last empty pause delimiter is ignored.

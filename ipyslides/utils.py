@@ -1,4 +1,4 @@
-_attrs = ['AnimationSlider', 'JupyTimer', 'ListWidget', 'alt', 'alert', 'as_html', 'as_html_widget', 'bullets', 'color', 'error', 'table', 'suppress_output','suppress_stdout','capture_content',
+_attrs = ['AnimationSlider', 'JupyTimer', 'ListWidget', 'alt', 'alert', 'as_html', 'as_widget', 'bullets', 'color', 'error', 'table', 'suppress_output','suppress_stdout','capture_content',
     'details', 'set_dir', 'textbox', 'code', 'fa', 'gap', 'link', 'center', 'icon', 'image', 'svg','iframe','frozen', 'raw', 'warn', 'bg',
     'focus','html', 'sig','stack', 'styled', 'doc', 'transition', 'today','get_child_dir','get_notebook_dir','is_jupyter_session','inside_jupyter_notebook','yoffset','css','pin']
 
@@ -777,9 +777,11 @@ def as_html(obj):
     "Convert supported (almost any) obj to html format."
     return XTML(htmlize(obj))
 
-def as_html_widget(obj=''): # should be useable empty
-    "Convert supported (almost any) obj to html format and return widget."
-    return XTML(htmlize(obj)).as_widget()
+def as_widget(obj=''): # should be useable empty
+    "Convert supported (almost any) obj to html format and return `ipywidgets.HTML` instance. If obj is a widget, it will be returned as is."
+    if isinstance(obj, ipw.DOMWidget):
+        return obj
+    return as_html(obj).as_widget()
 
 # This is only intended to use for general tags in markdown, do not use in python
 @_internal_xmd_call('anyTag')
@@ -867,11 +869,12 @@ def fa(name: str, color:str = 'currentColor', size:str = '1em',rotation:int = 0,
     style_kws = {'color': color, 'font-size': size, 'transform': f'rotate({rotation}deg)' if rotation else '', **css_props}
     return XTML(f'<i class="fa {name}" {_inline_style(style_kws)}></i>')
 
+# deprecate this call from markdown and let user use ::: columns.inline
 @_internal_xmd_call('stack')
 def stack(objs, sizes=None, vertical=False, css_class=None, **css_props):
-    """Stacks given objects in a column or row with given sizes. 
+    """Stacks given objects in a column or row with given sizes. Markdown equivalent to `stack(..., vertical=False)` is `::: columns.inline` block.
     
-    - objs: list/tuple of objects or a markdown string with '||' as separator.
+    - objs: list/tuple of objects. Markdown strings in list will be parsed to html. 
     - sizes: list/tuple of sizes(int, float) for each object, if not given, all objects will have equal size.
     - vertical: bool, to stack objects vertically or horizontally, default is horizontal.
     - css_class: str, to add a class to the container div.
@@ -879,6 +882,10 @@ def stack(objs, sizes=None, vertical=False, css_class=None, **css_props):
     """
     if isinstance(objs, str):
         objs = [v.strip() for v in objs.replace(r'\|','COL-SEP-PIPE').split('||')] # Split by pipes if given a string
+        if objs:
+            objs[0] = warn(
+                "Direct markdown input to stack() is being deprecated, use `::: columns.inline` for a column stack instead and rows is direct flow in markdown."
+            ).value + '\n' + objs[0] # add warning in start
     
     if not isinstance(objs, (list, tuple)):
         raise TypeError(f'objs should be a markdown string, list or tuple of objects, got {type(objs)}')
@@ -1067,9 +1074,8 @@ _css_info = (f"""
     In the output of [code! Slides.html('style',props) /], [code! Slides.css(props) /] etc. functions, top selector 
     would be different if it is called under slide context or not.
 
-[stack!
+```columns.inline
 {code('props = ' + json.dumps(_example_props, indent=2))}
-|| 
+--
 {code(_styled_css(_example_props).value, 'css','CSS')}
-/]
-""").replace('@',r'\@') # @import etc keys to clean up for markdown
+```""").replace('@',r'\@') # @import etc keys to clean up for markdown

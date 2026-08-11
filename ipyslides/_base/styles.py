@@ -397,6 +397,7 @@ def style_css(colors, fonts, layout, _root = False):
                 'background':'var(--bg1-altcolor) !important',
                 'color':'var(--fg1-color)',
             },
+            '.jupyter-widgets.widget-html': {'width': '100%'}, # avoid collapse in stacked layout
             '.widget-box': {'flex-shrink': 0}, # avoid collapse
             '.slide-footer': {
                 'box-sizing': 'border-box',
@@ -1047,5 +1048,25 @@ def style_css(colors, fonts, layout, _root = False):
             'width':'100%',
             'height':'auto',    
         },
+        '< .ips-stack-group': { # let work in notebook
+            'display':'grid',
+            'grid-template-rows': '16px auto', # columns template added inline based on content
+            'gap': '4px',
+            'padding': '4px',
+            '> .stack-radio': {'grid-row': '1 !important'}, # keep all radios in top row regardless of checked content position
+            '> *:not(.stack-radio)': {'display': 'none !important',}, # only keep radios, but avoid important
+            # Show content of checked radio or first child if none checked, but not the radio itself
+            # below two selectors are too complex, do not merg
+            '> .stack-radio:checked + *:not(.stack-radio)': (grid_block := {
+                'display': 'block !important', 
+                'grid-row': '2 !important',
+                'grid-column': '1 / -1 !important',
+            }),
+            '^:not(:has(.stack-radio:checked)) > :nth-child(2):not(.stack-radio)': grid_block,
+            '@media print': {
+                'display': 'block !important', # avoid grid for print
+                '> .stack-radio': {'display': 'none !important',}, # avoid showing all content in print
+            }
+        }
     })
     

@@ -665,6 +665,11 @@ class XMarkdown(Markdown):
                 out.data = super().convert(f'```{header}\n{data}\n```') # Let other extensions parse block
             
             return [out,] # list is required
+    
+    def _restrict_incremental(self, directive, data):
+        if _PLUS_RE.search(data):
+            data = "\n".join([error("ValueError", f"'{directive}' directive does not support incremental ++ separator.").value, data])
+        return data
         
     def _parse_colon_block(self, header, data):
         STRICT_TAGS = ("pre","raw") # code is handled separately
@@ -675,8 +680,18 @@ class XMarkdown(Markdown):
         if tag == "columns":
             if prop != "inline": # columns with display mode were already handled
                 return [error("ValueError", f"Invalid block type '{tag}' with property '{prop}'. Use 'columns' for display columns and 'columns.inline' for inline columns.")]
-            if re.search(rf'^\+\+\+\s*$|{_PLUS_RE.pattern}', data, flags=re.MULTILINE): # nested columns with ++ is not allowed
-                return [error("ValueError", f"'columns.inline' directive does not support incremental(++) and columns(+++) separators.")]
+            
+            css_props = {"display":"flex", **css_props} # add display flex for in notebook formatting
+            data = self._restrict_incremental('columns.inline', self._fix_legacy_col_sep(data)) # handle legacy mode and restrict incremental ++ separator
+            
+            if (line := data.strip()) and re.fullmatch('^.*$', line): # single line columns
+                data = re.sub(r'\s*\-\-\s*', '\n--\n', line) # ensure -- is on its own line for splitting
+                
+            if re.search(r'^\-\-\s*$', data, flags=re.MULTILINE):
+                data = '<div markdown="1">\n' + re.sub(
+                    r'^\-\-\s*$', '</div>\n<div markdown="1">\n', data, 
+                    flags=re.MULTILINE
+                ) + '\n</div>' # make columns by optional -- separator
         
         if tag in CAPTURED_TAGS:
             if tag in STRICT_TAGS: # keep as is from further processing
@@ -691,7 +706,6 @@ class XMarkdown(Markdown):
         
         style = "" # style for columns if widths are given
         if tag == "columns"  and widths: # columns with inline mode
-            css_props = {"display":"flex", **css_props} # add display flex for in notebook formatting
             klass = f"c-{id(widths)}" # unique class for columns
             _class = f"{_class} {klass}" if _class else klass # add klass
             widths = [float(w) for w in widths]
@@ -817,9 +831,16 @@ class XMarkdown(Markdown):
             outputs.extend(cap.outputs)
         if "after" in typ: outputs.append(src)
         return outputs
-
+    
+    def _fix_legacy_col_sep(self, data):
+        if re.search(r"^\+\+\+\s*$", data, flags=re.MULTILINE):
+            data = re.sub(r"^\+\+\+\s*$", "--", data, flags=re.MULTILINE)  # Change to -- for backward compatibility
+            data = "\n".join([warn('Use -- instead of legacy +++ to separate columns.', 'DeprecationWarning').value, data]) # Prepend warning to the data once
+        return data
+    
     def _parse_columns(self, data, widths, _class, css_props):
-        cols = re.split(r"^\+\+\+\s*$", data, flags=re.MULTILINE)  # Split by columns, allow nesetd blocks by indents
+        data = self._fix_legacy_col_sep(data)  # Fix legacy +++ column separators
+        cols = re.split(r"^\-\-\s*$", data, flags=re.MULTILINE)  # Split by columns, three + is legacy way
 
         if len(cols) == 1: # full width one column
             widths = [100]
@@ -851,7 +872,7 @@ class XMarkdown(Markdown):
                 with capture_content() as cap:
                     if self._returns: self._show_disply_error = True # to show error in display var resolution if top level returns
                     try:
-                        self._parse_nested(row,returns=False) # +++ splitted context always display mode
+                        self._parse_nested(row,returns=False)
                     finally:
                         if hasattr(self, '_show_disply_error'): del self._show_disply_error # cleanup
                         
@@ -913,7 +934,7 @@ class XMarkdown(Markdown):
                         f'{self._var_info(m.group())} cannot be displayed in current context or nesting level '
                         'because markdown parser was requested to return a string by the caller. '
                         'Display contexts such as write function or markdown columns block in '
-                        'display mode (+++ separtor used in columns) show object properly.'
+                        'display mode (not columns.inline) display objects properly.'
                     ).value,
                     text
                 )

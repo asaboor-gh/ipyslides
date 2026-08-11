@@ -454,7 +454,7 @@ def write(*objs,widths = None, css_class=None, **css_props):
         - You can avoid `repr(obj)` by `Slides.hold(func, ...)` e.g. `Slides.hold(plt.show)`. This can also be used to delay display until it is captured in a column.
         - You can use [code! display(obj, metadata = {'text/html': 'html repr by user'}) /] for any object to display object as it is and export its HTML representation in metadata.
         - You can add mini columns inside a column by markdown syntax or ` Slides.stack `, but content type is limited in that case.
-        - In markdown `columns`/`group` block syntax is similar to `write` command if `+++` separartor is used there.
+        - In markdown `columns`/`group` block syntax is similar to `write` command with `--` as columns seperator and `++` as incremental reveal separator.
         - Use `::: group snapshots=True` (and optional `header=...`) in markdown to enable snapshots behavior for that group block.
     
     ::: note-tip
