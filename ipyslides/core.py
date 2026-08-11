@@ -1,5 +1,6 @@
 import shutil, inspect
 import sys, json, re, math, textwrap
+import yaml
 from contextlib import contextmanager, suppress
 from collections.abc import Iterable
 from typing import Union, overload
@@ -533,7 +534,7 @@ class Slides(BaseSlides,metaclass=Singleton):
                 slide._set_css_classes(add = 'Out-Sync') # will go synced after rerun
 
     def set_citations(self, data):
-        r"""Set citations from dictionary or string with content like `\@key: citation value` on their own lines, 
+        r"""Set citations from dictionary or string in yaml format with content like `key: citation value` on their own lines or json format., 
         key should be cited in markdown as `@key`, optionally comma separated keys. `@key!` will show citation inline.
         Number of columns in displayed citations are determined by [code! Slides.settings.layout(..., ncol_refs=N) /] or 
         per slide by [code! [refs\! N \/] /] / [code! Slides.refs(N) /].
@@ -542,8 +543,8 @@ class Slides(BaseSlides,metaclass=Singleton):
         set_citations({"key1":"value1","key2":"value2"})
         
         set_citations('''
-        @key1: citation for key1
-        @key2: citation for key2
+        key1: citation for key1
+        key2: citation for key2
         ''')
 
         with open("citations_file.md","r") as f:
@@ -554,6 +555,7 @@ class Slides(BaseSlides,metaclass=Singleton):
         ```
 
         ::: note
+            - If your citations values start with other than letters, you may need to quote them in yaml format, e.g. `key: "*Bold citation*"`, simply `key: *Bold citation*` will raise error.
             - You should set citations at the start if using voila or python script. Setting at the start in notebook is useful as well.
             - Citations are replaced with new ones, so latest use of this function represents available citations.
             - Markdown equivalent of this function is a `--- citations ---` block only supported at the end of synced file via `Slides.sync_with_file`.
@@ -561,10 +563,20 @@ class Slides(BaseSlides,metaclass=Singleton):
         if isinstance(data, dict):
             self._set_ctns(data)
         elif isinstance(data, str):
-            self._set_ctns({
-                k.strip() : v.strip() 
-                for k,v in re.findall(r'^@(.+?):\s*(.*?)(?=^@|\Z)', textwrap.dedent(data), flags=re.MULTILINE | re.DOTALL)
-            })
+            data = textwrap.dedent(data).rstrip()
+            if re.search(r'^@.+?:', data, flags=re.MULTILINE):
+                print("Use key: value format without @ in front of key, like `key: value` for citations. @ is only used in markdown to cite keys.")
+                data = re.sub(r'^@(.+?):', r'\1:', data, flags=re.MULTILINE) # remove @ in front of key
+            
+            d = yaml.safe_load(data) # parse as yaml to get dict
+            if not isinstance(d, dict):
+                raise ValueError("Citations data should be a dictionary or string with key: value format, got something else.")
+            for k, v in d.items():
+                if not isinstance(k, str) or not isinstance(v, str):
+                    raise ValueError(f"Citations keys and values should be strings, got {type(k)}:{type(v)} for {k}:{v}")
+                if not re.fullmatch(r'[A-Za-z_]\w*', k): # Same as captured by AT_KEY regex
+                    raise ValueError(f"Citation key {k!r} is not a valid identifier, it should start with a letter or underscore and contain only letters, digits, or underscores.")
+            self._set_ctns(d)
         else:
             raise TypeError(f"data should be a dict or string content (including read from file), got {type(data)}")
         

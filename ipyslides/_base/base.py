@@ -157,8 +157,8 @@ class BaseSlides:
 
         ```markdown
          --- citations ---
-         @key1: Saboor et. al., 2025
-         @key2: A citations can span multiple lines, but key should start on new line
+         key1: Saboor et. al., 2025
+         key2: A citations can span multiple lines, but key should start on new line
          <!-- Or put this content in a file 'bib.md' and then inside citations block use include`bib.md` -->
         ```
         
