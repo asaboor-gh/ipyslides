@@ -10,9 +10,9 @@ _exclude = ":not([class*='anim-']):not(.anim-group *)" # exclude user defined an
 _is_flowsel = ':is(' + ','.join(_flow_sels) + ')'
 _nth_flowsel = ','.join(f".SlideBox > .SlideArea {sel}{_exclude}" for sel in _flow_sels)
 
-def _sm_content(icon):
-    # extra right side space, padding/mrgin does not work for marker
-    return Icon(icon, color='var(--accent-color, currentColor)').css['content'] + ' " "' 
+def _sm_content(icon, color):
+    # extra right side space, padding/mrgin does not work for marker, color need to be explicit, not var
+    return Icon(icon, color=color).css['content'] + ' " "' 
 
 def anim_dur(n):
     """Return animation duration CSS dictionary based on exponential approach to 1500ms."""
@@ -1023,7 +1023,7 @@ def style_css(colors, fonts, layout, _root = False):
                 'color': 'var(--fg3-color) !important',
                 'cursor': 'pointer',
                 '^::marker': {
-                    'content': _sm_content('chevrond'),
+                    'content': _sm_content('chevrond', colors['accent']),
                     'color': 'var(--accent-color) !important',
                     },
                 },
@@ -1035,7 +1035,7 @@ def style_css(colors, fonts, layout, _root = False):
                 'max-height': '400px !important',
                 'overflow': 'auto',
                 '> summary::marker': {
-                    'content': _sm_content('chevronu'),
+                    'content': _sm_content('chevronu', colors['accent']),
                     'color': 'var(--accent-color) !important',
                 },
                 '> summary::after': {
