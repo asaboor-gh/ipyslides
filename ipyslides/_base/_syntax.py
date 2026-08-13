@@ -85,7 +85,8 @@ Citations
 
 The general block syntax is `::: type-or-classes [args] attributes`.
 
-- You can use `/` to divide css properties from node attributes such as `::: note-info border="1px solid red" / id="mynote" dir="ltr"`. Node attributes come after `/`. 'data-' prefixed attributes can appear anywhere.
+- You can use `/` to divide css properties from node attributes such as `::: note-info border="1px solid red" / id="mynote" dir="ltr"`. 
+  Node attributes come after `/` and can include non-value attributes such as `open`, `disabled` etc. 'data-' prefixed attributes can appear anywhere.
 - You can create inline blocks by adding `..` in header (only takes effect if body is empty), such as `::: block-red .. text` will create a block with red background and text inside.
 - Both `..` and `/` can be escaped in header by backslash to interpret them as literal characters instead of block body and attributes splitters respectively. 
 - You can optionally continue block header on next multiple adjacent lines with `:` at start of each line. This multiline header is not available in \`\`\` blocks.

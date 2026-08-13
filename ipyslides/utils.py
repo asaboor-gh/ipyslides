@@ -704,7 +704,7 @@ def link(target_uid:str, text:str="Jump to Linked Slide", icon:str=None, uid:str
 
 _VOID_TAGS = ('area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr') # self closing tags
     
-def html(tag, children = None,css_class = None, void_attrs=None,**node_attrs):
+def html(tag, children = None,css_class = None, style=None, void_attrs=None,**node_attrs):
     """Returns html node with given children and node attributes like style, id etc. If an ttribute needs '-' in its name, replace it with '_'.     
     `tag` can be any valid html tag name. A self closing tag must not have children e.g. ` hr ` will be `<hr/>`.  Empty tag gives unwrapped children.
     
@@ -748,7 +748,13 @@ def html(tag, children = None,css_class = None, void_attrs=None,**node_attrs):
             raise TypeError(f"'style' tag requires dict with CSS, got {type(children)}")
     
     node_attrs = {k.replace('_','-'):v for k,v in node_attrs.items()}
-    attrs = ' '.join(_inline_style(v) if ('style' in k and isinstance(v, dict)) else f'{k}="{v}"' for k,v in node_attrs.items()) # Join with space is must
+    attrs = ' '.join(f'{k}="{v}"' for k,v in node_attrs.items()) 
+    
+    if style is not None:
+        if not isinstance(style, (str, dict)):
+            raise TypeError(f"'style' attribute should be a string or dict of inline css properties, got {type(style)}")
+        attrs += f' {_inline_style(style)}' if isinstance(style, dict) else f' style="{style}"'
+    
     attrs += (f' {void_attrs}' if void_attrs else '') # these usually come at end
     if css_class:
         attrs = f'class="{css_class}" {attrs}'
@@ -785,11 +791,13 @@ def as_widget(obj=''): # should be useable empty
 
 # This is only intended to use for general tags in markdown, do not use in python
 @_internal_xmd_call('anyTag')
-def anyTag(tag, content = "", css_class = None, void_attrs=None, **node_attrs):
+def anyTag(tag, content = "", css_class = None, void_attrs=None, node_attrs=None, **css_props):
     """Picks up html tag from markdown function calls and returns html node with given text and node attributes 
     like style, id etc. If an attribute needs '-' in its name, replace it with '_'.
     
     `void_attrs` are value-less attributes, such as `disabled`, `checked`, `open` etc. Must be a string of space separated attributes names.
+    
+    `node_attrs` are other html node attributes like `id`, `data-*` etc. with ('_' → '-' in keys) Must be a dict of attribute name and value pairs excluding `style` which is handled separately by `css_props`. If an attribute needs '-' in its name, replace it with '_'.
     
     The markdown call syntax for registered python functions and html tags is same, see `slides.xmd.funcs` for details.
     
@@ -809,8 +817,16 @@ def anyTag(tag, content = "", css_class = None, void_attrs=None, **node_attrs):
     if tag in _VOID_TAGS and content:
         raise RuntimeError(f'Parametr `content` should be empty for self closing tag {tag!r}')
     
+    if node_attrs is not None:
+        if not isinstance(node_attrs, dict):
+            raise TypeError(f"'node_attrs' should be a dict of html node attributes or None, got {type(node_attrs)}")
+        
+        if 'style' in node_attrs:
+            node_attrs.pop('style',None) # remove style from node_attrs if present, as it will be handled separately
+            raise KeyError("'style' attribute is built from **css_props, must not be in 'node_attrs'.")
+    
     # strips outer <p> tags to avoid double wrapping in <p> when used inside other tags
-    return html(tag, xmd(content, True, ""), css_class=css_class, void_attrs=void_attrs, **node_attrs)
+    return html(tag, xmd(content, True, ""), css_class=css_class, style=css_props, void_attrs=void_attrs, **(node_attrs or {}))
 
 @_internal_xmd_call('gap')
 def gap(h=1, v=1, unit = 'em'):

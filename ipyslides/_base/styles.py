@@ -1013,33 +1013,36 @@ def style_css(colors, fonts, layout, _root = False):
         '.hrules > *:not(:last-child)': {'border-bottom': '1px solid #8988 !important'},
         '.vrules > *:not(:last-child)': {'border-right': '1px solid #8988 !important'},
         'details': {
-            'padding': '0.2em',
-            '^, > summary': {'padding': '0.2em'},
+            'padding': '4px',
+            'position': 'relative', # keeps content inside
             '> summary': {
-                'padding-left': '0.2em !important',
                 'color': 'var(--fg3-color) !important',
+                'cursor': 'pointer',
                 '^::marker': {
-                    'content':'"≚  "',
+                    'content':'"⏵  "',
                     'color': 'var(--accent-color) !important',
                     },
                 },
+            '^::details-content': {
+                'border-left': '1px dashed #8988', # neutral border color
+                'padding-left': '0.2em', # extra padding with border
+            },
             '^[open]': {
-                'border-left': '2px solid var(--accent-color)',
                 'max-height': '400px !important',
                 'overflow': 'auto',
-                'padding-bottom': '1em', # for close button
                 '> summary::marker': {
-                    'content':'"≙  "',
+                    'content':'"⏶  "',
                     'color': 'var(--accent-color) !important',
                 },
                 '> summary::after': {
                     'display':'block',
-                    'content': '"≙"',
-                    'color': 'var(--accent-color) !important',
+                    'content': '""',
                     'position': 'absolute',
                     'left': 0,
-                    'bottom': 0,
-                    'padding-left': '0.4em',
+                    'top': 0,
+                    'width': '4px', # thin strip to click
+                    'height': '100%',
+                    'cursor': 'pointer', # important hint to click
                 },
             },
         },

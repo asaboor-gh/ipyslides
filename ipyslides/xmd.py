@@ -150,7 +150,7 @@ def _resolve_citations(parser, content):
     content = AT_KEYS.sub(sub_cite, content)  
     # warn for cite`*keys` usage
     content = re.sub(r"(?<![\`\.])\bcite\`(.*?)\`;?", 
-        lambda m: warn(f'Use @key, @key2!, @key3 etc. {m.group()} syntax is deprecated.').value, 
+        lambda m: error('SyntaxError',f'Use @key, @key2!, @key3 etc. {m.group()} syntax is deprecated.').value, 
         content, flags=re.DOTALL) 
     return content
 
@@ -523,10 +523,12 @@ class XMarkdown(Markdown):
                 if value.isdigit() or re.match(r'^\d+(\.\d+)?$', value):
                     numbers.append(float(value) if '.' in value else int(value))
                 else:
-                    args.append((value.replace('.',' ') if args else value).strip()) # remove . from classes except from directive name
+                    value = (value.replace('.',' ') if args else value).strip() # remove . from classes except from directive name
+                    node_attrs.update({value: None}) if post_slash else args.append(value) # if after /, treat as non-value as void attributes such as open
+                    
         sizes = numbers if numbers else None # making None is important for columns and stack 
         # flatten node_attrs to a string, but not css properties
-        node_attrs = ' '.join(f'{k}="{v}"' for k, v in node_attrs.items())
+        node_attrs = ' '.join(f'{k}="{v}"' if v is not None else k for k, v in node_attrs.items())
         
         if args:
             typ, prop = [v.strip() for v in args[0].split('.',1)] if '.' in args[0] else (args[0], '')
@@ -627,9 +629,8 @@ class XMarkdown(Markdown):
             text_chunk = re.sub(rf"\`{op}(.*?){cl}\`", repl, text_chunk, flags=re.DOTALL | re.MULTILINE)
         
         if has_syntax:
-            text_chunk = self._handle_var(warn(
-                "Nested `// //` syntax is being deprecated. New format [func! ... /] automatically support nesting.",
-                "DeprecationWarning"
+            text_chunk = self._handle_var(error("SyntaxError",
+                "Nested `// //` syntax is being deprecated. New format [func! ... /] automatically support nesting."
             )) + "\n" + text_chunk
         return text_chunk
 
@@ -692,11 +693,9 @@ class XMarkdown(Markdown):
             data = self._handle_inline_cols(data) # handle single line columns with | separator, do before adding warnings
             data = self._restrict_incremental('columns.inline', self._fix_legacy_col_sep(data)) # handle legacy mode and restrict incremental ++ separator
             
-            if re.search(r'^\-\-\s*$', data, flags=re.MULTILINE):
-                data = '<div markdown="1">\n' + re.sub(
-                    r'^\-\-\s*$', '</div>\n<div markdown="1">\n', data, 
-                    flags=re.MULTILINE
-                ) + '\n</div>' # make columns by optional -- separator
+            if re.search(r'^\-\-\s*$', data, flags=re.MULTILINE): # make columns by optional -- separator
+                _cs = '\n</div>\n<div markdown="1">\n'.join(_stream_chunks(data, sep='--'))
+                data = '\n'.join(['<div markdown="1">', _cs, '</div>']) 
         
         if tag in CAPTURED_TAGS:
             if tag in STRICT_TAGS: # keep as is from further processing
@@ -841,13 +840,13 @@ class XMarkdown(Markdown):
     def _fix_legacy_col_sep(self, data):
         if re.search(r"^\+\+\+\s*$", data, flags=re.MULTILINE):
             data = re.sub(r"^\+\+\+\s*$", "--", data, flags=re.MULTILINE)  # Change to -- for backward compatibility
-            data = "\n".join([warn('Use -- instead of legacy +++ to separate columns.', 'DeprecationWarning').value, data]) # Prepend warning to the data once
+            data = "\n".join([warn('Use -- instead of legacy +++ to separate columns.', 'SyntaxWarning').value, data]) # Prepend warning to the data once
         return data
     
     def _parse_columns(self, data, widths, _class, css_props):
         data = self._handle_inline_cols(data)  # Handle single line columns with | separator before adding extra warnings
         data = self._fix_legacy_col_sep(data)  # Fix legacy +++ column separators
-        cols = re.split(r"^\-\-\s*$", data, flags=re.MULTILINE)  # Split by columns, three + is legacy way
+        cols = list(_stream_chunks(data, sep='--'))  # Split columns by -- separator
 
         if len(cols) == 1: # full width one column
             widths = [100]
@@ -901,8 +900,9 @@ class XMarkdown(Markdown):
         # Reolve link targets as invisible span with id
         text = re.sub(r"(?<![\`\\])\[\#([\w\-]+)/\](?!\S)", r"<span id='\1' class='slide-link-target'></span>", text)
         # Resolve (deprecated) <link:label:origin text> and <link:label:target text?>
-        text = re.sub(r"<link:([\w\d-]+):origin\s*(.*?)>", r"<a href='#target-\1' id='origin-\1' class='slide-link'>\2</a>", text)
-        text = re.sub(r"<link:([\w\d-]+):target\s*(.*?)>", r"<a href='#origin-\1' id='target-\1' class='slide-link'>\2</a>", text)
+        warning = warn(r'The `<link: ...>` syntax is deprecated. Use `link` function instead.', 'SyntaxWarning')
+        text = re.sub(r"<link:([\w\d-]+):origin\s*(.*?)>", rf"<a href='#target-\1' id='origin-\1' class='slide-link'>\2</a>{warning}", text)
+        text = re.sub(r"<link:([\w\d-]+):target\s*(.*?)>", rf"<a href='#origin-\1' id='target-\1' class='slide-link'>\2</a>{warning}", text)
         # Resolve citations before variable substitution to avoid conflicts with citation keys
         text = _resolve_citations(self, text)  
         
@@ -915,7 +915,9 @@ class XMarkdown(Markdown):
     def _resolve_md_vars(self, text):
         # Replace [md-var/] variables stored during md-var blocks, 
         # but reusing snippets expose internal state, AVOID THAT
-        text = re.sub(r"(?<![\`\\])\<md-([\w]+)/\>", r"[md-\1/]", text) # update legacy to new syntax
+        warning = warn(r'The `<md-var/>` syntax is deprecated. Use `[md-var/]` instead.', 'SyntaxWarning')
+        text = re.sub(r"(?<![\`\\])\<md-([\w]+)/\>", rf"{warning} [md-\1/]", text) # update legacy to new syntax
+        
         all_matches = re.findall(r"(?<![\`\\])\[md-([\w]+)/\](?!\S)", text) # avoid `\ and end must
         for match in all_matches:
             value = esc._store.pop(match, error('NameError', f'Markdown variable {match!r} is not defined or already used!'))
@@ -1030,15 +1032,16 @@ class XMarkdown(Markdown):
             html_output = self._handle_var(warn(
                 'Legacy syntax for func`...` is being deprecated and will be removed in future releases. '
                 'Use [func! ... /] format for flexible automatic nesting, see slides.xmd.funcs for details.',
-                "DeprecationWarning"
+                "SyntaxWarning"
             )) + "\n" + html_output
             
             with self.active_parser(): # set instance parser to pass variables
                 html_output = re.sub(FUNC_RE, self.repl_inline_func, html_output, flags=re.DOTALL | re.MULTILINE)
 
         # These will be deprecated in future alongwith bactick functions
-        html_output = re.sub(r'(?: )?\^\`([^\`]*?)\`',r'<sup>\1</sup>', html_output) # superscript, leading space for readability consumed
-        html_output = re.sub(r'(?: )?\_\`([^\`]*?)\`',r'<sub>\1</sub>', html_output) # subscript
+        warning = warn(r'Legacy syntax for superscript ^\`...\` and subscript _\`...\` is being deprecated. Use `sub/sup` functions instead.', "SyntaxWarning")
+        html_output = re.sub(r'(?: )?\^\`([^\`]*?)\`',rf'<sup>\1</sup>{warning}', html_output) # superscript, leading space for readability consumed
+        html_output = re.sub(r'(?: )?\_\`([^\`]*?)\`',rf'<sub>\1</sub>{warning}', html_output) # subscript
         
         # New style function call [name! content /]
         # Match only innermost blocks by forbidding nested openers like [other! inside body.
@@ -1079,7 +1082,7 @@ class XMarkdown(Markdown):
             if nsep > 1:
                 return self._handle_var(error('ValueError', f"Too many '..' separators in '{match.group(0)}'. Only one is allowed. Escape .. with backslash if needed"))
             elif nsep == 1:
-                content, argvs = [c.replace('ESC-046-CHR', '.') for c in DOTS_RE.split(argvs, maxsplit=1)] # content .. params case, release escaped . back to normal
+                content, argvs = DOTS_RE.split(argvs, maxsplit=1) # content .. params case
                 if ParamsFirst:
                     argvs, content = content, argvs # swap for [tag!! params .. content /] case
             elif argvs.strip(): 
@@ -1408,24 +1411,22 @@ def _stream_chunks(text, sep='---'):
     if eof := re.search(r'^\s*EOF\s*$',text, flags = re.MULTILINE):
         text = text[:eof.start()]  # truncate at EOF
 
-    text = textwrap.dedent(text)  # content coming from python functions is usually indented, fix for all cases, need --- at start
+    text = textwrap.dedent(text)  # content coming from python functions is usually indented, fix for all cases, need sep at start
 
-    # Mask HTML comments so --- or -- inside them are not treated as separators.
+    # Mask HTML comments so sep inside them are not treated as separators.
     text = cmnt_esc.escape(text)
 
     pattern = _PATTERN_CACHE[s]
     last_pos = 0
     in_block = False
-    first = True if s == '--' else False # for pages, first chunk is always header, yield even if empty
 
     for match in pattern.finditer(text):
         if match.group(1): # It's a backtick fence (toggle shielding)
             in_block = not in_block
         elif not in_block: # It's a separator and we're NOT inside a block
-            if (chunk := text[last_pos:match.start()].rstrip()) or first: # need to preseve leading indents, so only rstrip
+            if (chunk := text[last_pos:match.start()].rstrip()): # need to preseve leading indents, so only rstrip
                 yield cmnt_esc.restore(chunk)
             last_pos = match.end()
-            first = False # only first chunk is special for pages
 
     if final_chunk := text[last_pos:].rstrip():
         if in_block:
