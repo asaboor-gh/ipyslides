@@ -10,6 +10,10 @@ _exclude = ":not([class*='anim-']):not(.anim-group *)" # exclude user defined an
 _is_flowsel = ':is(' + ','.join(_flow_sels) + ')'
 _nth_flowsel = ','.join(f".SlideBox > .SlideArea {sel}{_exclude}" for sel in _flow_sels)
 
+def _sm_content(icon):
+    # extra right side space, padding/mrgin does not work for marker
+    return Icon(icon, color='var(--accent-color, currentColor)').css['content'] + ' " "' 
+
 def anim_dur(n):
     """Return animation duration CSS dictionary based on exponential approach to 1500ms."""
     if n < 1: raise ValueError("n must be at least 1")
@@ -932,7 +936,7 @@ def style_css(colors, fonts, layout, _root = False):
             '^:empty': {'display':'none !important',},
         },
         '.docs': { # docs have Python code only, so no need to have fancy things there
-            'margin-bottom':'1em !important',
+            'margin-bottom':'0.25em',
             '.highlight': {'border':'none !important',},
             '.lang-name': {'display':'none !important',},
         },
@@ -1019,7 +1023,7 @@ def style_css(colors, fonts, layout, _root = False):
                 'color': 'var(--fg3-color) !important',
                 'cursor': 'pointer',
                 '^::marker': {
-                    'content':'"⏵  "',
+                    'content': _sm_content('chevrond'),
                     'color': 'var(--accent-color) !important',
                     },
                 },
@@ -1031,7 +1035,7 @@ def style_css(colors, fonts, layout, _root = False):
                 'max-height': '400px !important',
                 'overflow': 'auto',
                 '> summary::marker': {
-                    'content':'"⏶  "',
+                    'content': _sm_content('chevronu'),
                     'color': 'var(--accent-color) !important',
                 },
                 '> summary::after': {
