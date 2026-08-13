@@ -218,8 +218,8 @@ tagfixer = TagFixer()
 del TagFixer
 
 class char_esc:
-    r"""Utility class for escaping and restoring characters \@,\%,\|,\`,\<,\>,\:, \;, \!, \.,\, using backslash in text."""
-    _chars = r"`@%|/<>:;!.," # Characters to escape
+    r"""Utility class for escaping and restoring special characters using backslash in text."""
+    _chars = r"`@%|/<>:;!.,+-" # Characters to escape
 
     @classmethod
     def escape(cls, text):
@@ -346,6 +346,8 @@ class cmnt_esc:
     
 
 _PLUS_RE = re.compile(r'^\+\+(?:\[(?P<opt>[^\]\n]+)\])?(?:\s*$|\s)', re.MULTILINE) # This is used to split by ++ on its own line,
+# Count only standalone ".." tokens (surrounded by whitespace or string boundaries)
+DOTS_RE = re.compile(r'(?<!\S)\.\.(?!\S)')
 
 MACRO_RE = re.compile(
     r"(?<![\\\`])"            # not preceded by backslash or backtick
@@ -590,11 +592,10 @@ class XMarkdown(Markdown):
                         text_chunk += line # text chunk, not part of block
             
             header = char_esc.escape(header)  # Escape characters in header before splitting
-            if '|' in header:
+            if DOTS_RE.search(header): # if header has .. then it is a block with same line content
+                header, rest_line = DOTS_RE.split(header, maxsplit=1) # split at first .., rest is block body
                 if not block_body.strip(): # if block body is empty but header has pipe, then it is inline block
-                    header, block_body = header.split('|', 1)
-                else:
-                    header, _ = header.split('|', 1) # ignore everything after pipe in header in general
+                    block_body = rest_line.strip() # treat rest of line as block body
             header = char_esc.restore(header)  # Restore characters in header after splitting
             
             if block_body.strip(): # block comes first, only if not empty
@@ -670,6 +671,12 @@ class XMarkdown(Markdown):
         if _PLUS_RE.search(data):
             data = "\n".join([error("ValueError", f"'{directive}' directive does not support incremental ++ separator.").value, data])
         return data
+    
+    def _handle_inline_cols(self, data):
+        "Check if columns are on a single line and split them by | separator to make them multi-line for proper parsing."
+        if (line := data.strip()) and re.fullmatch('^.*$', line): # single line columns
+            data = re.sub(r'\s+\|\s+', '\n--\n', line) # ensure | is spaced
+        return data
         
     def _parse_colon_block(self, header, data):
         STRICT_TAGS = ("pre","raw") # code is handled separately
@@ -682,11 +689,9 @@ class XMarkdown(Markdown):
                 return [error("ValueError", f"Invalid block type '{tag}' with property '{prop}'. Use 'columns' for display columns and 'columns.inline' for inline columns.")]
             
             css_props = {"display":"flex", **css_props} # add display flex for in notebook formatting
+            data = self._handle_inline_cols(data) # handle single line columns with | separator, do before adding warnings
             data = self._restrict_incremental('columns.inline', self._fix_legacy_col_sep(data)) # handle legacy mode and restrict incremental ++ separator
             
-            if (line := data.strip()) and re.fullmatch('^.*$', line): # single line columns
-                data = re.sub(r'\s*\-\-\s*', '\n--\n', line) # ensure -- is on its own line for splitting
-                
             if re.search(r'^\-\-\s*$', data, flags=re.MULTILINE):
                 data = '<div markdown="1">\n' + re.sub(
                     r'^\-\-\s*$', '</div>\n<div markdown="1">\n', data, 
@@ -721,6 +726,7 @@ class XMarkdown(Markdown):
     def _parse_code(self, data, prop, focus_lines, _class, props, attrs):
         params = inspect.signature(_highlight).parameters.keys()
         kwargs = {k: eval(v) if v in "TrueFalseNone" else v for k, v in props.items() if k in params} # only pass known params
+        data = char_esc.restore(cmnt_esc.restore(data)) # restore escape/comments before highlighting
         out = _highlight(data, css_class=_class, **kwargs)
         leftover = {k: v for k, v in props.items() if k not in params} # left over css properties
         if leftover:
@@ -839,6 +845,7 @@ class XMarkdown(Markdown):
         return data
     
     def _parse_columns(self, data, widths, _class, css_props):
+        data = self._handle_inline_cols(data)  # Handle single line columns with | separator before adding extra warnings
         data = self._fix_legacy_col_sep(data)  # Fix legacy +++ column separators
         cols = re.split(r"^\-\-\s*$", data, flags=re.MULTILINE)  # Split by columns, three + is legacy way
 
@@ -934,7 +941,7 @@ class XMarkdown(Markdown):
                         f'{self._var_info(m.group())} cannot be displayed in current context or nesting level '
                         'because markdown parser was requested to return a string by the caller. '
                         'Display contexts such as write function or markdown columns block in '
-                        'display mode (not columns.inline) display objects properly.'
+                        '(not columns.inline) display objects properly when the parser is called in display context.'
                     ).value,
                     text
                 )
@@ -1068,13 +1075,11 @@ class XMarkdown(Markdown):
         if argvs.strip() == '..': 
             content, argvs = "", "" # handles [tag! .. /]  and [tag!! .. /] -> tag("")
         else:
-            # Count only standalone ".." tokens (surrounded by whitespace or string boundaries)
-            SEP_RE = re.compile(r'(?<!\S)\.\.(?!\S)')
-            nsep = len(SEP_RE.findall(argvs))
+            nsep = len(DOTS_RE.findall(argvs))
             if nsep > 1:
-                return self._handle_var(error('ValueError', f"Too many '..' separators in '{match.group(0)}'. Only one is allowed. Escape .. with backslash if needed."))
+                return self._handle_var(error('ValueError', f"Too many '..' separators in '{match.group(0)}'. Only one is allowed. Escape .. with backslash if needed"))
             elif nsep == 1:
-                content, argvs = SEP_RE.split(argvs, maxsplit=1) # content .. params case
+                content, argvs = [c.replace('ESC-046-CHR', '.') for c in DOTS_RE.split(argvs, maxsplit=1)] # content .. params case, release escaped . back to normal
                 if ParamsFirst:
                     argvs, content = content, argvs # swap for [tag!! params .. content /] case
             elif argvs.strip(): 
@@ -1216,9 +1221,14 @@ class _XMDMeta(type):
         return _extensions
     @property
     def syntax(self) -> XTML:
-        "Extnded markdown syntax information."
+        "Extended markdown syntax information."
         from ._base._syntax import xmd_syntax # circular import
         return _parse_as_snapshots(xmd_syntax)
+    
+    @property
+    def escaped_chars(self) -> tuple[str]:
+        "List of characters that are escaped in extended markdown."
+        return tuple(char_esc._chars)
     
     @property
     def funcs(self):
@@ -1260,7 +1270,7 @@ class _XMDMeta(type):
         return XTML(info.value + dtls.value)
     
     def __dir__(cls): # tab completion still sucks with meta programming!
-        return sorted(list(super().__dir__()) + ["extensions", "funcs", "gather", "register", "syntax"])
+        return sorted(list(super().__dir__()) + ["escaped_chars", "extensions", "funcs", "gather", "register", "syntax"])
     
     @staticmethod
     def gather(content:str, **vars): # export xmd in docs and demo to show this

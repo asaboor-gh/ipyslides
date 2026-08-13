@@ -86,15 +86,15 @@ Citations
 The general block syntax is `::: type-or-classes [args] attributes`.
 
 - You can use `/` to divide css properties from node attributes such as `::: note-info border="1px solid red" / id="mynote" dir="ltr"`. Node attributes come after `/`. 'data-' prefixed attributes can appear anywhere.
-- You can create inline blocks by adding `|` in header (only takes effect if body is empty), such as `::: block-red | text` will create a block with red background and text inside.
-- Both `|` and `/` can be escaped in header by backslah to interpret them as literal characters instead of block body and attributes splitters respectively. 
+- You can create inline blocks by adding `..` in header (only takes effect if body is empty), such as `::: block-red .. text` will create a block with red background and text inside.
+- Both `..` and `/` can be escaped in header by backslash to interpret them as literal characters instead of block body and attributes splitters respectively. 
 - You can optionally continue block header on next multiple adjacent lines with `:` at start of each line. This multiline header is not available in \`\`\` blocks.
 - Theme colors such as `fg1=red bg2=black` upto 3, can be assigned for each block to tweak look and feel of content.
 - Blocks can be escaped by having a space before `:::` at start of line, such as ` ::: block-red` will not be parsed as block.
 - Some block levels HTML tags are handled specially, such as p, pre, ul, ol, blockquote, details, summary, table.
 - You can use `::: block` nested inside \`\`\` block at same indentation level but otherwise must be correctly indented.
 - Bullet points are hard to stylize, so use `::: ul/ol` blocks to create lists with custom styles and in side have `::: li` blocks for each item.
-  e.g. a per item marker can be added using `::: li list-style="'👉'" | item text` besides all other CSS styles, or a `data-marker` attribute directly.
+  e.g. a per item marker can be added using `::: li list-style="'👉'" .. item text` besides all other CSS styles, or a `data-marker` attribute directly.
 
 ::: table 1 4 caption-side=top bg3=#8988
     This table, itself created with a `::: table` block, lists common block types and their usage.
@@ -112,7 +112,7 @@ The general block syntax is `::: type-or-classes [args] attributes`.
     | `::: display css_classes` | Create a block with specific CSS classes forcing display mode, it can break dom flow, but usefull to embed widget variables under blocks. |
 
 ::: details
-    ::: summary | Important Notes on `md-` and `code` blocks
+    ::: summary .. Important Notes on `md-` and `code` blocks
     - Variable created with `md-var_name` can be used anywhere in markdown using `[md-var_name/]` to display source code.
     - `md-[position or variable]` accepts same parameters as `code` block for syntax highlighting and get deleted on first use.
     - Both `code` and `md-var` blocks support attribute access such as `::: code.collapsed` or `::: md-var.inline` to show selected view. 
@@ -122,10 +122,12 @@ The general block syntax is `::: type-or-classes [args] attributes`.
 **Layouts**{{.text-big}}
 
 Inline Columns
-: Inline columns/rows can be added by using `::: columns.inline` directive.
+: Inline columns can be added by using `::: columns.inline` directive and can have one-liner content on their own line after `..` separator.
+Note that if `:::` block is inside inline functions, `..` must be escaped for correct parsing and it will be available back to block body before block's own parsing time.
+One-liner content (after `..` or single line in body) can be separated by `|` character to create multiple columns, e.g. `::: columns.inline 1 1 1 .. Column A | Column B | Column C`.
 
 Block Columns
-: You can create block columns using `::: columns` syntax.
+: You can create block columns using `::: columns` syntax. They also support `..` on their own line but it is discouraged because they are blocks and should look like blocks.
 Column separator is double minus `--` for `::: columns` and it's optional for `::: columns.inline` where distinct content blocks are automatically resolved per column, but `--` can be used for explicit separation and it is superceded if used.
 Use `::: group snapshots=True` to enable per-row iteration for a block in columns or whole `::: group` outside of columns is a single column display block.
 Use `header='Header text'` in the same group header to keep a static header visible while rows reveal.
@@ -140,17 +142,17 @@ Use `++[isolate]` before `::: columns` to separate previous content from first c
           Children should be visually blocks themselves like headings, paragraphs, lists etc or wrapped in `::: block` to make them obvious 
           blocks like this one or use `--` separator to create explicit columns.
         - CSS classes and attributes can be used to style columns besides relative widths.
-        - Single line content with '--' inline separator is supported for short content, e.g. 
-        ::: columns.inline 1 1 1 | Column A -- Column B -- Column C
+        - Single line content with '|' inline separator is supported for short content, even single line in columns body, e.g.
+        ::: columns.inline 1 1 1 .. Column A | Column B | Column C
     
-    ::: block-blue border="1px solid red" | [alert! inline [color! block text /] /]
+    ::: block-blue border="1px solid red" .. [alert! inline [color! block text /] /]
     
     ::: ul block-yellow border="2px solid orange" list-style=disc
         ::: li list-style="'👉'" 
             Top level `columns` is necessary to create columns or use simple block with `display=flex`.
             and frame speactor is used at end of block.
         <li data-marker=ℹ️> Indentation is important, so use tabs or spaces consistently.</li>
-        ::: li | This follows disc marker from parent `ul` block.
+        ::: li .. This follows disc marker from parent `ul` block.
 ```
 
 ++
@@ -179,7 +181,7 @@ Code Blocks
 
 ```md-src.collapsed
 ::: details
-    ::: summary | Click to see important notes on code blocks 
+    ::: summary .. Click to see important notes on code blocks 
     - In ` ::: code ` block, you need to set parameters that are passed to `code` function, such as `language`, `name`, `lineno`, `css_class`, etc.
     - The \`\`\` code block does act like `::: code ` block and supports same parameters.
     - You can focus on specific lines in code blocks using line numbers (1-based) such as `::: code 2 4 5` to focus on lines 2, 4 and 5 visually. 
@@ -227,7 +229,7 @@ Inline functions can be nested, thanks to new function call pattern that must en
 
 ::: columns 1 3
     ```md-src.inline
-    [color!! "skyblue" .. [alert! Alert /] inside colored text! /]
+    [color!! "skyblue" .. [alert! Alert /] &larr; inside colored text! /]
     ```
     --
     [md-src/]
@@ -241,7 +243,8 @@ Inline functions can be nested, thanks to new function call pattern that must en
 - Drop a link target in any place using `[#target_id/]` and use `target_id` in `link` commnad or html anchor to jump to that target. Use `Slides.link` for more details.
 - Use syntax `[link\! "target_id", "Jump to slide" \/]` to jump between slides. See `Slides.link` for more details.
 - Cells in markdown table can be spanned to multiple rows/columns by attributes `| cell text \{{: rowspan="2" colspan="1"}}|` inside a cell, should be a space bewteen text and attributes.
-- Escape a backtick with backslash, i.e. [alert! \\` → \` /], other escape characters include [alert! @, %, /, |, :, ;, ! /]. In Python >=3.12, you need to make escape strings raw, including the use of $ \LaTeX $ and re module.
+- Escape a backtick with backslash, i.e. [alert! \\` → \` /], other escape characters are [alert! {xmd.escaped_chars} /]. In Python >=3.12, you need to make escape strings raw, including the use of $ \LaTeX $ and re module.
+- Use html entities for special characters, e.g. `&rarr;` →, `&larr;` ←, `&uarr;` ↑, `&darr;` ↓, `&harr;` ↔, `&udarr;` ⇅, `&lArr;` ⇐, `&rArr;` ⇒, `&uArr;` ⇑, `&dArr;` ⇓, `&hArr;` ⇔ etc.
 - Use `sub` and `sup` functions for subscript and superscript respectively, e.g. H[sub!2/]O, E = mc[sup!2/].
 - See `Slides.css_styles` for available CSS classes to use in markdown blocks and other places.
 - See `Slides.css_animations` for available CSS animation classes to use in markdown blocks and other places.
@@ -251,9 +254,9 @@ Inline functions can be nested, thanks to new function call pattern that must en
     [md-src/] 
     --
     Item 1 Header
-    : Item 1 details [sup!1/]
+    : Item 1 &rarr; details [sup!1/]
     Item 1 Header
-    : Item 1 details [sub!2/]
+    : Item 1 &rarr; details [sub!2/]
 ```
 
 **Extending Syntax**{{.text-big}}
@@ -373,10 +376,10 @@ Define `@keyframes` in Slides.css(...) or in a notebook cell.
 **🌟 Power Mode: `anim-group`** (Staggered Animations)
 ```md-after
 ::: ul anim-group anim-slide-left anim-zoom
-    ::: li | Item 1 (0ms delay)
-    ::: li | Item 2 (~84ms delay)
-    ::: li | Item 3 (~188ms delay)
-    ::: li | Item 4 (~295ms delay)
+    ::: li .. Item 1 (0ms delay)
+    ::: li .. Item 2 (~84ms delay)
+    ::: li .. Item 3 (~188ms delay)
+    ::: li .. Item 4 (~295ms delay)
     // Delays follow smooth sine curve: 100ms per 10 items
 ```
 
@@ -385,9 +388,9 @@ Define `@keyframes` in Slides.css(...) or in a notebook cell.
 **Per Item Origins** (Dynamic Effects)
 ```md-after
 ::: ul anim-group anim-iris anim-rotate
-    ::: li --origin="33% 50%" | Each item opens from different origin
-    ::: li --origin="50% 50%" | With rotation
-    ::: li --origin="67% 50%" | Staggered naturally
+    ::: li --origin="33% 50%" .. Each item opens from different origin
+    ::: li --origin="50% 50%" .. With rotation
+    ::: li --origin="67% 50%" .. Staggered naturally
 ```
 
 **Advanced Combinations**

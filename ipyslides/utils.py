@@ -1035,8 +1035,8 @@ def bullets(iterable, ordered = False, marker = None, css_class = None, **css_pr
     Markdown Equivalent:
     ```md-before
     ::: ul .hrules list-style="'✅'" 
-        ::: li list-style="'❌'" | First item
-        ::: li data-marker=🔴 | Second item 
+        ::: li list-style="'❌'" .. First item
+        ::: li data-marker=🔴 .. Second item 
         ::: li
             Third item takes default marker and is large, so made block
     ```
