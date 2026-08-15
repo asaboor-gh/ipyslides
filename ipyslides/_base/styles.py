@@ -1016,11 +1016,11 @@ def style_css(colors, fonts, layout, _root = False):
             'padding': '4px',
             'position': 'relative', # keeps content inside
             '> summary': {
+                # avoid setting position relative here, summary after will not be able to click over full details area
                 'display': 'flex',
                 'flex-direction': 'row',
                 'align-items': 'center',
                 'justify-content': 'flex-start',
-                'position': 'relative',
                 'color': 'var(--fg3-color) !important',
                 'list-style': 'none', # hider default marker
                 'cursor': 'pointer',
@@ -1035,7 +1035,7 @@ def style_css(colors, fonts, layout, _root = False):
             },
             '^::details-content': {
                 'border-left': '1px dashed #8988', # neutral border color
-                'padding-left': '0.2em', # extra padding with border
+                'padding-left': '1ch', # extra padding with border
             },
             '^[open]': {
                 'max-height': '400px !important',
