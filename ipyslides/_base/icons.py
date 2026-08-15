@@ -222,7 +222,7 @@ class Icon(XTML):
         return f'Icon(css = {self.css}, svg = {self.value!r})'
     
     def __format__(self, spec):
-        return f'{_inline_svg(self.value):{spec}}' # important for f-strings be iinline to add in tables etc.
+        return f'{_inline_svg(self.value):{spec}}' # important for f-strings be inline to add in tables etc.
     
     @property
     def svg(self):
@@ -230,13 +230,11 @@ class Icon(XTML):
         return self.value
     
     @property
+    def uri(self):
+        "Get Data URI of the icon as `data:image/svg+xml;utf8,<svg>...</svg>`."
+        return f"data:image/svg+xml;utf8,{_inline_svg(self.value)}"
+    
+    @property
     def css(self):
         "Get the CSS code of the icon as dictionary of {'content': url(svg)}."
-        return {'content': f"url('data:image/svg+xml;utf8,{_inline_svg(self.value)}')"}   
-    
-    @classmethod
-    def get_css_class(cls, name):
-        """Get CSS class to add for this an icon name. You need font awsome CSS in exported HTML 
-        if you are using ipywidgets Button icons besides defined in this module. check `.available` class attribute for info on names."""
-        klass = ' '.join(f"fa-{n}" for n in name.split()) # can be many icons
-        return f"fa {klass}" if klass else ""
+        return {'content': f"url('{self.uri}')"}

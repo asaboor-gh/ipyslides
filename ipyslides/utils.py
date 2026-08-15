@@ -292,7 +292,7 @@ _internal_xmd_call('code')(code) # Register code class for xmd usage
 
 @_internal_xmd_call('details')
 def details(obj,summary='Click to show content', name=None, opened=False, **css_props):
-    "Show/Hide Content in collapsed html. Multiple details with same name in a container open exclusively."
+    "Show/Hide Content in collapsed html. Multiple details with same name in a container open exclusively to make an accordion."
     css_props = {'max-height':'100%','overflow':'auto', **css_props}
     nodeattr = f'name="{name}"' if name else ''
     isopen = 'open' if opened else ''

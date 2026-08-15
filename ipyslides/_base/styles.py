@@ -10,10 +10,6 @@ _exclude = ":not([class*='anim-']):not(.anim-group *)" # exclude user defined an
 _is_flowsel = ':is(' + ','.join(_flow_sels) + ')'
 _nth_flowsel = ','.join(f".SlideBox > .SlideArea {sel}{_exclude}" for sel in _flow_sels)
 
-def _sm_content(icon, color):
-    # extra right side space, padding/mrgin does not work for marker, color need to be explicit, not var
-    return Icon(icon, color=color).css['content'] + ' " "' 
-
 def anim_dur(n):
     """Return animation duration CSS dictionary based on exponential approach to 1500ms."""
     if n < 1: raise ValueError("n must be at least 1")
@@ -1020,13 +1016,23 @@ def style_css(colors, fonts, layout, _root = False):
             'padding': '4px',
             'position': 'relative', # keeps content inside
             '> summary': {
+                'display': 'flex',
+                'flex-direction': 'row',
+                'align-items': 'center',
+                'justify-content': 'flex-start',
+                'position': 'relative',
                 'color': 'var(--fg3-color) !important',
+                'list-style': 'none', # hider default marker
                 'cursor': 'pointer',
-                '^::marker': {
-                    'content': _sm_content('chevrond', colors['accent']),
+                '^::-webkit-details-marker': {'display': 'none !important'}, # hide default marker in webkit
+                '^::before': {
+                    'content': f'url({Icon("chevrond", colors["accent"]).uri!r})',
                     'color': 'var(--accent-color) !important',
-                    },
+                    'transition': 'transform 0.4s ease',
+                    'line-height': '0 !important', # this somehow makes it aligned with text
+                    'margin-right': '1ch !important', # avoid text touching marker
                 },
+            },
             '^::details-content': {
                 'border-left': '1px dashed #8988', # neutral border color
                 'padding-left': '0.2em', # extra padding with border
@@ -1034,9 +1040,8 @@ def style_css(colors, fonts, layout, _root = False):
             '^[open]': {
                 'max-height': '400px !important',
                 'overflow': 'auto',
-                '> summary::marker': {
-                    'content': _sm_content('chevronu', colors['accent']),
-                    'color': 'var(--accent-color) !important',
+                '> summary::before': {
+                    'transform': 'rotate(180deg)',
                 },
                 '> summary::after': {
                     'display':'block',
