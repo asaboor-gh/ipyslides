@@ -13,7 +13,7 @@ from .settings import Settings
 from .notes import Notes
 from .export_html import _HhtmlExporter
 from ..formatters import XTML, htmlize, slidebound
-from ..xmd import error, resolve_included_files, _parse_as_snapshots, _stream_chunks
+from ..xmd import error, resolve_included_files, _parse_as_steps, _stream_chunks
 from ..utils import _css_info
 from ..dashlab import FileWatcher
 
@@ -63,7 +63,7 @@ class BaseSlides:
     @property
     def css_animations(self):
         "CSS animations for use in content blocks."
-        return _parse_as_snapshots(_syntax.css_animations)
+        return _parse_as_steps(_syntax.css_animations)
    
     def get_source(self, title = 'Source Code', **kwargs):
         "Return source code of all slides except created as frames with python code. kwargs are passed to `Slides.code`."

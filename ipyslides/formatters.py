@@ -475,7 +475,8 @@ class Serializer:
         if isinstance(box_widget, (ipw.Stack, ipw.Accordion, ipw.Tab)):        
             kwargs['grid_template_columns'] = f'repeat({len(box_widget.children)}, 16px) auto' # This makes the radios on top
             css_class += ' ips-stack-group' # Add stack class for styling
-            cs_html = [f'<input type="radio" name="radio-group-{id(box_widget)}" class="stack-radio">\n{c}' for c in cs_html] 
+            attrs = f'type="radio" name="radio-group-{id(box_widget)}" class="stack-radio"'
+            cs_html = [f'<input {attrs} {"checked" if i == 0 else ""}>\n{c}' for i, c in enumerate(cs_html)]
             
         content = '\n'.join(cs_html)
         return f'<div class="{css_class}" {_inline_style(kwargs)}>{content}</div>'
@@ -505,8 +506,13 @@ class Serializer:
         from .xmd import raw # avoid circular import
         
         css_class = ' '.join(output_widget._dom_classes) # To keep style of Output widget, latest as well
+        outputs = output_widget.outputs
+        if getattr(output_widget, '_exprng', None) is not None: # This is from steps
+            start, end = output_widget._exprng
+            outputs = outputs[start:end + 1] # selective range of outputs
+
         content = ''
-        for d in output_widget.outputs:
+        for d in outputs:
             if 'text' in d: # streams takes prefersnces
                 content += raw(d['text']).value
             else:

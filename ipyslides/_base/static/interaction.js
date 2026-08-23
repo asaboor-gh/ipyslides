@@ -190,91 +190,15 @@ function tldrawLinks(node, model) {
     })
 }
 
-function isGroupHeaderRow(rowEl) {
-    return !!(rowEl && rowEl.querySelector('.group-header-content'));
-}
-
 function handleColsRows(outputs, frame) {
-    // Fallback persistence: completed snapshots columns before current part keep only last row.
-    if (frame.part !== undefined) {
-        for (let j = 0; j < frame.part; j++) {
-            if (!outputs[j]) continue;
-            const writer = outputs[j].querySelector(':scope .columns.writer:first-of-type');
-            if (!writer) continue;
-            const cols = writer.querySelectorAll(':scope > div');
-            for (const colDiv of cols) {
-                if (!colDiv.classList.contains('snapshots-rows')) continue;
-                const rowsRoot = colDiv.querySelector(':scope .jp-OutputArea');
-                if (!rowsRoot) continue;
-                const rows = rowsRoot.children;
-
-                let lastVisible = -1;
-                for (let r = rows.length - 1; r >= 0; r--) {
-                    if (!isGroupHeaderRow(rows[r])) {
-                        lastVisible = r;
-                        break;
-                    }
-                }
-
-                for (let r = 0; r < rows.length; r++) {
-                    rows[r].classList.remove('print-collapsed');
-                    if (isGroupHeaderRow(rows[r])) continue;
-                    if (lastVisible >= 0 && r < lastVisible) {
-                        rows[r].classList.add('print-collapsed');
-                    }
-                }
-            }
-        }
-    }
-
-    // Persistent snapshots: collapse non-last rows in columns we already exited.
-    if (frame._snapshots_persist) {
-        const persist = frame._snapshots_persist;
-        const colsOutput = outputs[persist.idx];
-        if (colsOutput) {
-            const writer = colsOutput.querySelector(':scope .columns.writer:first-of-type');
-            if (writer) {
-                const cols = writer.querySelectorAll(':scope > div');
-                for (const [c, lastRow] of Object.entries(persist._snapshots_last_rows)) {
-                    const colDiv = cols[Number(c)];
-                    if (!colDiv) continue;
-                    if (!colDiv.classList.contains('snapshots-rows')) continue;
-                    const rowsRoot = colDiv.querySelector(':scope .jp-OutputArea');
-                    if (!rowsRoot) continue;
-                    const rows = rowsRoot.children;
-                    for (let r = 0; r < rows.length; r++) {
-                        rows[r].classList.remove('print-collapsed');
-                        if (isGroupHeaderRow(rows[r])) continue;
-                        if (r <= lastRow) {
-                            rows[r].classList.add('print-collapsed');
-                        }
-                    }
-                }
-            }
-        }
-    }
     if (frame.col !== undefined && outputs[frame.part]) {
         const writer = outputs[frame.part].querySelector(':scope .columns.writer:first-of-type');
         if (!writer) return;
-        const snapshotsLastRows = frame._snapshots_last_rows || {};
         let cols = writer.querySelectorAll(':scope > div');
         for (let k = 0; k < cols.length; k++) {
-            const isSnapshotsRows = cols[k].classList.contains('snapshots-rows');
             cols[k].classList.remove('print-invisible'); // reset first
             if (k > frame.col) {
                 cols[k].classList.add('print-invisible');
-            } else if (k < frame.col && isSnapshotsRows && snapshotsLastRows[k] !== undefined) {
-                // snapshots: previous columns show only last row
-                const rowsRoot = cols[k].querySelector(':scope .jp-OutputArea');
-                if (!rowsRoot) { continue; }
-                let rows = rowsRoot.children;
-                for (let r = 0; r < rows.length; r++) {
-                    rows[r].classList.remove('print-collapsed');
-                    if (isGroupHeaderRow(rows[r])) continue;
-                    if (r <= snapshotsLastRows[k]) {
-                        rows[r].classList.add('print-collapsed');
-                    }
-                }
             } else if (k === frame.col) {
                 if (frame.row !== undefined) {
                     // Handle incremental rows
@@ -283,29 +207,9 @@ function handleColsRows(outputs, frame) {
                     let rows = rowsRoot.children;
                     for (let r = 0; r < rows.length; r++) {
                         rows[r].classList.remove('print-invisible');
-                        rows[r].classList.remove('print-collapsed');
-                        if (isGroupHeaderRow(rows[r])) continue;
                         if (r > frame.row) {
                             rows[r].classList.add('print-invisible');
-                        } else if (isSnapshotsRows && snapshotsLastRows[k] !== undefined) {
-                            // snapshots: collapse rows before current
-                            const prevRow = frame.prev_row;
-                            if (prevRow !== undefined && r <= prevRow) {
-                                rows[r].classList.add('print-collapsed');
-                            }
-                        }
-                    }
-                } else if (isSnapshotsRows && snapshotsLastRows[k] !== undefined) {
-                    // snapshots: current column fully visible, show only last row
-                    const rowsRoot = cols[k].querySelector(':scope .jp-OutputArea');
-                    if (!rowsRoot) { continue; }
-                    let rows = rowsRoot.children;
-                    for (let r = 0; r < rows.length; r++) {
-                        rows[r].classList.remove('print-collapsed');
-                        if (isGroupHeaderRow(rows[r])) continue;
-                        if (r <= snapshotsLastRows[k]) {
-                            rows[r].classList.add('print-collapsed');
-                        }
+                        } 
                     }
                 }
             }
@@ -318,7 +222,6 @@ function printSlides(box, model) {
 
     // Defensive cleanup: VSCode/IDE print flows may skip afterprint and leave stale clones/classes.
     box.querySelectorAll(':scope .print-invisible').forEach(el => el.classList.remove('print-invisible'));
-    box.querySelectorAll(':scope .print-collapsed').forEach(el => el.classList.remove('print-collapsed'));
     box.querySelectorAll(':scope .SlideArea.print-clone').forEach(el => el.remove());
     box.querySelectorAll(':scope > .print-cleanup-btn').forEach(btn => btn.remove());
 
@@ -362,7 +265,6 @@ function printSlides(box, model) {
 
                 // Ensure each frame starts from a clean print state.
                 clone.querySelectorAll(':scope .print-invisible').forEach(el => el.classList.remove('print-invisible'));
-                clone.querySelectorAll(':scope .print-collapsed').forEach(el => el.classList.remove('print-collapsed'));
 
                 clone.style.transform = 'translateZ(0) scale(1)';
                 applyPrintProgressWidth(clone, numFrames, i);
@@ -373,15 +275,7 @@ function printSlides(box, model) {
                     let outputs = Array.from(outRoot.children);
 
                     for (let j = outputs.length - 1; j >= 0; j--) {
-                        let inContent = (j >= frame.start && j <= frame.end);
-                        outputs[j].classList.remove('print-collapsed');
                         outputs[j].classList.remove('print-invisible');
-
-                        if (!inContent) {
-                            if (outputs[j]) {
-                                i > 0 ? outputs[j].remove() : outputs[j].classList.add('print-collapsed');
-                            }
-                        }
                     }
 
                     if (frame.part !== undefined) {
@@ -406,7 +300,6 @@ function printSlides(box, model) {
     // Clean up AFTER print dialog closes or user may click if print fails in soome IDEs like vscode
     function cleanupAfterPrint() {
         box.querySelectorAll(':scope .print-invisible').forEach(el => el.classList.remove('print-invisible'));
-        box.querySelectorAll(':scope .print-collapsed').forEach(el => el.classList.remove('print-collapsed'));
         for (let obj of window._printOnlyObjs || []) {
             obj.remove(); // Remove cloned slides
         }

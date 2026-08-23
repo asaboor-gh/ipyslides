@@ -46,7 +46,7 @@ with slides.slide(-1):
     slides.pause()
     print("-1 will pick latest slide number!")
     slides.pause()
-    print("I will be last item shown on current page!")
+    print("I will be last item shown on current slide!")
 ```
 
 ```python
@@ -128,7 +128,7 @@ Use `Save as PDF` option instead of Print PDF in browser to make links work in o
 **Printing from Exported HTML File**<br>
 You can also get PDF from exported HTML file. Use `Save as PDF` and enable background graphics when printing to keep links working.
 
-For widgets and other objects's snapshots to be available in exported
+For widgets and other objects to appear reliably in exported
 slides, use [alert! slides.alt /]. You can paste screenshots from system tool
 into Clips GUI in side panel. On Linux, you need [alert! xclip /] or [alert! wl-paste /] installed.
 

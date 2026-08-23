@@ -232,7 +232,7 @@ class Slide:
             delim = metadata.get("DELIM", None) if metadata and isinstance(metadata, dict) else None
             delim_list.append(delim if delim in ("PAUSE",) else None) # only PAUSE delimiter are considered
 
-        # Remove trailing delimiters
+        # Remove trailing delimiters, keep leading if user wants to show a blank slide at start
         while delim_list and delim_list[-1] is not None:
             delim_list.pop()
         filtered = filtered[:len(delim_list)]  # sync filtered outputs
@@ -243,7 +243,6 @@ class Slide:
             if delim is None:
                 indices.append(i)
             elif delim == "PAUSE":
-                # last PAUSE in adjacent delimiters should be kept, as that may include ISOLATE before COLUMNS
                 next_delim = delim_list[i+1] if i+1 < len(delim_list) else None
                 if next_delim != "PAUSE": 
                     indices.append(i)
@@ -338,119 +337,51 @@ class Slide:
     def _reset_frames(self, offset=0):
         self._widget.remove_class('HasFrames') # reset first
         frames, contents = [], self.contents  # get once
-        page = {"start": 0, "end": len(contents) - 1} # One legacy page, will be deprecated slowly
         
-        if parts := self._resolve_parts(page, contents, range(0, page["end"] + 1)):
-            frames.extend(parts)
-        
-        # Add offeset to all indices to keep metadata available across all frames
-        updated_persist = set()
-        for i, frame in enumerate(frames):
-            for key in ("start", "part", "end"):
-                if key in frame and isinstance(frame[key], int):
-                    frames[i][key] += offset
-            persist = frame.get("_snapshots_persist")
-            if isinstance(persist, dict) and id(persist) not in updated_persist:
-                if isinstance(persist.get("idx"), int):
-                    persist["idx"] += offset
-                updated_persist.add(id(persist))
+        if parts := self._resolve_parts(contents, offset=offset):
+            base = {"start": offset, "end": len(contents) - 1 + offset}
+            frames.extend([{**base, **part} for part in parts])
         
         self._frame_idxs = tuple(frames) if len(frames) > 1 else ()
         if self._frame_idxs:
             self._widget.add_class('HasFrames') # make sure class is added
-            self._reveal_frames() # shows a quick snaphots how frames (were built) will show up 
+            self._reveal_frames() # quick preview of how built frames will appear
         elif hasattr(self, '_frame_idxs'): # from previous run may be
             del self._frame_idxs
         return frames
     
-    def _resolve_parts(self, page, contents, indxs):
+    def _resolve_parts(self, contents, offset=0):
         ensure_dict = lambda meta: meta if isinstance(meta, dict) else {} # insure dict type
+        get_frags = lambda meta: ensure_dict(meta).get("FRAGS", ())
         frames = []
-        _snapshots_persist = None  # Track snapshots persistence after exiting columns
-        last_index = None
-        
-        for index in indxs:
-            last_index = index
-            meta = ensure_dict(contents[index].metadata)
-            if isinstance(meta, dict) and meta.get("DELIM", "") == "PAUSE":
-                if index == indxs.stop - 1: 
-                    continue  # skip if PAUSE is last in range
-                
-                meta_prev = ensure_dict(contents[index - 1].metadata) if index - 1 > 0 else {} # can go to first index
-                meta_next = ensure_dict(contents[index + 1].metadata) if index + 1 in indxs else {}
-                
-                # Single column flattened after PAUSE with its ROW delimiters
-                if ("FLATCOL" in meta_next):
-                    for i in range(index, index + meta_next["FLATCOL"]):
-                        meta_row = ensure_dict(contents[i].metadata) if i in indxs else {}
-                        if meta_row.get("DELIM", "") == "ROW":
-                            meta_row["DELIM"] = "PAUSE"  # change ROW to PAUSE for frame handling
-                   
-                # --- PAUSE before COLUMNS ---
-                if "COLUMNS" in meta_next:
-                    # PAUSE before COLUMNS should not create a trigger-only frame.
-                    # This keeps previous content visible and shows the first column part together.
-                    if meta.get("ISOLATE", False) and index > indxs.start:
-                        new_frame = {**page, "part": index}
-                        if _snapshots_persist:
-                            new_frame["_snapshots_persist"] = _snapshots_persist
-                        frames.append(new_frame)
-                    # Pre-compute row isolation columns from writer metadata
-                    snapshots_last_rows = {}
-                    snapshots_cols = getattr(contents[index + 1], '_snapshots_cols', {})
-                    if isinstance(snapshots_cols, dict):
-                        snapshots_last_rows = {int(k): v for k, v in snapshots_cols.items() if isinstance(v, int)}
-                    # Add frames for each column part, tracking previous row per column
-                    prev_row_per_col = {}
-                    for part in contents[index + 1]._parts:
-                        new_frame = {**page, "part": index + 1, **part}
-                        col = part.get("col")
-                        if "row" in part:
-                            if col in prev_row_per_col:
-                                new_frame["prev_row"] = prev_row_per_col[col]
-                            prev_row_per_col[col] = part["row"]
-                        if snapshots_last_rows:
-                            new_frame["_snapshots_last_rows"] = snapshots_last_rows
-                        if _snapshots_persist:
-                            new_frame["_snapshots_persist"] = _snapshots_persist
-                        frames.append(new_frame)
-                    # Persist snapshots columns collapse after exiting this writer.
-                    if snapshots_last_rows:
-                        _snapshots_persist = {"idx": index + 1, "_snapshots_last_rows": snapshots_last_rows}
 
-                # --- PAUSE after COLUMNS ---
-                elif "COLUMNS" in meta_prev:
-                    # If last frame was built by previous columns, skip this PAUSE
-                    if index == indxs.start or (frames and "col" in frames[-1]):
-                        continue  # skip adding extra frame after columns parts
-                    new_frame = {**page, "part": index}
-                    if _snapshots_persist:
-                        new_frame["_snapshots_persist"] = _snapshots_persist
-                    frames.append(new_frame)
+        for index, obj in enumerate(contents, start=offset):
+            meta = ensure_dict(obj.metadata)
 
-                # --- Regular PAUSE ---
-                elif index > indxs.start:
-                    new_frame = {**page, "part": index}
-                    if _snapshots_persist:
-                        new_frame["_snapshots_persist"] = _snapshots_persist
-                    frames.append(new_frame)
+            # Build column fragment frames directly from COLUMNS outputs.
+            if "COLUMNS" in meta and get_frags(meta):
+                for part in get_frags(meta):
+                    frames.append({"part": index, **part})
 
-        # Ensure at least one frame at the end when last item is real content.
-        # If the range ends with a trailing delimiter (e.g. from pause.iter default trail),
-        # appending a frame here creates a no-op extra click.
-        last_meta = ensure_dict(contents[last_index].metadata) if isinstance(last_index, int) else {}
-        if frames and isinstance(last_index, int) and frames[-1].get("part", last_index) != last_index and not last_meta.get("DELIM", ""):
-            new_frame = {**page, "part": last_index}
-            if _snapshots_persist:
-                new_frame["_snapshots_persist"] = _snapshots_persist
-            frames.append(new_frame)
-        return frames 
+            # Next PAUSE after columns is ignored if fragments were already built from the COLUMNS output.
+            if meta.get("DELIM", "") == "PAUSE":
+                meta_prev = ensure_dict(contents[index - 1].metadata) if index - 1 >= 0 else {}
+                if "COLUMNS" in meta_prev and get_frags(meta_prev):
+                    continue
+
+                frames.append({"part": index})
+
+        # Ensure frame at the end when last item is not a delimiter or fragmented columns
+        last_index = len(contents) - 1 + offset
+        if frames and frames[-1].get("part", 0) != last_index:
+            frames.append({"part": last_index})
+        return frames
     
     @property
     def _fidxs(self):
         idxs = getattr(self, '_frame_idxs', ())
         if self._app.widgets.checks.merge.value:
-            # Merge PAUSE frames into a single export frame: NOTE: This may need to respect snapshots later
+            # Merge PAUSE frames into a single export frame.
             merged_frames = []
             for frame in idxs:
                 frame = {k:v for k,v in frame.items() if k in ('start','end')} # remove part, col, row info
@@ -509,7 +440,7 @@ class Slide:
         # Collapse nodes after end
         start = frame["start"] + 1
         end = frame["end"] + 1
-        css_rules[f'^:nth-child(n + {end + 1})'] = collapse_node(True)
+        css_rules[f'^:nth-child(n + {end + 1})'] = collapse_node()
 
         # Handle PAUSE incremental frames
         if "part" in frame:
@@ -530,37 +461,6 @@ class Slide:
                     # Hide rows after current one in the current column
                     rows_hide = frame["row"] + 2 # +2 to start hiding after this row
                     css_rules[f'{col_sel}:nth-child({col_idx + 1}) > .jp-OutputArea > .jp-OutputArea-child:nth-child(n + {rows_hide})'] = hide_node(True)
-
-                    # snapshots: collapse non-current rows so only the active row is visible
-                    if col_idx in frame.get("_snapshots_last_rows", {}):
-                        focus_sel = f'^:nth-child({part_end}) > .jp-OutputArea-output > .columns.writer:first-of-type > div.snapshots-rows'
-                        row_sel = f'{focus_sel}:nth-child({col_idx + 1}) > .jp-OutputArea > .jp-OutputArea-child'
-                        if "prev_row" in frame:
-                            css_rules[f'{row_sel}:nth-child(-n + {frame["prev_row"] + 1}):not(:has(.group-header-content))'] = collapse_node(True)
-                        css_rules[f'{row_sel}:nth-child(n + {frame["row"] + 1}):not(:has(.group-header-content))'] = collapse_node(True)
-
-                # snapshots: collapse non-last rows in previous columns and current col when fully visible
-                snapshots_last_rows = frame.get("_snapshots_last_rows", {})
-                if snapshots_last_rows:
-                    focus_sel = f'^:nth-child({part_end}) > .jp-OutputArea-output > .columns.writer:first-of-type > div.snapshots-rows'
-                    # Previous columns: show only last row, collapse the rest
-                    for c in range(col_idx):
-                        if c in snapshots_last_rows:
-                            prev_row_sel = f'{focus_sel}:nth-child({c + 1}) > .jp-OutputArea > .jp-OutputArea-child'
-                            css_rules[f'{prev_row_sel}:nth-child(-n + {snapshots_last_rows[c] + 1}):not(:has(.group-header-content))'] = collapse_node(True)
-                    # Current column fully visible (no row): show only last row
-                    if "row" not in frame and col_idx in snapshots_last_rows:
-                        curr_row_sel = f'{focus_sel}:nth-child({col_idx + 1}) > .jp-OutputArea > .jp-OutputArea-child'
-                        css_rules[f'{curr_row_sel}:nth-child(-n + {snapshots_last_rows[col_idx] + 1}):not(:has(.group-header-content))'] = collapse_node(True)
-
-        # Persistent snapshots: collapse non-last rows in columns we already exited
-        if "_snapshots_persist" in frame:
-            persist = frame["_snapshots_persist"]
-            cols_idx = persist["idx"] + 1  # 1-indexed for CSS
-            focus_sel = f'^:nth-child({cols_idx}) > .jp-OutputArea-output > .columns.writer:first-of-type > div.snapshots-rows'
-            for c, last_row in persist["_snapshots_last_rows"].items():
-                row_sel = f'{focus_sel}:nth-child({c + 1}) > .jp-OutputArea > .jp-OutputArea-child'
-                css_rules[f'{row_sel}:nth-child(-n + {last_row + 1}):not(:has(.group-header-content))'] = collapse_node(True)
 
         # Build final CSS with proper selector
         base_selector = f'^.n{self.number}.HasFrames > .jp-OutputArea > .jp-OutputArea-child'
@@ -614,7 +514,7 @@ class Slide:
         return self._reset_indexf(self.nf, self.prev_frame) # go right and swicth back
     
     def _reveal_frames(self):
-        "Reveal frames on current page incrementally if any, during update_display to have a quick snaphot how frames are built."
+        "Reveal frames on current slide incrementally if any, during update_display to have a quick snaphot how frames are built."
         self.first_frame() # go to first frame by default
         step_count = len(self._fidxs[1:]) # Get to all parts on edit incrementally
         
@@ -761,8 +661,8 @@ class Slide:
     def contents(self):
         outputs = []
         for out in self._contents:
-            if "_MODEL_ID" in out.metadata: # need this for export
-                outputs.append(widget_from_data(out.metadata["_MODEL_ID"]))
+            if "COLUMNS" in out.metadata: # need this for export
+                outputs.append(widget_from_data(out.metadata["COLUMNS"]))
             elif 'DataTOC' in out.metadata:
                 outputs.append(self._reset_toc())
             else:

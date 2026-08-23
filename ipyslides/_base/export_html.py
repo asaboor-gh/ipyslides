@@ -67,23 +67,11 @@ class _HhtmlExporter:
                     if not "part" in frame: # full content in range
                         frame_objs.extend(objs[start:end + 1])
                     else: # partial content in range
-                        snapshots_persist = frame.get("_snapshots_persist")
-                        snapshots_persist_idx = None
-                        if isinstance(snapshots_persist, dict) and isinstance(snapshots_persist.get("idx"), int):
-                            snapshots_persist_idx = snapshots_persist["idx"] - item._offset
                         for i in range(start, end + 1):
                             if i < part:
-                                # Check if this writer has persisted snapshots metadata.
-                                if snapshots_persist and i == snapshots_persist_idx and hasattr(objs[i], "fmt_html"):
-                                    frame_objs.append(objs[i].fmt_html(snapshots_persist))
-                                # Fallback: any completed snapshots writer before current part keeps only last rows
-                                elif hasattr(objs[i], "fmt_html") and getattr(objs[i], "_snapshots_cols", None):
-                                    clr = dict(getattr(objs[i], "_snapshots_cols", {}) or {})
-                                    frame_objs.append(objs[i].fmt_html({"_snapshots_last_rows": clr}))
-                                else:
-                                    frame_objs.append(objs[i])
+                                frame_objs.append(objs[i])
                             elif i > part:
-                                frame_objs.append(f"<div style='visibility:hidden;'>{_fmt_html(objs[i])}</div>")
+                                frame_objs.append(f"<div style='visibility:hidden;'>{_fmt_html(objs[i])}</div>") # hold space
                             else: # i == part, can be Writer
                                 if "col" in frame and hasattr(objs[i], "fmt_html"): # Writer with columns
                                     frame_objs.append(objs[i].fmt_html(frame))

@@ -236,6 +236,15 @@
         clip-path: none !important;
         pointer-events: auto !important;
     }
+    /* General user animations/transitions should be immediately settled to last in print mode */
+    *, *::before, *::after {
+        transition-duration: 0s !important;
+        transition-delay: 0s !important;
+        animation-duration: 0s !important; 
+        animation-delay: 0s !important;
+        animation-iteration-count: 1 !important;
+        animation-fill-mode: forwards !important;
+    }
 }
 
 /* ==========================================================================

@@ -94,7 +94,7 @@ isd.demo()  # See and interact with demo presentation
 
 Support for various content types including:
 
-- 📜 Extended Markdown, see `slides.xmd_syntax`
+- 📜 Extended Markdown, see `slides.xmd.syntax`
 - 📊 Plots (Matplotlib, Plotly, Altair)
 - 🔧 Interactive Widgets
 - 📷 Images and Media

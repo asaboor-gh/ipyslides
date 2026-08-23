@@ -472,8 +472,8 @@ class XMarkdown(Markdown):
         "Split content at '++', optionally yielding Delimiter objects."
         def _part_delim():
             delim = _delim("PAUSE")
-            if opt == 'isolate' and isinstance(getattr(delim, 'metadata', None), dict):
-                delim.metadata['ISOLATE'] = True
+            if opt == 'isolate':
+                warn("The '[isolate]' option after ++ is deprecated. Use 'columns.paused' directive instead.", name="DeprecationWarning").display()
             return delim
         
         start = 0
@@ -531,9 +531,9 @@ class XMarkdown(Markdown):
         node_attrs = ' '.join(f'{k}="{v}"' if v is not None else k for k, v in node_attrs.items())
         
         if args:
-            typ, prop = [v.strip() for v in args[0].split('.',1)] if '.' in args[0] else (args[0], '')
+            typ, mode = [v.strip() for v in args[0].split('.',1)] if '.' in args[0] else (args[0], '')
             if typ == "multicol": typ = "columns" # backward-compatible alias
-            return typ, prop, sizes, ' '.join(args[1:]), kwargs, node_attrs # block type, sizes, className, css_props, node_attrs
+            return typ, mode, sizes, ' '.join(args[1:]), kwargs, node_attrs # block type, mode, sizes, className, css_props, node_attrs
         return '', '', sizes, '', kwargs, node_attrs
     
     def _parse_args(self, param_str, content=None):
@@ -637,7 +637,7 @@ class XMarkdown(Markdown):
     def _parse_block(self, header, data):
         "Returns list of parsed block or columns or code, input is without ``` but includes langauge name."
         data = resolve_included_files(textwrap.dedent(data)) # clean up data  before processing 
-        typ, prop, widths, _class, css_props, attrs = self._parse_params(header)
+        typ, mode, widths, _class, css_props, attrs = self._parse_params(header)
         
         if typ == "citations": # avoid using citations block
             return [error("ValueError", f"Use '--- citations ---' syntax at the end of the synced markdown file instead of a citations block.")]
@@ -646,15 +646,15 @@ class XMarkdown(Markdown):
                 self._wr.write(data, css_class=_class, **css_props)
             return cap.outputs
         elif typ == "group":
-            return self._parse_group(data, _class, css_props)
-        elif typ == "columns" and not prop: # handle columns with display mode
-            return self._parse_columns(data, widths, _class, css_props) # simple columns will be handled inline 
+            return [error("RuntimeError", "'group' markdown block is deprecated. Use 'columns.paused' or 'steps' instead.")]
+        elif typ == "columns" and mode in ("", "paused"): # handle columns with display mode
+            return self._parse_columns(data, widths, _class, css_props, mode=mode) # simple columns will be handled inline 
         elif "md-" in typ:
             return self._parse_md_src(data, header)
         elif typ == "table":
             return self._parse_table(data, widths, _class, css_props, attrs)
         elif typ == "code":
-            return self._parse_code(data, prop, widths, _class, css_props, attrs)
+            return self._parse_code(data, mode, widths, _class, css_props, attrs)
         elif header.strip().startswith(":::") or typ == "columns": # simple columns.inline
             return self._parse_colon_block(header, data)
         else:
@@ -668,10 +668,9 @@ class XMarkdown(Markdown):
             
             return [out,] # list is required
     
-    def _restrict_incremental(self, directive, data):
-        if _PLUS_RE.search(data):
-            data = "\n".join([error("ValueError", f"'{directive}' directive does not support incremental ++ separator.").value, data])
-        return data
+    def _ignore_incremental(self, data):
+        # Just ignore, don't ask user change their content if they can switch mode to paused or inline
+        return _PLUS_RE.sub('', data) # remove ++ lines, but keep content
     
     def _handle_inline_cols(self, data):
         "Check if columns are on a single line and split them by | separator to make them multi-line for proper parsing."
@@ -683,15 +682,15 @@ class XMarkdown(Markdown):
         STRICT_TAGS = ("pre","raw") # code is handled separately
         CAPTURED_TAGS = ("p","details","summary","center","blockquote","ul","ol", "li", "nav", *STRICT_TAGS) # tags that are captured by this parser
         
-        tag, prop, widths, _class, css_props, attrs = self._parse_params(header)
+        tag, mode, widths, _class, css_props, attrs = self._parse_params(header)
         
         if tag == "columns":
-            if prop != "inline": # columns with display mode were already handled
-                return [error("ValueError", f"Invalid block type '{tag}' with property '{prop}'. Use 'columns' for display columns and 'columns.inline' for inline columns.")]
+            if mode != "inline": # columns with display mode were already handled
+                return [error("ValueError", f"Invalid block type '{tag}' with mode '{mode}'. Supported modes are 'inline' and 'paused' only!")]
             
             css_props = {"display":"flex", **css_props} # add display flex for in notebook formatting
             data = self._handle_inline_cols(data) # handle single line columns with | separator, do before adding warnings
-            data = self._restrict_incremental('columns.inline', self._fix_legacy_col_sep(data)) # handle legacy mode and restrict incremental ++ separator
+            data = self._ignore_incremental(self._fix_legacy_col_sep(data)) # handle legacy mode and ++ separator
             
             if re.search(r'^\-\-\s*$', data, flags=re.MULTILINE): # make columns by optional -- separator
                 _cs = '\n</div>\n<div markdown="1">\n'.join(_stream_chunks(data, sep='--'))
@@ -722,7 +721,7 @@ class XMarkdown(Markdown):
         _class = " ".join([tag, _class])
         return [XTML(f"<div class='{_class}' {_inline_style(css_props)} {attrs}>{self._parse_nested(data, returns=True)}</div>{style}")]
     
-    def _parse_code(self, data, prop, focus_lines, _class, props, attrs):
+    def _parse_code(self, data, mode, focus_lines, _class, props, attrs):
         params = inspect.signature(_highlight).parameters.keys()
         kwargs = {k: eval(v) if v in "TrueFalseNone" else v for k, v in props.items() if k in params} # only pass known params
         data = char_esc.restore(cmnt_esc.restore(data)) # restore escape/comments before highlighting
@@ -738,71 +737,11 @@ class XMarkdown(Markdown):
             out = out.focus(lines) 
         out.raw = textwrap.dedent(data) # attach raw code as well to access
         
-        if prop and getattr(out, prop, None):
-            out = getattr(out, prop) # get property if available
+        if mode and getattr(out, mode, None):
+            out = getattr(out, mode) # get property if available
             
         return [out]
     
-    def _parse_group(self, data, _class, props, as_group=False):
-        params = inspect.signature(self._wr.group).parameters.keys()
-        kwargs = {k: eval(v) if v in "TrueFalseNone" else v for k, v in props.items() if k in params} # only pass known params
-        css_props = {k: v for k, v in props.items() if k not in params} # left over css properties
-        grp = self._wr.group(
-            list(_stream_chunks(data, sep='++')),
-            css_class=_class, **kwargs, **css_props
-        )
-
-        if as_group:
-            return grp
-        
-        with capture_content() as cap:
-            self._wr.write(grp)
-        return cap.outputs
-
-    def _column_group_object(self, col_text):
-        """Return a group object for column-level group handling, else None.
-
-        - If the entire column is a single group block (::: group or ```group),
-          return the parsed group object.
-        - If a group block marker appears but does not occupy the whole column,
-          return a group whose first item is a ValueError output.
-        """
-        text = textwrap.dedent(col_text).rstrip()
-        if not text:
-            return None
-
-        def _make_group(header, data):
-            typ, _, _, _class, props, _ = self._parse_params(header)
-            if typ == "group":
-                return self._parse_group(data, _class, props, as_group=True)
-
-        blocks = self._split_blocks_with_dedent(text)
-        if len(blocks) == 1 and blocks[0][0] == "block":
-            group_obj = _make_group(*blocks[0][1])
-            if group_obj is not None:
-                return group_obj
-
-        fenced = re.match(r'^\s*```([^\n]*)\n(.*?)\n```\s*$', text, flags=re.DOTALL)
-        if fenced:
-            group_obj = _make_group(*fenced.groups())
-            if group_obj is not None:
-                return group_obj
-
-        has_group_marker = bool(
-            re.search(r'^\s*:::\s*group(?:\s|$)', text, flags=re.MULTILINE)
-            or re.search(r'^\s*```+\s*group(?:\s|$)', text, flags=re.MULTILINE)
-        )
-        if has_group_marker:
-            return self._wr.group([
-                error('ValueError',
-                    'A group block inside ::: columns must occupy the whole column with no extra text. '
-                    'Use a full-column ::: group ... block (or ```group ...``` fenced block).'
-                )
-            ])
-
-        return None
-
-                
     def _parse_table(self, data, widths, _class, props, attrs):
         out = self._parse_nested(data, returns=True) # let table extension handle it
         props["caption-side"] = props.get("caption-side", "top") # default caption side
@@ -821,9 +760,9 @@ class XMarkdown(Markdown):
         return [XTML(out)] # return table as is, it will be parsed by table extension
         
     def _parse_md_src(self, data, header):
-        typ, prop, focus_lines, _class, kwargs, attrs = self._parse_params(header) 
+        typ, mode, focus_lines, _class, kwargs, attrs = self._parse_params(header) 
         kwargs["language"] = "markdown" # force markdown language anyhow
-        src, = self._parse_code(data, prop, focus_lines, _class, kwargs, attrs) # list of one item
+        src, = self._parse_code(data, mode, focus_lines, _class, kwargs, attrs) # list of one item
         if typ not in ("md-before", "md-after"):  # normal md block
             esc._store[typ[3:]] = src # store variable excluding md- prefix to have available in processing below
         outputs = []
@@ -843,7 +782,7 @@ class XMarkdown(Markdown):
             data = "\n".join([warn('Use -- instead of legacy +++ to separate columns.', 'SyntaxWarning').value, data]) # Prepend warning to the data once
         return data
     
-    def _parse_columns(self, data, widths, _class, css_props):
+    def _parse_columns(self, data, widths, _class, css_props, mode=None):
         data = self._handle_inline_cols(data)  # Handle single line columns with | separator before adding extra warnings
         data = self._fix_legacy_col_sep(data)  # Fix legacy +++ column separators
         cols = list(_stream_chunks(data, sep='--'))  # Split columns by -- separator
@@ -868,11 +807,6 @@ class XMarkdown(Markdown):
         # Under any display context
         cap_cols = []
         for col in cols:
-            group_obj = self._column_group_object(col)
-            if group_obj is not None:
-                cap_cols.append(group_obj)
-                continue
-
             rows = [] # list to make row-wise parts
             for row in self._split_parts(col):
                 with capture_content() as cap:
@@ -886,7 +820,8 @@ class XMarkdown(Markdown):
             cap_cols.append(rows)
             
         with self.active_parser(), capture_content() as cap:
-            self._wr.write(*cap_cols, widths=widths, css_class=_class, **css_props)
+            kwargs = {"css_class": _class, "paused": mode == "paused", **css_props}
+            self._wr.write(*cap_cols, widths=widths, **kwargs)
             
         return cap.outputs
     
@@ -1016,7 +951,7 @@ class XMarkdown(Markdown):
                 except Exception as e:
                     return self._handle_var(error('Exception', f'Could not resolve {match.group()!r}:\n{e}'))
 
-                if isinstance(value, DOMWidget) or 'nb' in fmt_spec: # Anything with :nb or widget
+                if isinstance(value, DOMWidget) or 'nb' in fmt_spec: # Anything with :nb or widget or from escaped display variable
                     return self._handle_var(value,ctx = match.group()) 
                 return self._handle_var(hfmtr.vformat(f"{{{match.group()[2:-1].strip()}}}", (), user_ns)) # clear spaces around variable
 
@@ -1080,7 +1015,7 @@ class XMarkdown(Markdown):
         else:
             nsep = len(DOTS_RE.findall(argvs))
             if nsep > 1:
-                return self._handle_var(error('ValueError', f"Too many '..' separators in '{match.group(0)}'. Only one is allowed. Escape .. with backslash if needed"))
+                return self._handle_var(error('ValueError', f"Too many '..' separators in \n'{match.group(0)}'.\nOnly one is allowed. Escape .. with backslash if needed"))
             elif nsep == 1:
                 content, argvs = DOTS_RE.split(argvs, maxsplit=1) # content .. params case
                 if ParamsFirst:
@@ -1226,7 +1161,7 @@ class _XMDMeta(type):
     def syntax(self) -> XTML:
         "Extended markdown syntax information."
         from ._base._syntax import xmd_syntax # circular import
-        return _parse_as_snapshots(xmd_syntax)
+        return _parse_as_steps(xmd_syntax())
     
     @property
     def escaped_chars(self) -> tuple[str]:
@@ -1378,23 +1313,21 @@ class xmd(metaclass=_XMDMeta):
             return XMarkdown._active_parser(content, returns=returns, tag=tag)
         return XMarkdown()._parse(content, returns=returns, tag=tag)
 
-def _parse_as_snapshots(markdown):
-    "Parse an implied group without header from markdown content using ++ separator."
+def _parse_as_steps(markdown):
+    "Parse markdown chunks split by ++ and show alternate chunks through a steps widget."
     if not isinstance(markdown, str):
         raise TypeError(f"markdown expects a string, got {markdown!r}")
     
     pages = list(_stream_chunks(markdown, sep='++'))
     with capture_content() as cap:
-        xmd(pages[0], returns=False) # render common header part
-        
-        from .writer import group, write  # circular import
-        snaps = group(snapshots=True)
-        for page in pages[1:]: # set pages for current slide
-            with snaps.capture():
-                xmd(page, returns=False)
-                
-        _delim("PAUSE").display() # trigger parts
-        write(snaps) # will show each page one by one
+            xmd(pages[0], returns=False) # render common header part
+
+            if len(pages) > 1:
+                from .utils import steps  # circular import
+                from .writer import write  # circular import
+            
+            stps = [XTML(xmd(page,True)) for page in pages[1:]] # parse each page and store as XTML
+            write(steps(stps, dots_loc='right'))
     return frozen(cap) # return captured content as frozen to be automatically displayed in last line of cell
 
 

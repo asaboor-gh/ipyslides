@@ -305,26 +305,38 @@ theme_colors = {
     }   
 }
 
-def collapse_node(b):
+def collapse_node():
     "Used to collapse div in frames navigation and print mode."
     css = {
-        'height': '0' if b else 'unset',
-        'min-height': '0' if b else 'unset', # unlike max height, it can't be none
-        'max-height': '0' if b else 'none',
-        'overflow': 'hidden' if b else 'unset',
-        'border': 'none' if b else 'unset', # just to be safe, althout output areas don't have border and others below
-        'outline': 'none' if b else 'unset',
-        'padding': '0' if b else 'unset',
-        'margin': '0' if b else 'unset',
+        'height': '0',
+        'min-height': '0', # unlike max height, it can't be none
+        'max-height': '0',
+        'overflow': 'hidden',
+        'border': 'none', # just to be safe, althout output areas don't have border and others below
+        'outline': 'none',
+        'padding': '0',
+        'margin': '0',
+        'position': 'absolute', # to avoid taking space and effect layout, this solved months long issue why output was moving upwards! Thanks to Claude Opus for correcting this!
     }
     out = {k: f'{v} !important' for k, v in css.items()}
-    if b: # to avoid taking space and effect layout, this solved months long issue why output was moving upwards! Thanks to Claude Opus for correcting this!
-        out['position'] = 'absolute !important' 
-    return {**out, **hide_node(b)} # hide is required for animations to take effect on parts on reveal
+    return {**out, **hide_node(True)} # hide is required for animations to take effect on parts on reveal
 
 def hide_node(b): 
     "Used to hide div in frames navigation and print mode, but keep space."
-    return {'^, ^ *': {'visibility': ('hidden' if b else 'inherit') + '!important'}}
+    return {'^, ^ *': { # True False is needed to set inherit visibility for children
+        'visibility': ('hidden' if b else 'inherit') + '!important',
+        **({'pointer-events': 'none !important'} if b else {})
+    }}
+    
+def view_nodes(selector: str, first: int = 0, last: int = None) -> dict:
+    """Generates CSS to collapse sibling nodes outside the inclusive range [first, last] 0-indexed."""
+    if last is not None:
+        notsel = f":not(:nth-child(n + {first + 1}):nth-child(-n + {last + 1}))"
+    else:
+        notsel = f":nth-child(-n + {first})" if first > 0 else ":not(*)"
+
+    return {f"{selector}{notsel}": collapse_node()}
+
 
 def _safe_height(aspect):
     """Calculate slide height with a tiny epsilon to avoid exact boundary issues in print.
@@ -345,6 +357,7 @@ def _safe_height(aspect):
     return round(210 / aspect, 2) + 0.001
 
 def style_css(colors, fonts, layout, _root = False):
+    maxheight = f'calc({_safe_height(layout.aspect)}mm - 16px - var(--paddingBottom, 23px))' # for nested items
     uclass = get_unique_css_class()
     _root_dict = {**{f"--{k}-color":v for k,v in colors.items()}, # Only here change to CSS variables
         '--text-size':f'{fonts.size}px',
@@ -570,6 +583,16 @@ def style_css(colors, fonts, layout, _root = False):
             'overflow': 'hidden !important', # important to avoid scroll of slide area, output area will handle it
             'display': 'grid !important', # can use align-content with block, but its came in 2024, so avoid new stuff
             'align-items': 'center !important' if layout.centered else 'start !important',
+            '.jp-OutputArea': {
+                'max-height': f'{maxheight} !important', # avoid things get overflowing
+                'overflow': 'auto',
+                '.jp-OutputArea-child, .jp-OutputArea-output': {
+                    "position": "static !important", # absolute content should not be stuck here 
+                    "^:only-child, > *:only-child" : {
+                        'min-height': 'stretch !important', # useful for backgrounds stretching, like in write a full column from outside
+                    }
+                }, 
+            },
             '> .jp-OutputArea': {
                 'position': 'static !important', # absolute content should be relative to SlideArea
                 'padding': '0 !important',
@@ -580,12 +603,10 @@ def style_css(colors, fonts, layout, _root = False):
                 'max-width': f'{layout.width}% !important',
                 'max-height': '100% !important', # avoid overflow of output area and let it scroll
                 'overflow': 'auto !important' if layout.scroll else 'hidden !important', # needs here too besides top
-                '.jp-OutputArea-child, .jp-OutputArea-output': {"position": "static !important"}, # absolute content should not be stuck here too
                 '@media print': { # For PDF printing of frames, invisible, collapsed set by JS, first sellectors works for rows too beside top level
                     'display': 'block !important', # need some fix
                     'overflow': 'hidden !important', # no need to scroll in print
                     '.jp-OutputArea-child.print-invisible, .columns.writer > div.print-invisible': hide_node(True),
-                    '.jp-OutputArea-child.print-collapsed': {'^, *': collapse_node(True)},
                 },
             },
             '@media print': { # For PDF printing dynamically set page size
@@ -612,6 +633,13 @@ def style_css(colors, fonts, layout, _root = False):
             '* .jp-OutputArea:has(.ips-pinned-item), .jp-OutputArea-child:has(.ips-pinned-item)': {
                 'overflow': 'visible !important', # avoid clipping of pinned content, but avoid top Area under slide
             },
+            '.ips-steps-wrapper': {
+                '> .ips-steps-output': {
+                    'max-height': f'{maxheight} !important', # does on OutputARea, but needed in export too
+                    'min-width': '0 !important', # needs inside grid to avoid overflow, its also on widget itself
+                    'transform': 'translateZ(0) !important', # create stacking context here to contain elements
+                },
+            },
             '.speaker-notes': {
                 **({} if layout._inotes else {'display':'none !important',}), # hide notes if not choosen to include in print
                 'border-radius':'0.2em !important',
@@ -637,49 +665,6 @@ def style_css(colors, fonts, layout, _root = False):
                 'color':'var(--accent-color)',
                 'text-decoration':'none !important',
                 'text-shadow': '0 1px var(--bg1-altcolor)',
-            },
-            '.columns.writer > div.bullet-points-rows': {
-                'display': 'grid',
-                'grid-template-columns': 'max-content 1fr',
-                'column-gap': '0.45em',
-                'align-items': 'start',
-                'width': '100%',
-                '> .group-header-content': {'grid-column': '1 / -1'},
-                '> .bullet-points-marker': {'grid-column': '1', 'justify-self': 'end', 'color': 'var(--accent-color)'},
-                '> *:not(.group-header-content):not(.bullet-points-marker):not(.jp-OutputArea)': {'grid-column': '2', 'min-width': '0'},
-                '> .jp-OutputArea': {
-                    'grid-column': '1 / -1',
-                    'display': 'grid',
-                    'grid-template-columns': 'max-content 1fr',
-                    'column-gap': 'inherit',
-                    'align-items': 'inherit',
-                    'width': '100%',
-                    '> .jp-OutputArea-child:has(.group-header-content)': {'grid-column': '1 / -1'},
-                    '> .jp-OutputArea-child:has(.bullet-points-marker)': {
-                        'grid-column': '1', 
-                        'justify-self': 'end', # to show markers aligned to right
-                        'display': 'inline-block', # need to be collapsed width for print
-                        'color': 'var(--accent-color)',
-                    },
-                    '> .jp-OutputArea-child:not(:has(.group-header-content)):not(:has(.bullet-points-marker))': {
-                        'grid-column': '2',
-                        'min-width': '0',
-                        'width': 'auto',
-                        'max-width': '100%',
-                        'display': 'block', # important to avoid shrink
-                    },
-                    '@media print': {
-                        'display': 'grid !important',
-                        'grid-template-columns': 'max-content 1fr !important',
-                        'column-gap': 'inherit !important',
-                        '> .jp-OutputArea-child:not(:has(.group-header-content)):not(:has(.bullet-points-marker))': {
-                            'min-width': '0 !important',
-                            'width': 'auto !important',
-                            'max-width': '100% !important',
-                            'display': 'block !important',
-                        },
-                    },
-                },
             },
             '.slide-link-target': {"width":"0 !important", "height":"0 !important",}, # avoid taking space, but still need to work
             '.slide-link:not(.citelink), .link-button': {
@@ -770,7 +755,7 @@ def style_css(colors, fonts, layout, _root = False):
             'ul li::marker, ol li::marker': {'color':'var(--accent-color)',},
             '.raw-text': { # Should follow theme under slides 
                 'color':'var(--fg1-color) !important',
-                'max-height':'400px',
+                'max-height': maxheight,
                 'white-space':'pre !important',
             },
             '.text-box': { # general text box for writing inline refrences etc. 
@@ -845,6 +830,7 @@ def style_css(colors, fonts, layout, _root = False):
                 'align-items':'stretch',
                 '> *': {
                     'min-width':'0 !important', # avoid overflow due to stubborn elements
+                    '> *:only-child': {'min-height': 'stretch !important',}, # make single child span full height, useful for backgrounds and nested content without setting class on column itself, (like in writer)
                 },
                 'table': {'width':'calc(100% - 0.5em)'}, # make table full width inside columns with some padding
             },
@@ -1038,7 +1024,7 @@ def style_css(colors, fonts, layout, _root = False):
                 'padding-left': '1ch', # extra padding with border
             },
             '^[open]': {
-                'max-height': '400px !important',
+                'max-height': f'{maxheight} !important',
                 'overflow': 'auto',
                 '> summary::before': {
                     'transform': 'rotate(180deg)',

@@ -1,6 +1,6 @@
 _attrs = ['AnimationSlider', 'JupyTimer', 'ListWidget', 'alt', 'alert', 'as_html', 'as_widget', 'bullets', 'color', 'error', 'table', 'suppress_output','suppress_stdout','capture_content',
     'details', 'set_dir', 'textbox', 'code', 'fa', 'gap', 'link', 'center', 'icon', 'image', 'svg','iframe','frozen', 'raw', 'warn', 'bg',
-    'focus','html', 'sig','stack', 'styled', 'doc', 'transition', 'today','get_child_dir','get_notebook_dir','is_jupyter_session','inside_jupyter_notebook','yoffset','css','pin']
+    'focus','html', 'sig','stack', 'styled', 'steps', 'doc', 'transition', 'today','get_child_dir','get_notebook_dir','is_jupyter_session','inside_jupyter_notebook','yoffset','css','pin']
 
 __all__ = sorted(_attrs)
 
@@ -10,6 +10,7 @@ import datetime
 import inspect
 import traceback
 
+from itertools import chain, accumulate
 from collections.abc import Iterable
 from types import MethodType
 from pathlib import Path
@@ -20,15 +21,15 @@ from PIL import Image as pilImage, ImageGrab
 from IPython import get_ipython
 from IPython.display import SVG, IFrame
 from IPython.display import Image, display
-from dashlab.widgets import AnimationSlider, JupyTimer, ListWidget # For export
-from dashlab.utils import _build_css # This is very light weight and too important dependency
+from dashlab.widgets import AnimationSlider, JupyTimer, ListWidget, StepSlider # For export
+from dashlab.utils import _build_css, _fix_init_sig # This is very light weight and too important dependency
 
 from ._base.icons import Icon as icon # for export and overrides in fa function
 from .formatters import ipw, XTML, IMG, frozen, get_slides_instance, fix_ipy_image, _inline_style, htmlize, _fig_caption, slidebound, slidesready
 from .xmd import xmd, get_unique_css_class, capture_content, raw, error, warn, _internal_xmd_call
 from .source import code
-from .writer import _style_for_widget
-from ._base.styles import animations
+from .writer import write, _style_for_widget, _fmt_html
+from ._base.styles import animations, view_nodes
 
 
 def is_jupyter_session():
@@ -1039,7 +1040,7 @@ def today(fmt = '%b %d, %Y',fg = 'inherit'): # Should be inherit color for markd
 
 def bullets(iterable, ordered = False, marker = None, css_class = None, **css_props):
     """A powerful bullet list. `iterable` could be list of anything that you can pass to `write` command. 
-    Use `group` for revealing points step by step in `write`, which also supports widgets.
+    Use `write(..., paused=True)` for frame-based incremental reveal, or `steps(...)` for slider-based step view.
     
     - If an item in iterable is a tuple/list of 2 elements and first element is a str, it will be used as per item marker.   
     - `ordered`: bool, to create ordered or unordered list.
@@ -1095,3 +1096,92 @@ _css_info = (f"""
 --
 {code(_styled_css(_example_props).value, 'css','CSS')}
 ```""").replace('@',r'\@') # @import etc keys to clean up for markdown
+
+
+@_fix_init_sig
+class steps(ipw.GridBox):
+    """A stepper widget to step through given objects with a slider. `objs` should be a list/tuple of objects 
+    to step through and can be any object that can be converted to a widget using `as_widget`. `dots_loc` controls 
+    the location of step dots, which can be 'left', 'top', 'right' or 'bottom'. `interval` controls the time interval 
+    in milliseconds for automatic stepping. `css_class` and `css_props` can be used to style the widget.
+    `static_index` can be used to set a specific index to be displayed statically in PDF and HTML export, while the stepper will still function normally in the notebook.
+    """
+    def __init__(self, objs, dots_loc="left", interval=1500, css_class=None, static_index = -1, **css_props):
+        if not isinstance(objs, (list, tuple)) or len(objs) < 2:
+            raise ValueError("objs must be a list/tuple with at least two objects to step through!")
+        if not dots_loc in ("left","top","right","bottom"):
+            raise ValueError(f"dots_loc must be one of left, right, top, bottom, got {dots_loc!r}")
+        
+        self._uclass = f'output-{id(self)}' # unique class for this instance's output area
+        klasses = ['ips-steps-wrapper', 'vertical'] if dots_loc in ("left","right") else ['ips-steps-wrapper']
+        
+        if isinstance(css_class, str):
+            klasses.extend(css_class.split())
+            
+        key = 'grid_template_columns' if dots_loc in ("left","right") else 'grid_template_rows'
+        value = '0 24px 1fr' if dots_loc in ("left","top") else '0 1fr 24px'
+        css_props = {key:value, **css_props}
+        super().__init__(layout=css_props, _dom_classes=klasses)
+        
+        self._sidxs, outputs = self._process_objs(objs)
+        
+        if static_index < 0:
+            static_index = len(self._sidxs) - 1 
+        if static_index >= len(self._sidxs):
+            raise ValueError(f"static_index must index {len(self._sidxs)} objects, got {static_index}")
+        
+        self._expidx = static_index
+        self._htmlstyle =  ipw.HTML(layout={'width':'0','height':'0','padding': '0'}).add_class('ips-steps-style')
+        self._output = ipw.Output(layout={'min_width': '0'} # must have min-width in grid layout to avoid unexpected lengths
+            ).add_class(self._uclass).add_class('ips-steps-output')
+        self._output._exprng = self._sidxs[self._expidx] if self._sidxs else None # attach range for export
+        
+        with self._output:
+            display(*outputs) # only clean outputs
+        
+        self._stepper = StepSlider(vertical=True if dots_loc in ("left","right") else False, nsteps=len(self._sidxs), interval=interval)
+        
+        children = (self._stepper, self._output) if dots_loc in ("left","top") else (self._output, self._stepper)
+        self.children = (self._htmlstyle, *children)
+        self._stepper.observe(self._set_view, names="value")
+        self._set_view(0) # set initial view
+        
+    def _process_objs(self, objs):
+        # This is crucial to capture them here as they do not update directly in output widget in same synchronous call
+        with capture_content() as cap:
+            write(objs, paused=True)
+
+        main = [[]]
+        for c in cap.outputs:
+            meta = c.metadata if isinstance(c.metadata, dict) else {}
+            if meta.get('DELIM', None) == "PAUSE":
+                if main[-1]:
+                    main.append([])
+            else:
+                main[-1].append(c)
+
+        if main and not main[-1]:
+            main.pop()
+
+        idxs = list(accumulate([0, *(len(m) for m in main)]))
+        sidxs = tuple((i, j - 1) for i, j in zip(idxs[:-1], idxs[1:]))
+        return sidxs, tuple(chain(*main))
+    
+    def _set_view(self, change):
+        forward = True # default to forward jump even when value set
+        if isinstance(change, int): # given interger index
+            idxs = self._sidxs[change]
+        else:
+            num = change['new']
+            idxs = self._sidxs[num - 1] # stepper is 1-indexed
+            forward = change['old'] and num > change['old']
+        
+        if slides := get_slides_instance(): # must before changing view window to take effect
+            # Allow animation on selection any time
+            getattr(slides.widgets.slidebox, 'remove_class' if forward else 'add_class')('AnimPrev') 
+            slides._send_nav_msg(forward, parts=True, selector=f'.{self._uclass}')
+        
+        selector = f'.{self._uclass} > div > .jp-OutputArea-child'
+        css = _build_css('', view_nodes(selector,*idxs))
+        self._htmlstyle.value = f"<style>\n{css}\n</style>"
+        

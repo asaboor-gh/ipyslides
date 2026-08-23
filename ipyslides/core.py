@@ -865,7 +865,7 @@ class Slides(BaseSlides,metaclass=Singleton):
                 Find special syntax to be used in markdown by `Slides.xmd.syntax`.
         ::: note
             - You can add ++ (plus plus) in the content staring on new line to add parts which reveal incrementally.
-            - Parts separator (++) just before `columns` creates incremental columns and rows. `++[isolate]` triggers isolation of columns from previous content.
+            - Parts separator (++) just before `columns.paused` creates isolation between previous content and incremental columns and rows.
             - Use `%%slide -1` to enable auto slide numbering. Other cell code is preserved.
             - Without '-m' flag, the cell content is treated as Python code and can benifit from `Slides.src` function to set the source for the slide.
 
@@ -933,7 +933,7 @@ class Slides(BaseSlides,metaclass=Singleton):
         
         1. If used with a string input, it is treated as markdown source and will be immediately updated.
             - Use `++` to separte content into parts for incremental display on ites own line with optionally adding content after one space.
-            - Markdown `columns/group` blocks can be displayed incrementally if `++` is used (alone on line) before these blocks as a trigger.
+            - Markdown `columns.paused` blocks can be displayed incrementally and `++` before these blocks acts as a separator to isolate previous content from incremental columns and rows.
             - See `slides.xmd.syntax` for extended markdown usage.
             - Variables such as \%{var} can be provided in `**vars` (or left during build) and later updated in notebook using `rebuild` method on slide handle or overall slides.
             - If an f-string is provided, variables in f-string are resolved eagerly and never get updated on rebuild including lazy ones provided by `Slides.esc`.
@@ -1041,10 +1041,10 @@ class Slides(BaseSlides,metaclass=Singleton):
         In markdown slides, use two plus signs `++` on its own line, optionally add content right after `++ `.
         
         - Adjacent pause delimiters are ignored, so no empty parts are created in normal flow.
-        - A call [code! pause() /] before `write` command adds parts inside columns and rows. 
-            - Use [code! pause(isolate=True) /] to isolate previous content from a following `write(...columns...)` reveal.
-            - In markdown, use `++[isolate]` before `::: columns` for the same behavior while `::: columns.inline` does not support incremental reveal.
-                    See [code! write /] command for more details.
+        - A call [code! write(..., paused=True) /] adds incremental parts inside columns and rows. 
+            - Use [code! pause() /] before write to isolate previous content from its first part reveal.
+            - In markdown, use `++` before `::: columns.paused` for the same behavior of isolating previous content from columns and rows.
+            - `::: columns.inline` and plain `::: columns` are display modes and do not provide paused incremental framing.
         - Use [code! pause.iter(iterable) /] to create multiple parts from iterable automatically.
         - Last empty pause delimiter is ignored.
         """
@@ -1052,17 +1052,16 @@ class Slides(BaseSlides,metaclass=Singleton):
         # AND CANNOT HAVE ITS OWN STATE METADATA, SO IT WAS DEPRECATED. KEEP IT SIMPLE.
         
         def __init__(self, isolate=False):
-            delim = _delim("PAUSE")
-            if isolate and isinstance(getattr(delim, 'metadata', None), dict):
-                delim.metadata['ISOLATE'] = True
-            display(delim)
+            if isolate:
+                raise RuntimeError("The 'isolate' option is removed. Use `write(..., paused=True)` and place `pause()` before it to isolate previous content.")
+            display(_delim("PAUSE"))
 
         @classmethod
         def iter(cls, iterable, isolate=False, trail=True):
             """Loop over given iterable by adding a separator before each item.
             If `trail` is True (default), a separator is added at end as well.
             
-            Set `isolate=True` to mark only the first inserted delimiter as isolate.
+            The `isolate` option is removed and now raises an error if provided.
             """
             if not isinstance(iterable, Iterable) or isinstance(iterable, (str, bytes, dict)):
                 raise TypeError(f"iterable should be a list-like object, got {type(iterable)}")

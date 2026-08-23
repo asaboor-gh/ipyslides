@@ -75,9 +75,6 @@ pre {white-space: break-spaces;} /* General rule unless specified in elements */
     width: 100vw !important;
     line-height: 1.5 !important; /* Default line-height for all text to match Jupyter */
 }
-.SlidesWrapper.SlidesMerged .snapshots-rows .snapshots-merge-hide {
-    display: none !important;
-}
 section {
 	scroll-snap-align:start !important;
     scroll-snap-stop: always !important;

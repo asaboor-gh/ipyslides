@@ -30,8 +30,8 @@ Use any or combination of these styles in markdown blocks or `css_class` argumen
 
 Besides these CSS classes, you always have `Slide.css`, `Slides.html('style',...)` functions at your disposal.
 '''
-
-xmd_syntax = rf'''
+# as function to let any call use escaped functions, otherwise they are lost on first use
+xmd_syntax = lambda: rf'''
 ## Extended Markdown
 ++                                      
 Extended syntax on top of [Python-Markdown](https://python-markdown.github.io/) supports almost full presentation from Markdown.
@@ -40,15 +40,14 @@ Extended syntax on top of [Python-Markdown](https://python-markdown.github.io/) 
 
 Slides and Parts Separators
 : Double plus `++` (`pause` in Python) can be used to increment objects in parts on a slide.
-A `++` on its own line before `columns` block (not `columns.inline`) will make it reveal content incrementally.
-Use `++[isolate]` before a `::: columns/::: group` blocks to isolate previous content from column reveal.
+A `++` on its own line before `columns.paused` block (not `columns`/`columns.inline`) isolates previous content from the first reveal step.
 Note that only `++` allows content on same line after it and following lines.
 Triple dashes `---` separator is used to split text in slides inside markdown content of synced markdown file.
 `---` should be on their own lines in main content (not inside block syntax) to be recognized as slide separators.
 
 Sections & TOC
 : [alert! [section\! content \/] /] to add a section that will appear in the table of contents.
-Use [code! section\!! True \.. content \/] /] to mark the beginning of supplemental slides with True parameter in section command.
+Use [code! [section\!! True \.. content \/] /] to mark the beginning of supplemental slides with True parameter in section command.
 Slides in this section remain navigable, use supplemental numbering (`S.1`, `S.2`, ...), and do not advance the main progress bar.
 [alert! [toc\! Table of content header text\/] /] to add a table of contents. See `ipyslides.docs()` for creating a `TOC` accompanied by section summary.
 
@@ -106,7 +105,8 @@ The general block syntax is `::: type-or-classes [args] attributes`.
     | `::: raw/pre`     | Raw text or preformatted text, no markdown parsing. Use `raw` or `pre` as first word in block. |
     | `::: code [focused lines]`  | Code block with syntax highlighting, parameters are passed to highlight function. Use `code.inline` and `code.collapsed` for specific view. |
     | `::: tag or classes` | tags are block level elements such as `p`, `details`, `summary`, `table`, `center`, etc. |
-    | `::: columns [widths]` | Create columns with relative widths, e.g. `columns 4 6` for 40% and 60% width. The columns separator is `--` and incremental reveal is supported via `++`. Use `++[isolate]` before the block to isolate previous content from this reveal sequence. |
+    | `::: columns [widths]` | Create columns with relative widths, e.g. `columns 4 6` for 40% and 60% width. This is display mode (no incremental frames). The columns separator is `--`. |
+    | `::: columns.paused [widths]` | Create columns with paused incremental reveal. Use `++` inside columns to split row steps; use `++` before the block to isolate previous content from the first reveal step. |
     | `::: columns.inline [widths]` | Create inline columns with relative widths, e.g. `columns.inline 4 6` for 40% and 60% width. This block does not support incremental reveal and `--` separator is optional (but superceded if used) because distinct text blocks are automatically considered columns. |
     | `::: md-[before,after,var_name] [focused lines]` | Parse markdown in the block, with showing source code at before or after or assign a variable name and use as `[md-var_name/]`. Use `md-[name].inline` and `md-[name].collapsed` for specific view. |
     | `::: table [col widths]` | Create a table with optional column widths, e.g. `::: table 1 2` for 33% and 66% width. Use `caption-side=top/bottom` to place caption on top/bottom.|
@@ -129,16 +129,16 @@ One-liner content (after `..` or single line in body) can be separated by `|` ch
 
 Block Columns
 : You can create block columns using `::: columns` syntax. They also support `..` on their own line but it is discouraged because they are blocks and should look like blocks.
-Column separator is double minus `--` for `::: columns` and it's optional for `::: columns.inline` where distinct content blocks are automatically resolved per column, but `--` can be used for explicit separation and it is superceded if used.
-Use `::: group snapshots=True` to enable per-row iteration for a block in columns or whole `::: group` outside of columns is a single column display block.
-Use `header='Header text'` in the same group header to keep a static header visible while rows reveal.
-Use `++[isolate]` before `::: columns` to separate previous content from first column reveal.
+Column separator is double minus `--` for `::: columns`/`::: columns.paused` and it's optional for `::: columns.inline` where distinct content blocks are automatically resolved per column, but `--` can be used for explicit separation and it is superceded if used.
+Use `::: columns.paused` and `++` for frame-based reveal, `::: columns` for static block columns, or Python-side `steps(...)` for slider-based step transitions.
+Use `++` before `::: columns.paused` to separate previous content from first column reveal.
 
 ```md-before
 ::: columns.inline 6 1 4 block-blue 
 : border="1px dashed red"
     ::: block-red
-        - `::: columns` act like `write` command and reveal content incrementally when `++` is used before and inside the block.
+        - `::: columns.paused` maps to `write(..., paused=True)` and reveals content incrementally when `++` is used inside the block.
+        - `::: columns` maps to `write(..., paused=False)` and is static display mode.
         - children inside `columns.inline` pick relative width from parent's `columns.inline` block.
           Children should be visually blocks themselves like headings, paragraphs, lists etc or wrapped in `::: block` to make them obvious 
           blocks like this one or use `--` separator to create explicit columns.
@@ -151,7 +151,7 @@ Use `++[isolate]` before `::: columns` to separate previous content from first c
     ::: ul block-yellow border="2px solid orange" list-style=disc
         ::: li list-style="'👉'" 
             Top level `columns` is necessary to create columns or use simple block with `display=flex`.
-            and frame speactor is used at end of block.
+            and `--` separator is used between columns.
         <li data-marker=ℹ️> Indentation is important, so use tabs or spaces consistently.</li>
         ::: li .. This follows disc marker from parent `ul` block.
 ```
