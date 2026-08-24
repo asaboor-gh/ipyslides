@@ -241,8 +241,7 @@ function printSlides(box, model) {
     
     for (let n = 0; n < slides.length; n++) {
         let slide = slides[n];
-        let outArea = slide.querySelector(':scope .jp-OutputArea');
-        if (outArea) { outArea.scrollTop = 0; }
+        slide.querySelectorAll(':scope .jp-OutputArea').forEach(outArea => {outArea.scrollTop = 0;}); // reset scroll for all output areas
 
         // Extract slide number from class (e.g., 'n25' -> 25)
         const slideNum = parseInt([...slide.classList].find(cls => /^n\d+$/.test(cls))?.slice(1)) || null;

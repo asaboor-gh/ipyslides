@@ -1119,9 +1119,8 @@ class steps(ipw.GridBox):
             klasses.extend(css_class.split())
             
         key = 'grid_template_columns' if dots_loc in ("left","right") else 'grid_template_rows'
-        value = '0 24px 1fr' if dots_loc in ("left","top") else '0 1fr 24px'
-        css_props = {key:value, **css_props}
-        super().__init__(layout=css_props, _dom_classes=klasses)
+        value = '24px 1fr' if dots_loc in ("left","top") else '1fr 24px'
+        super().__init__(layout={'display': 'grid', key: value}, _dom_classes=klasses)
         
         self._sidxs, outputs = self._process_objs(objs)
         
@@ -1131,18 +1130,31 @@ class steps(ipw.GridBox):
             raise ValueError(f"static_index must index {len(self._sidxs)} objects, got {static_index}")
         
         self._expidx = static_index
-        self._htmlstyle =  ipw.HTML(layout={'width':'0','height':'0','padding': '0'}).add_class('ips-steps-style')
+        self._viewstyle =  ipw.HTML().add_class('abs-style').add_class('jupyter-only') # will not export this style
         self._output = ipw.Output(layout={'min_width': '0'} # must have min-width in grid layout to avoid unexpected lengths
             ).add_class(self._uclass).add_class('ips-steps-output')
         self._output._exprng = self._sidxs[self._expidx] if self._sidxs else None # attach range for export
         
         with self._output:
             display(*outputs) # only clean outputs
+            
+        first, last = self._sidxs[self._expidx] if self._sidxs else [0, None]
+        self._fixstyle = html('style', _build_css('', {
+                f'.{self._uclass}': css_props, # apply user css to output
+                '.ips-steps-wrapper > .abs-style': {'position': 'absolute', 'width': '0', 'height': '0', 'padding': '0'}, # take style widgets out of flow
+                ':not(.SlideArea) .ips-steps-output': {'max-height': '400px', 'overflow': 'auto'},
+            })).as_widget().add_class('abs-style')
+        
+        self._printstyle = html('style', _build_css('', {
+            '@media print': {
+                **view_nodes(f'.{self._uclass} > div > .jp-OutputArea-child',first, last),
+                '.ips-steps-wrapper .steps-widget': {'opacity': '0.2 !important'}, # dim it
+            }})).as_widget().add_class('abs-style').add_class('jupyter-only') # will not export this style to avoid conflicts
         
         self._stepper = StepSlider(vertical=True if dots_loc in ("left","right") else False, nsteps=len(self._sidxs), interval=interval)
         
         children = (self._stepper, self._output) if dots_loc in ("left","top") else (self._output, self._stepper)
-        self.children = (self._htmlstyle, *children)
+        self.children = (self._fixstyle, self._viewstyle, self._printstyle, *children)
         self._stepper.observe(self._set_view, names="value")
         self._set_view(0) # set initial view
         
@@ -1182,6 +1194,6 @@ class steps(ipw.GridBox):
             slides._send_nav_msg(forward, parts=True, selector=f'.{self._uclass}')
         
         selector = f'.{self._uclass} > div > .jp-OutputArea-child'
-        css = _build_css('', view_nodes(selector,*idxs))
-        self._htmlstyle.value = f"<style>\n{css}\n</style>"
+        css = _build_css('', {'@media screen': view_nodes(selector,*idxs)}) # only screen mode to avoid print conflicts
+        self._viewstyle.value = f"<style>\n{css}\n</style>"
         

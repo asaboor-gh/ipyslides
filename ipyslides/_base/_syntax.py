@@ -40,7 +40,7 @@ Extended syntax on top of [Python-Markdown](https://python-markdown.github.io/) 
 
 Slides and Parts Separators
 : Double plus `++` (`pause` in Python) can be used to increment objects in parts on a slide.
-A `++` on its own line before `columns.paused` block (not `columns`/`columns.inline`) isolates previous content from the first reveal step.
+A `columns.paused` block at first nesting level with `++` inside it also creates incremental reveal of columns and rows.
 Note that only `++` allows content on same line after it and following lines.
 Triple dashes `---` separator is used to split text in slides inside markdown content of synced markdown file.
 `---` should be on their own lines in main content (not inside block syntax) to be recognized as slide separators.
@@ -106,7 +106,7 @@ The general block syntax is `::: type-or-classes [args] attributes`.
     | `::: code [focused lines]`  | Code block with syntax highlighting, parameters are passed to highlight function. Use `code.inline` and `code.collapsed` for specific view. |
     | `::: tag or classes` | tags are block level elements such as `p`, `details`, `summary`, `table`, `center`, etc. |
     | `::: columns [widths]` | Create columns with relative widths, e.g. `columns 4 6` for 40% and 60% width. This is display mode (no incremental frames). The columns separator is `--`. |
-    | `::: columns.paused [widths]` | Create columns with paused incremental reveal. Use `++` inside columns to split row steps; use `++` before the block to isolate previous content from the first reveal step. |
+    | `::: columns.paused [widths]` | Create columns with paused incremental reveal. Use `++` inside columns to split row steps; use `++` before the block to isolate previous content from the first reveal step. The columns separator is `--`. |
     | `::: columns.inline [widths]` | Create inline columns with relative widths, e.g. `columns.inline 4 6` for 40% and 60% width. This block does not support incremental reveal and `--` separator is optional (but superceded if used) because distinct text blocks are automatically considered columns. |
     | `::: md-[before,after,var_name] [focused lines]` | Parse markdown in the block, with showing source code at before or after or assign a variable name and use as `[md-var_name/]`. Use `md-[name].inline` and `md-[name].collapsed` for specific view. |
     | `::: table [col widths]` | Create a table with optional column widths, e.g. `::: table 1 2` for 33% and 66% width. Use `caption-side=top/bottom` to place caption on top/bottom.|
@@ -130,7 +130,7 @@ One-liner content (after `..` or single line in body) can be separated by `|` ch
 Block Columns
 : You can create block columns using `::: columns` syntax. They also support `..` on their own line but it is discouraged because they are blocks and should look like blocks.
 Column separator is double minus `--` for `::: columns`/`::: columns.paused` and it's optional for `::: columns.inline` where distinct content blocks are automatically resolved per column, but `--` can be used for explicit separation and it is superceded if used.
-Use `::: columns.paused` and `++` for frame-based reveal, `::: columns` for static block columns, or Python-side `steps(...)` for slider-based step transitions.
+Use `::: columns.paused` and `++` inside for frame-based reveal, `::: columns` for static block columns, or Python-side `steps(...)` for slider-based step transitions.
 Use `++` before `::: columns.paused` to separate previous content from first column reveal.
 
 ```md-before

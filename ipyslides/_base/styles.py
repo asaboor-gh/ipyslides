@@ -306,7 +306,7 @@ theme_colors = {
 }
 
 def collapse_node():
-    "Used to collapse div in frames navigation and print mode."
+    "Used to collapse div. Wrap in @media screen and @media print for frames navigation and print mode to avoid exclusion of content."
     css = {
         'height': '0',
         'min-height': '0', # unlike max height, it can't be none
@@ -634,6 +634,7 @@ def style_css(colors, fonts, layout, _root = False):
                 'overflow': 'visible !important', # avoid clipping of pinned content, but avoid top Area under slide
             },
             '.ips-steps-wrapper': {
+                'display': 'grid !important', # for export, otherwise it is block and loses same view as notebook
                 '> .ips-steps-output': {
                     'max-height': f'{maxheight} !important', # does on OutputARea, but needed in export too
                     'min-width': '0 !important', # needs inside grid to avoid overflow, its also on widget itself
@@ -830,7 +831,9 @@ def style_css(colors, fonts, layout, _root = False):
                 'align-items':'stretch',
                 '> *': {
                     'min-width':'0 !important', # avoid overflow due to stubborn elements
-                    '> *:only-child': {'min-height': 'stretch !important',}, # make single child span full height, useful for backgrounds and nested content without setting class on column itself, (like in writer)
+                    '^, > *:only-child': {
+                        'min-height': 'stretch !important',
+                    }, # make single child span full height, useful for backgrounds and nested content without setting class on column itself, (like in writer)
                 },
                 'table': {'width':'calc(100% - 0.5em)'}, # make table full width inside columns with some padding
             },

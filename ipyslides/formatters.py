@@ -485,9 +485,10 @@ class Serializer:
         """Convert ipywidgets.HTML object to HTML string."""
         if not isinstance(html_widget,(ipw.HTML,ipw.HTMLMath)):
             raise TypeError(f"Expects instance of ipywidgets.(HTML/HTMLMath), got {type(html_widget)}")
-
+        
+        inner_html = '' if 'jupyter-only' in html_widget._dom_classes else html_widget.value # avoid jupyter-only, but export shell for space
         css_class = ' '.join(html_widget._dom_classes) # To keep style of HTML widget, latest as well
-        return f'<div class="{css_class}" {_inline_style(html_widget)}>{html_widget.value}</div>' 
+        return f'<div class="{css_class}" {_inline_style(html_widget)}>{inner_html}</div>' 
     
     def _alt_media(self, media_widget):
         if isinstance(media_widget, ipw.Image):

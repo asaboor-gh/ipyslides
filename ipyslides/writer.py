@@ -97,8 +97,6 @@ class Writer(ipw.HBox):
         can_flatten_single = single_col and not any([
             isinstance(css_class, str),
             css_props,
-            single_meta.get('col_css_class', ''),
-            single_meta.get('col_css_props', {}),
         ])
 
         if can_flatten_single:
@@ -108,12 +106,7 @@ class Writer(ipw.HBox):
             self.children = [
                 _Output(layout = ipw.Layout(flex = c['flex'],min_width='0',position='relative')) # make position relative explicitly
                 for c in self._cols
-            ]
-            for i, (col, out) in enumerate(zip(self._cols, self.children)):
-                if col.get('uclass'):
-                    out.add_class(col['uclass'])
-                if col.get('col_css_class'):
-                    [out.add_class(c) for c in str(col['col_css_class']).split()]
+            ]  
             display(self, metadata=self.metadata) # Just display it with ID
             self.update_display() # show content on widgets
 
@@ -142,14 +135,7 @@ class Writer(ipw.HBox):
         cols = []
         for i, (w, obj) in enumerate(zip(widths, objs)):
             outputs = obj if isinstance(obj, (list, tuple)) else [obj] # flatten to list of outputs
-
-            cols.append({
-                'flex': f'{w:.3f} {w:.3f} {w*100:.3f}%',
-                'outputs': outputs,
-                'col_css_class': '', # will be added later by colstyle implementation
-                'col_css_props': {},
-                'uclass': f'coluid-{id(self)}-{i}',
-            })
+            cols.append({'flex': f'{w:.3f} {w:.3f} {w*100:.3f}%', 'outputs': outputs})
 
         frags = []
         for i, col in enumerate(cols):
@@ -169,10 +155,6 @@ class Writer(ipw.HBox):
             with capture_content() as cap:
                 if i == 0 and css_props: # display CSS in first column only
                     XTML(_style_for_widget(self, **css_props)).display() 
-
-                if col.get('col_css_props'):
-                    col_selector = f'.{col["uclass"]}'
-                    XTML(f'<style>\n{_build_css((col_selector,), col["col_css_props"])}\n</style>').display()
                     
                 for c in rows:
                     if isinstance(c,(RichOutput, ipw.DOMWidget)):
@@ -222,7 +204,7 @@ class Writer(ipw.HBox):
 
         def _fmt_rows(outputs):
             rows = []
-            for r, output in enumerate(outputs):
+            for output in outputs:
                 html = _fmt_html(output)
                 if not html:
                     continue
@@ -232,17 +214,12 @@ class Writer(ipw.HBox):
 
         for i, col in enumerate(self._cols):
             flex = f'flex:{col["flex"]};min-width:0;position:relative;'
-            col_class = ' '.join(x for x in (
-                col.get('uclass', ''),
-                col.get('col_css_class', ''),
-            ) if x)
-            class_attr = f' class="{col_class}"' if col_class else ''
             if i > col_idx: # Entire column is hidden
                 content = '\n'.join(_fmt_rows(col['outputs']))
-                cols.append(f'<div{class_attr} style="{flex};visibility:hidden">{content}</div>')
+                cols.append(f'<div style="{flex};visibility:hidden">{content}</div>')
             elif i < col_idx: # Entire column is visible (or previous in focus mode)
                 content = '\n'.join(_fmt_rows(col['outputs']))
-                cols.append(f'<div{class_attr} style="{flex};">{content}</div>')
+                cols.append(f'<div style="{flex};">{content}</div>')
             else: # Current column, check rows
                 rows = []
                 row_idx = (visible_upto or {}).get("row", float('inf'))
@@ -252,7 +229,7 @@ class Writer(ipw.HBox):
                     else:
                         rows.append(f'<div style="visibility:hidden;">{_fmt_html(output)}</div>') # hold space
                 
-                cols.append(f'<div{class_attr} style="{flex};">{chr(10).join(rows)}</div>')
+                cols.append(f'<div style="{flex};">{chr(10).join(rows)}</div>')
                 
         css_class = ' '.join(self._dom_classes)
         return f'<div class="{css_class}" {_inline_style(self)}>{chr(10).join(cols)}</div>'
