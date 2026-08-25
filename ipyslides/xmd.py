@@ -693,8 +693,9 @@ class XMarkdown(Markdown):
             data = self._ignore_incremental(self._fix_legacy_col_sep(data)) # handle legacy mode and ++ separator
             
             if re.search(r'^\-\-\s*$', data, flags=re.MULTILINE): # make columns by optional -- separator
-                _cs = '\n</div>\n<div markdown="1">\n'.join(_stream_chunks(data, sep='--'))
-                data = '\n'.join(['<div markdown="1">', _cs, '</div>']) 
+                data = XTML('<div>' + '</div>\n<div>'.join(
+                    [self._parse_nested(c, returns=True) for c in _stream_chunks(data, sep='--')]
+                ) + '</div>') # wrapping in divs is important otherwise can be so many columns based on parsed content
         
         if tag in CAPTURED_TAGS:
             if tag in STRICT_TAGS: # keep as is from further processing
@@ -713,13 +714,14 @@ class XMarkdown(Markdown):
             _class = f"{_class} {klass}" if _class else klass # add klass
             widths = [float(w) for w in widths]
             widths = [w/(sum(widths) or 1) for w in widths] # allow relative column widths
-            style = '\n'.join(f".{klass} > :nth-child({i+1}) {{flex: {w:.3f} {w:.3f} {100*w:.3f}%;}}" for i, w in enumerate(widths)) # nth-child selectors
-            style += '\n' + f".{klass} > :nth-child({len(widths)}) ~ * {{flex: {min(widths):.3f} {min(widths):.3f} {100*min(widths):.3f}%;}}" # rest all columns get min width
+            style = '\n'.join(f".{klass} > :nth-child({i+1}) {{flex: {w:.3f} {w:.3f} {100*w:.3f}%}}" for i, w in enumerate(widths)) # nth-child selectors
+            style += '\n' + f".{klass} > :nth-child({len(widths)}) ~ * {{flex: {min(widths):.3f} {min(widths):.3f} {100*min(widths):.3f}% !important;}}" # rest all columns get min width
             style = f"<style>.{klass} > p:empty {{display:none;}}\n{style}</style>" # empty p tags should not be treated as columns
             
         # treat tag as class if not given at end
         _class = " ".join([tag, _class])
-        return [XTML(f"<div class='{_class}' {_inline_style(css_props)} {attrs}>{self._parse_nested(data, returns=True)}</div>{style}")]
+        data = data.value if isinstance(data, XTML) else self._parse_nested(data, returns=True) # -- columns parsed already
+        return [XTML(f"<div class='{_class}' {_inline_style(css_props)} {attrs}>{data}</div>{style}")]
     
     def _parse_code(self, data, mode, focus_lines, _class, props, attrs):
         params = inspect.signature(_highlight).parameters.keys()

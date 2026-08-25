@@ -1101,7 +1101,8 @@ _css_info = (f"""
 @_fix_init_sig
 class steps(ipw.GridBox):
     """A stepper widget to step through given objects with a slider. `objs` should be a list/tuple of objects 
-    to step through and can be any object that can be converted to a widget using `as_widget`. `dots_loc` controls 
+    to step through and can be any object that can be converted to a widget using `as_widget`. Multiple objects
+    in a single step can be given as a nested list/tuple of objects. `dots_loc` controls 
     the location of step dots, which can be 'left', 'top', 'right' or 'bottom'. `interval` controls the time interval 
     in milliseconds for automatic stepping. `css_class` and `css_props` can be used to style the widget.
     `static_index` can be used to set a specific index to be displayed statically in PDF and HTML export, while the stepper will still function normally in the notebook.
@@ -1142,6 +1143,7 @@ class steps(ipw.GridBox):
         self._fixstyle = html('style', _build_css('', {
                 f'.{self._uclass}': css_props, # apply user css to output
                 '.ips-steps-wrapper > .abs-style': {'position': 'absolute', 'width': '0', 'height': '0', 'padding': '0'}, # take style widgets out of flow
+                '.ips-steps-wrapper .steps-widget .widget-readout:hover': {'border-radius': '4px', 'background': 'var(--bg2-color, #98988)'},
                 ':not(.SlideArea) .ips-steps-output': {'max-height': '400px', 'overflow': 'auto'},
             })).as_widget().add_class('abs-style')
         

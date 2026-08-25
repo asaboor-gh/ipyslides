@@ -27,6 +27,7 @@ Use any or combination of these styles in markdown blocks or `css_class` argumen
  `raw-text`         | Text will be shown as printed style. {: .raw-text}
  `focus-self`       | Double-click on element to zoom into popup view. Double-click again or navigate slides to exit. {: .focus-self}
  `focus-child`      | Focus on child objects of node with this class. Same double-click to zoom in/out behavior.
+ `column`           | Inside `columns`, if an element with no siblings has `column` class, it will stretch to full height of columns no matter how deeply nested it is.
 
 Besides these CSS classes, you always have `Slide.css`, `Slides.html('style',...)` functions at your disposal.
 '''
@@ -168,10 +169,10 @@ Code Blocks
 
 ```md-src
 ::: columns
-    ::: block-green
+    ::: column block-green
         [md-src/]
     --
-    ::: block-red
+    ::: column block-red
         ```python
         print('Hello, I was highlighted from a code block!')
         ```
@@ -242,7 +243,7 @@ Inline functions can be nested, thanks to new function call pattern that must en
 - Use [alert! include\`markdown_file.md[optional list slicing to pick lines from file such as [2:5], [10:]]\` /] to include a file in markdown format.
 - Use [alert! [fa\! icon_name \/] /] to add FontAwesome icons, e.g. [fa\! arrow-right \/] → [fa! arrow-right /], [fa\! check .. "green" \/] → [fa! check .. "green" /] etc.
 - Drop a link target in any place using `[#target_id/]` and use `target_id` in `link` commnad or html anchor to jump to that target. Use `Slides.link` for more details.
-- Use syntax `[link\! "target_id", "Jump to slide" \/]` to jump between slides. See `Slides.link` for more details.
+- Use syntax `[link\!! "target_id", "Jump to slide" \/]` to jump between slides. See `Slides.link` for more details.
 - Cells in markdown table can be spanned to multiple rows/columns by attributes `| cell text \{{: rowspan="2" colspan="1"}}|` inside a cell, should be a space bewteen text and attributes.
 - Escape a backtick with backslash, i.e. [alert! \\` → \` /], other escape characters are [alert! {xmd.escaped_chars} /]. In Python >=3.12, you need to make escape strings raw, including the use of $ \LaTeX $ and re module.
 - Use html entities for special characters, e.g. `&rarr;` →, `&larr;` ←, `&uarr;` ↑, `&darr;` ↓, `&harr;` ↔, `&udarr;` ⇅, `&lArr;` ⇐, `&rArr;` ⇒, `&uArr;` ⇑, `&dArr;` ⇓, `&hArr;` ⇔ etc.

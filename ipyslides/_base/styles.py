@@ -586,11 +586,8 @@ def style_css(colors, fonts, layout, _root = False):
             '.jp-OutputArea': {
                 'max-height': f'{maxheight} !important', # avoid things get overflowing
                 'overflow': 'auto',
-                '.jp-OutputArea-child, .jp-OutputArea-output': {
+                '^, .jp-OutputArea-child, .jp-OutputArea-output': {
                     "position": "static !important", # absolute content should not be stuck here 
-                    "^:only-child, > *:only-child" : {
-                        'min-height': 'stretch !important', # useful for backgrounds stretching, like in write a full column from outside
-                    }
                 }, 
             },
             '> .jp-OutputArea': {
@@ -825,17 +822,23 @@ def style_css(colors, fonts, layout, _root = False):
             '.columns':{
                 'width':'100%',
                 'max-width':'100%',
-                'display':'inline-flex',
+                'display':'flex',
                 'flex-direction':'row',
                 'column-gap':'0.2em',
                 'align-items':'stretch',
                 '> *': {
                     'min-width':'0 !important', # avoid overflow due to stubborn elements
-                    '^, > *:only-child': {
-                        'min-height': 'stretch !important',
-                    }, # make single child span full height, useful for backgrounds and nested content without setting class on column itself, (like in writer)
                 },
                 'table': {'width':'calc(100% - 0.5em)'}, # make table full width inside columns with some padding
+                ':only-child:has(.column), .column:only-child': { # strecth column to full height if single parents
+                    'display': 'flex',
+                    'flex-direction': 'column',
+                    'flex': '1 1 100% !important',
+                    'min-height': '0 !important',
+                    'height': '100% !important',
+                    'margin': '0 !important', # must to avoid extra space that causes overflow
+                    'box-sizing': 'border-box !important',
+                }
             },
         },
         'code': {

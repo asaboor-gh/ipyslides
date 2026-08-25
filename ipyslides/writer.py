@@ -176,9 +176,7 @@ class Writer(ipw.HBox):
                 raise RuntimeError(f'Error in column {i+1}:\n{cap.stderr}')
 
             # can have last row delimiter, useful for single column automatically dropping last separator
-            base_outputs = list(cap.outputs) 
-            
-            cols[i]['outputs'] = base_outputs
+            cols[i]['outputs'] = list(cap.outputs) 
 
             if paused:
                 for r, out in enumerate(cols[i]['outputs']):
@@ -272,6 +270,7 @@ def write(*objs,widths = None, css_class=None, paused=False, **css_props):
         - In markdown, `::: columns` maps to static `write(..., paused=False)`, while `::: columns.paused` maps to incremental `write(..., paused=True)`.
         - `::: columns.inline` is inline display mode and ignores incremental framing.
         - Use `++` before `::: columns.paused` to isolate previous content from the first reveal step.
+        - A single object/block with `column` class inside `write`/`::: columns` will stretch to full height of columns no matter how deeply nested it is.
     
     ::: note-tip
         To make a group of rows as single item visually for incremental display purpose, wrap them in a nested list/tuple.
