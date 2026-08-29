@@ -13,7 +13,7 @@ from IPython.utils.capture import CapturedIO
 from dashlab.utils import _build_css
 
 from .formatters import ipw, XTML, RichOutput, _Output, serializer, htmlize, _inline_style, toc_from_meta, _delim
-from .xmd import BoundXMD, xmd, capture_content, get_slides_instance
+from .xmd import BoundXMD, xmd, capture_content, get_slides_instance, _split_parts
 
 
 class hold:
@@ -134,6 +134,8 @@ class Writer(ipw.HBox):
         
         cols = []
         for i, (w, obj) in enumerate(zip(widths, objs)):
+            if isinstance(obj, str):
+                obj = list(_split_parts(obj, delimited=False)) # split at '++' to support markdown column ~ list of strings
             outputs = obj if isinstance(obj, (list, tuple)) else [obj] # flatten to list of outputs
             cols.append({'flex': f'{w:.3f} {w:.3f} {w*100:.3f}%', 'outputs': outputs})
 
@@ -161,7 +163,7 @@ class Writer(ipw.HBox):
                         display(c)
                     elif isinstance(c, CapturedIO):
                         c.show() # Display captured outputs, all of them
-                    elif isinstance(c,str):
+                    elif isinstance(c, str):
                         xmd(c, returns = False)
                     elif isinstance(c, BoundXMD):
                         c.parse(returns = False) # parse and display extended markdown bounded object
@@ -243,6 +245,7 @@ def write(*objs,widths = None, css_class=None, paused=False, **css_props):
     Write any object that can be displayed in a cell with some additional features:
     
     - Strings will be parsed as as extended markdown that can have citations/python code blocks/Javascript etc. Variables are resolved from notebook scope.
+      A whole column as string will be splitted at '++' to create rows. This is equivalent to list of strings.
     - The output of `xmd.gather` can be passed to parse and display content with user given and scoped variables.
     - Use `paused=True` with rows in columns to reveal content incrementally during frame navigation.
     - Use `slides.steps([...])` for slider-driven step transitions where content is swapped in place.

@@ -129,6 +129,7 @@ class Slides(BaseSlides,metaclass=Singleton):
         - Use indexing with given number to apply persistent effects such as CSS or acess via attributes such as 
           `Slides.s0`, `Slides.s1` etc. for existing slides, so `Slides.s10 == Slides[10,]` if slide with number 10 exists.
         - Use `[section\!! "Backup slides", True \/]` to mark start of supplemental slides. Progress completes before this section and supplemental frames/slides are numbered as `S.1`, `S.2`, ... while remaining navigable.
+        - For functions that accept `width`/`height`, you can use `cqw`/`cqh` CSS units for relative size to current slide, e.g. `image(..., width='50cqw')` will span half the slide width.
     """
 
     @classmethod

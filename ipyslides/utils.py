@@ -1140,18 +1140,16 @@ class steps(ipw.GridBox):
             display(*outputs) # only clean outputs
             
         first, last = self._sidxs[self._expidx] if self._sidxs else [0, None]
-        self._fixstyle = html('style', _build_css('', {
+        self._fixstyle = html('style', _build_css((), {
                 f'.{self._uclass}': css_props, # apply user css to output
                 '.ips-steps-wrapper > .abs-style': {'position': 'absolute', 'width': '0', 'height': '0', 'padding': '0'}, # take style widgets out of flow
-                '.ips-steps-wrapper .steps-widget .widget-readout:hover': {'border-radius': '4px', 'background': 'var(--bg2-color, #98988)'},
                 ':not(.SlideArea) .ips-steps-output': {'max-height': '400px', 'overflow': 'auto'},
             })).as_widget().add_class('abs-style')
         
-        self._printstyle = html('style', _build_css('', {
-            '@media print': {
-                **view_nodes(f'.{self._uclass} > div > .jp-OutputArea-child',first, last),
-                '.ips-steps-wrapper .steps-widget': {'opacity': '0.2 !important'}, # dim it
-            }})).as_widget().add_class('abs-style').add_class('jupyter-only') # will not export this style to avoid conflicts
+        self._printstyle = html('style', _build_css(('@media print',), {
+            **view_nodes(f'.{self._uclass} > div > .jp-OutputArea-child',first, last),
+            '.ips-steps-wrapper .steps-widget': {'opacity': '0.2 !important'}, # dim it
+        })).as_widget().add_class('abs-style').add_class('jupyter-only') # will not export this style to avoid conflicts
         
         self._stepper = StepSlider(vertical=True if dots_loc in ("left","right") else False, nsteps=len(self._sidxs), interval=interval)
         
@@ -1196,6 +1194,6 @@ class steps(ipw.GridBox):
             slides._send_nav_msg(forward, parts=True, selector=f'.{self._uclass}')
         
         selector = f'.{self._uclass} > div > .jp-OutputArea-child'
-        css = _build_css('', {'@media screen': view_nodes(selector,*idxs)}) # only screen mode to avoid print conflicts
+        css = _build_css(('@media screen',), view_nodes(selector,*idxs)) # only screen mode to avoid print conflicts
         self._viewstyle.value = f"<style>\n{css}\n</style>"
         

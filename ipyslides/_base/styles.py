@@ -576,6 +576,7 @@ def style_css(colors, fonts, layout, _root = False):
             'position': 'absolute !important',
             'width':'210mm !important', # A4 width letter page can have a little extra margin, important to have fixed width
             'height': f'{_safe_height(layout.aspect)}mm !important',
+            'container-type': 'size !important', # allows using cqh,cqw type relative units for better content scaling
             'transform-origin': 'center !important' if layout.centered else 'left top !important',
             'transform': 'translateZ(0) scale(var(--contentScale,1)) !important', # Set by Javascript , translateZ is important to avoid blurry text
             'padding' : '8px !important', # don't make 1em to avoid change size with fonts

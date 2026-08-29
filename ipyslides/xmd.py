@@ -429,7 +429,7 @@ class XMarkdown(Markdown):
                 outputs.extend(self._parse_block(*obj))  
                 continue # vars are substituted already inside, obj = (header, data)
 
-            for part in self._split_parts(obj, delimited=True):
+            for part in _split_parts(obj, delimited=True):
                 if not isinstance(part, str):
                     outputs.append(part) # Delimiter
                     continue
@@ -466,37 +466,7 @@ class XMarkdown(Markdown):
         content = re.sub(r"(\[load\!.*?\/\])", error(r"Nested loading of files is not supported \1").value, content)
         # after loading content, raise deprecation warning for old syntax instead of silently adopting it.
         content = re.sub(r"(?<![\`\.\\])\bload\[?(.*?)\]?\`([^\`]*)\`", r"[alert! Use [load\! \2 \.. \1 \/] syntax instead! /]", content)
-        return content
-
-    def _split_parts(self, content, delimited=False):
-        "Split content at '++', optionally yielding Delimiter objects."
-        def _part_delim():
-            delim = _delim("PAUSE")
-            if opt == 'isolate':
-                warn("The '[isolate]' option after ++ is deprecated. Use 'columns.paused' directive instead.", name="DeprecationWarning").display()
-            return delim
-        
-        start = 0
-        first = True
-
-        content = textwrap.dedent(content)  # Dedent content before processing to make sure ++ is at start of line
-        for m in _PLUS_RE.finditer(content):
-            opt = (m.group('opt') or '').strip().lower().replace('_', '-')
-            chunk = content[start:m.start()].rstrip() # preserve leading indentation, clear trailing junk
-
-            if chunk:
-                yield chunk
-                if delimited:
-                    yield _part_delim()
-            elif first and delimited:
-                yield _part_delim()
-
-            first = False
-            start = m.end()
-
-        if tail := content[start:].rstrip():
-            yield tail
-    
+        return content    
     
     def _parse_params(self, param_string):
         """Parse parameter string with simple regex."""
@@ -810,7 +780,7 @@ class XMarkdown(Markdown):
         cap_cols = []
         for col in cols:
             rows = [] # list to make row-wise parts
-            for row in self._split_parts(col):
+            for row in _split_parts(col):
                 with capture_content() as cap:
                     if self._returns: self._show_disply_error = True # to show error in display var resolution if top level returns
                     try:
@@ -1316,11 +1286,11 @@ class xmd(metaclass=_XMDMeta):
         return XMarkdown()._parse(content, returns=returns, tag=tag)
 
 def _parse_as_steps(markdown):
-    "Parse markdown chunks split by ++ and show alternate chunks through a steps widget."
+    "Parse markdown chunks splitted by -- and show alternate chunks through a steps widget. First chunk is treated as common header and shown always."
     if not isinstance(markdown, str):
         raise TypeError(f"markdown expects a string, got {markdown!r}")
     
-    pages = list(_stream_chunks(markdown, sep='++'))
+    pages = list(_stream_chunks(markdown, sep='--'))
     with capture_content() as cap:
             xmd(pages[0], returns=False) # render common header part
 
@@ -1334,7 +1304,7 @@ def _parse_as_steps(markdown):
 
 
 def _stream_chunks(text, sep='---'):
-    "Used for slides and pages splitting, yields chunks."
+    "Used for slides and pages splitting, yields chunks. Use _split_parts for splitting by ++ more flexibly and yielding delimiter objects."
     s = sep.strip()
     if s.startswith('```'):
         raise ValueError(f"Invalid separator '{s}'. To split by backticks, use re.split instead!")
@@ -1367,3 +1337,34 @@ def _stream_chunks(text, sep='---'):
         if in_block:
             final_chunk += '\n```'  # close unclosed code block in forgiven manner instead of raising error
         yield cmnt_esc.restore(final_chunk)
+        
+
+def _split_parts(content, delimited=False):
+    "Split content at '++', optionally yielding delimiter objects. '++ ' inline is also supported unlinke strict '++' on a line by itself in _stream_chunks."
+    def _part_delim():
+        delim = _delim("PAUSE")
+        if opt == 'isolate':
+            warn("The '[isolate]' option after ++ is deprecated. Use 'columns.paused' directive instead.", name="DeprecationWarning").display()
+        return delim
+    
+    start = 0
+    first = True
+
+    content = textwrap.dedent(content)  # Dedent content before processing to make sure ++ is at start of line
+    for m in _PLUS_RE.finditer(content):
+        opt = (m.group('opt') or '').strip().lower().replace('_', '-')
+        chunk = content[start:m.start()].rstrip() # preserve leading indentation, clear trailing junk
+
+        if chunk:
+            yield chunk
+            if delimited:
+                yield _part_delim()
+        elif first and delimited:
+            yield _part_delim()
+
+        first = False
+        start = m.end()
+
+    if tail := content[start:].rstrip():
+        yield tail
+

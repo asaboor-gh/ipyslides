@@ -34,7 +34,7 @@ Besides these CSS classes, you always have `Slide.css`, `Slides.html('style',...
 # as function to let any call use escaped functions, otherwise they are lost on first use
 xmd_syntax = lambda: rf'''
 ## Extended Markdown
-++                                      
+--                                     
 Extended syntax on top of [Python-Markdown](https://python-markdown.github.io/) supports almost full presentation from Markdown.
 
 **Presentation Structure**{{.text-big}}
@@ -79,7 +79,7 @@ Citations
  key2: A citations can span multiple lines, but key should start on new line
 /]
 
-++
+--
 
 **Content Blocks**{{.text-big}}
 
@@ -119,7 +119,7 @@ The general block syntax is `::: type-or-classes [args] attributes`.
     - `md-[position or variable]` accepts same parameters as `code` block for syntax highlighting and get deleted on first use.
     - Both `code` and `md-var` blocks support attribute access such as `::: code.collapsed` or `::: md-var.inline` to show selected view. 
     You can also use `::: code 1 3` to focus on specific lines based on index 1 in markdown unlike Python.
-++
+--
 
 **Layouts**{{.text-big}}
 
@@ -157,7 +157,7 @@ Use `++` before `::: columns.paused` to separate previous content from first col
         ::: li .. This follows disc marker from parent `ul` block.
 ```
 
-++
+--
 
 **Code Display**{{.text-big}}
 
@@ -191,7 +191,7 @@ Code Blocks
     [md-src/]
 ```
 
-++
+--
 
 **Variables Substitution**{{.text-big}}
 
@@ -219,7 +219,7 @@ Variables from Python code can be embedded directly into Markdown.
 - Widgets behave same with or without `:nb` format spec. 
 - Formatting is done using `str.format` method, so f-string like literal expressions are not supported.
     
-++
+--
 
 {esc(xmd.funcs)}
 
@@ -236,7 +236,7 @@ Inline functions can be nested, thanks to new function call pattern that must en
     --
     [md-src/]
 
-++
+--
 **General Syntax**{{.text-big}}
 
 - To avoid any further markdown parsing, use ` Slides.esc ` while interpolating variables or expressions in f-strings, such as `f"Hello {{esc(var)}}"` or `f"Hello {{esc(func())}}"`.
@@ -249,6 +249,7 @@ Inline functions can be nested, thanks to new function call pattern that must en
 - Use html entities for special characters, e.g. `&rarr;` →, `&larr;` ←, `&uarr;` ↑, `&darr;` ↓, `&harr;` ↔, `&udarr;` ⇅, `&lArr;` ⇐, `&rArr;` ⇒, `&uArr;` ⇑, `&dArr;` ⇓, `&hArr;` ⇔ etc.
 - Use `sub` and `sup` functions for subscript and superscript respectively, e.g. H[sub!2/]O, E = mc[sup!2/].
 - See `Slides.css_styles` for available CSS classes to use in markdown blocks and other places.
+- Slide width/height in container query units can be used in functions/blocks that accept `width`/`height`, e.g. `[image\!..., width='50cqw' \/]` will span half the slide width.
 - See `Slides.css_animations` for available CSS animation classes to use in markdown blocks and other places.
 - Definition list syntax:
 ```md-src.inline
@@ -275,7 +276,7 @@ Inline functions can be nested, thanks to new function call pattern that must en
 css_animations = '''
 ## 🎬 IPySlides Content Animations
 
-++
+--
 
 All animations are **fully composable** - combine multiple animation classes to create complex effects! Use `anim-group` on a parent container to apply staggered animations to all children.
 
@@ -326,7 +327,7 @@ Variable | Default | Description
 `--kf-count` | 1 | Iteration count for `.anim-kf`.
 `--kf-direction` | normal | Animation direction for `.anim-kf`.
 
-++
+--
 
 ### 💡 Usage Examples
 
@@ -354,7 +355,7 @@ Variable | Default | Description
     Iris opens from top-left corner while zooming!
 ```
 
-++
+--
 
 **Custom Variables**
 ```md-after
@@ -385,7 +386,7 @@ Define `@keyframes` in Slides.css(...) or in a notebook cell.
     // Delays follow smooth sine curve: 100ms per 10 items
 ```
 
-++
+--
 
 **Per Item Origins** (Dynamic Effects)
 ```md-after
@@ -414,7 +415,7 @@ Define `@keyframes` in Slides.css(...) or in a notebook cell.
     Flips up from bottom while zooming!
 ```
 
-++
+--
 
 ### ✨ Key Features
 

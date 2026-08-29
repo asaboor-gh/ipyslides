@@ -151,11 +151,15 @@ def plt2html(plt_fig = None,transparent=True,width = None, caption=None, crop=No
     plt.close(_fig) #AVoids throwing text outside figure
     if width is None:
         width = f'{_fig.get_size_inches()[0]}in'
-    width = (f'width:{width}px' if isinstance(width,int) else f'width:{width}') + ';max-width:100%;' # important to avoid overflow
-    svg = f'<svg style="{width};height:auto;"' + plot_bytes.getvalue().decode('utf-8').split('<svg')[1]
+        
+    props = {
+        'width': f'{width}px' if isinstance(width,int) else f'{width}',
+        'height': 'auto', 'max-width': '100%' # max-width to avoid overflow
+    }
+    svg = f'<svg {_inline_style(props)}' + plot_bytes.getvalue().decode('utf-8').split('<svg')[1]
 
     from .utils import svg as USVG # Avoid circular import
-    return USVG(svg, width=width,crop=crop,caption=caption)
+    return USVG(svg, width=width, crop=crop, caption=caption)
     
 def plt2image(plt_fig=None, transparent=True, width=None, caption=None, format='png', dpi=300):
     """Convert matplotlib figure to image with base64 encoding.
