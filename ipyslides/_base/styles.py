@@ -384,6 +384,7 @@ def style_css(colors, fonts, layout, _root = False):
             }, # Define color below at low specificity, otherwise it can overwrite code
         },
         '.jp-RenderedHTMLCommon :is(pre:not(.Error), code)': {'line-height': '1.5 !important','background': 'none !important'}, # Avoid a white background set by jupyter
+        '.jp-RenderedHTMLCommon > *:last-child': {'margin-bottom': '0.2em'}, # override jupyter's default bottom margin for last child
         '^.SlidesWrapper':{
             'container': 'slides / inline-size',
             'margin':'auto',
@@ -420,13 +421,13 @@ def style_css(colors, fonts, layout, _root = False):
                 'z-index': '5',
                 'line-height': '1.5',# needs to enforce proper height in print
                 '.footer-text': {
+                    'font-size': 'calc(12px * min(var(--contentScale), 1))',
                     'display': 'flex',
                     'align-items': 'center',
                     'gap': '0.5rem',
-                    'padding': '0 6px', # not on top continer which has progressbar
+                    'padding': '0 calc(6px * min(var(--contentScale), 1))', # not on top continer which has progressbar
                     'width': '100%',
                     'min-width': '0',
-                    'font-size': '12px !important',
                     "padding-bottom": "1px !important", # a little space above progressbar
                 },
                 '.footer-text > div:first-child': {
@@ -686,7 +687,7 @@ def style_css(colors, fonts, layout, _root = False):
             },
             'dl': {
                 'display': 'grid',
-                'margin-block':'0.5em',
+                'margin': '0',
                 'font-family':'var(--jp-content-font-family) !important',
                 'font-size':'var(--text-size) !important', # somwhow gets different font size
             }, # Jupyterlab fix
@@ -829,17 +830,19 @@ def style_css(colors, fonts, layout, _root = False):
                 'align-items':'stretch',
                 '> *': {
                     'min-width':'0 !important', # avoid overflow due to stubborn elements
+                    'height': 'stretch', # fill full height
+                    ':only-child:has(.column)': {
+                        'display':'contents !important', # bring single nested column to parent level
+                    },
+                },
+                '.column': {
+                    'min-width':'0 !important', # avoid overflow due to stubborn elements
+                    'height': 'stretch', # fill full height
                 },
                 'table': {'width':'calc(100% - 0.5em)'}, # make table full width inside columns with some padding
-                ':only-child:has(.column), .column:only-child': { # strecth column to full height if single parents
-                    'display': 'flex',
-                    'flex-direction': 'column',
-                    'flex': '1 1 100% !important',
-                    'min-height': '0 !important',
-                    'height': '100% !important',
-                    'margin': '0 !important', # must to avoid extra space that causes overflow
-                    'box-sizing': 'border-box !important',
-                }
+                ':only-child:has(.column), .jp-OutputArea-output:has(.column)': { 
+                    'display':'contents !important', # bring single nested column to parent level
+                },
             },
         },
         'code': {
@@ -968,8 +971,8 @@ def style_css(colors, fonts, layout, _root = False):
             'padding-right': '0.5em',
             'border-radius': '2px',
             'border-left': '2px inset var(--accent-color)',
-            'margin-top': '0.5em',
-            'margin-bottom': '0.7em !important',
+            'margin-top': '0.25em',
+            'margin-bottom': '0.5em !important',
             'background': 'hsl(from var(--bg3-color) h s l / 0.9)',
             '^.admonition > .admonition-title': {'display':'none !important'}, # Remove admonition title
             '^::before': {
@@ -989,9 +992,9 @@ def style_css(colors, fonts, layout, _root = False):
                 '--bg-color': 'var(--bg2-color)',
                 '--bg1-altcolor': r'hsl(from var(--bg-color) h 80% l)', # make table rows, text show etc align with block color
                 'border-radius': '8px',
-                'margin': '0.5em 0',
                 'background': 'hsl(from var(--bg-color) h s l / 0.7)', 
                 'padding': '4px',
+                'margin-block-start': '0.2em', # avoid two blocks touching, same gap as columns
                 '^:is(ul,ol)': {'padding-left':'1.5em'} # align list inside block, same as normal lists
             },
             **({

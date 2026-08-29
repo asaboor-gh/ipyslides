@@ -635,7 +635,7 @@ function setScale(box, model) {
     }
     const pad = model.get('_fpad') || 23; // padding bottom, default 23px for footer space
     box.style.setProperty('--contentScale',scale);
-    box.style.setProperty('--paddingBottom',Number(pad/scale) + "px");
+    box.style.setProperty('--paddingBottom',Number(pad) + "px");
 }
 
 function handleScale(box, model) {

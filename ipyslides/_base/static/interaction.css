@@ -21,7 +21,7 @@
     }
     .ipyslides-print-node:not(.SlidesWrapper) {
         all: unset !important;
-        display: block !important;
+        display: contents !important; /* collapse all parent nodes */
         margin: 0 !important;
         padding: 0 !important;
     }
@@ -236,8 +236,8 @@
         clip-path: none !important;
         pointer-events: auto !important;
     }
-    /* General user animations/transitions should be immediately settled to last in print mode */
-    *, *::before, *::after {
+    /* General user animations/transitions should be immediately settled to last in print mode, restrict inscope */
+    .jp-OutputArea *, .jp-OutputArea *::before, .jp-OutputArea *::after {
         transition-duration: 0s !important;
         transition-delay: 0s !important;
         animation-duration: 0s !important; 

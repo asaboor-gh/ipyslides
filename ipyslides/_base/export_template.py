@@ -94,6 +94,9 @@ section .SlideBox {
 .SlidesWrapper .SlideLogo {
     position: fixed !important;
     line-height: 0 !important; /* suppress bad line-height here */
+    transform: scale(min(var(--contentScale), 1)) !important; /* scale footer to match content, but not more than 1 */
+    transform-origin: left bottom !important;
+    transition: transform 0.4s ease-in-out;
 }
 .SlidesWrapper::-webkit-scrollbar,
 .SlidesWrapper::-webkit-scrollbar-button,

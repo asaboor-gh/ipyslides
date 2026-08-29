@@ -48,7 +48,9 @@ def layout_css(accent_color, aspect):
                     },
                 },
                 ".static-widget": {
-                    "position": "static !important", # let objects flow out
+                    "^, > *, .widget-html-content": {
+                        "position": "static !important", # let objects flow out
+                    },
                 },
                 ".Warn::after": {
                     "display": "block",
@@ -131,6 +133,11 @@ def layout_css(accent_color, aspect):
                     "position": "absolute !important",
                     "^, .widget-html-content": {"line-height": "0 !important"},
                     "@media print": {"position": "fixed !important",},
+                    "@media screen": { # avoid messing up print layout
+                        "transform": "scale(min(var(--contentScale), 1)) !important", # scale footer to match content, but not more than 1
+                        "transform-origin": "left bottom !important",
+                        "transition": "transform 0.4s ease-in-out",
+                    },
                 }, # other properties are set internally
                 "> .Build-Btn": {"visibility": "hidden !important",}, # hide build button by default
                 "^:has(.SlideArea.Stale) > .Build-Btn": {
@@ -328,7 +335,6 @@ def layout_css(accent_color, aspect):
                     "line-height": "1.5 !important",
                 },
                 "^, .widget-html-content": {
-                    "--text-size": "14px !important",
                     "position": "static !important", # footer content should escape
                 },
             },

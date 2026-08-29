@@ -1014,7 +1014,7 @@ class XMarkdown(Markdown):
             return self._handle_var(error('Exception', f"ipyslides is partially initialized. Cannot parse {match.group(0)!r}"))
         
         func, ctx = _XMD_FUNCS.get(fname, _XMD_FUNCS["anyTag"])
-        if 'anyTag' in func.__name__:
+        if 'anyTag' in getattr(func, '__name__', ''): # __name__ is not available on all types of callables
             func = partial(func, fname.strip('_').lower()) # partial function for anyTag with tag name, svg_ goes to svg tag, not svg function
         
         if ctx == "slide" and not getattr(self._slides, 'this', None): # slide only functions

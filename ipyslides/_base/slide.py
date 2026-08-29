@@ -254,8 +254,8 @@ class Slide:
         self._widget.clear_output(wait = True) # Clear, but don't go there
         # Need to know how many contents before user provide content
         with capture_content() as cap:
+            html('span', '', id = self._sec_id, css_class='Slide-UID').display() # to register section id in DOM
             display(VBox([
-                    html('span', '', id = self._sec_id, css_class='Slide-UID').as_widget(), # span to not occupy space, need to remove from frames later.
                     self._bglayer, # background image layer
                     self._ftrhtml, # dynamic footer layer
                     self._fcss, # frame separator CSS
@@ -365,7 +365,8 @@ class Slide:
 
             # Next PAUSE after columns is ignored if fragments were already built from the COLUMNS output.
             if meta.get("DELIM", "") == "PAUSE":
-                meta_prev = ensure_dict(contents[index - 1].metadata) if index - 1 >= 0 else {}
+                prev_index = index - 1 - offset # actual index in contents list
+                meta_prev = ensure_dict(contents[prev_index].metadata) if prev_index >= 0 else {}
                 if "COLUMNS" in meta_prev and get_frags(meta_prev):
                     continue
 
