@@ -14,7 +14,7 @@ from tldraw import TldrawWidget
 from . import styles
 from ._widgets import InteractionWidget, NotesWidget, LaserPointer
 from .intro import get_logo, how_to_print, instructions, key_combs
-from ..utils import html, htmlize
+from ..utils import html, htmlize, update_class
 from ..dashlab import ListWidget, TabsWidget
 from .. import formatters as fmtrs
   
@@ -129,13 +129,10 @@ class CtxMenu(ListWidget):
     
     def _on_mode_change(self, msg):
         # make icons consistent, this is special case from js response
-        value, klass = False if msg.startswith('!') else True, msg.lstrip('!')
+        condition, klass = False if msg.startswith('!') else True, msg.lstrip('!')
+        update_class(self.ws.mainbox, klass, condition) # update mainbox class to reflect mode change
         if 'fullscreen' in klass.lower():
-            self._update_state('fscreen', value) 
-        if value:
-            self.ws.mainbox.add_class(klass)
-        else:
-            self.ws.mainbox.remove_class(klass)  
+            self._update_state('fscreen', condition)
 
     def _set_opts(self):
         "Set options based on current state."
@@ -170,8 +167,7 @@ class CtxMenu(ListWidget):
             elif key == 'panel':
                 self.ws.panelbox.toggle(value)
             elif key == 'swipe':
-                toggle_klass = self.ws.mainbox.add_class if value else self.ws.mainbox.remove_class
-                toggle_klass('mouse-swipe-enabled')
+                update_class(self.ws.mainbox, 'mouse-swipe-enabled', value)
                 self.ws._push_toast("Move mouse left/right while holding down left mouse button to navigate slides." if value else "Mouse swipe disabled.")
             elif key == 'toc':
                 self.ws.panelbox.toggle(True) # open panel
@@ -222,7 +218,7 @@ class SidePanel(VBox):
             self.ws.theme,
             HTML('<b>Additional Features</b>',layout = _html_layout),
             self.ws.checks.focus, self.ws.checks.rebuild, self.ws.checks.notes,
-            self.ws.checks.toast, self.ws.checks.reflow,self.ws.checks.merge,
+            self.ws.checks.toast, self.ws.checks.flow,self.ws.checks.merge,
             HTML('<b>PDF Printing / HTML Export</b>',layout = _html_layout),
             HTML(html('details',[html('summary','Printing Info'), how_to_print]).value),
             self.ws.checks.inotes,
@@ -322,7 +318,7 @@ class _Checks:
     """
     Instantiate under `Widgets` class only.
     """
-    reflow  = ipw.Checkbox(value = False,description='Reflow Content',layout=auto_layout)
+    flow    = ipw.Checkbox(value = False,description='Flow Content',layout=auto_layout)
     inotes  = ipw.Checkbox(value = False,description='Inline Notes (PDF only)',layout=auto_layout,)
     merge   = ipw.Checkbox(value = False,description='Merge Parts',layout=auto_layout)
     notes   = ipw.Checkbox(value = False,description='Notes Popup',layout=auto_layout) # do not observe, just keep track when slides work

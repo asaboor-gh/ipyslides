@@ -338,34 +338,20 @@ def view_nodes(selector: str, first: int = 0, last: int = None) -> dict:
     return {f"{selector}{notsel}": collapse_node()}
 
 
-def _safe_height(aspect):
-    """Calculate slide height with a tiny epsilon to avoid exact boundary issues in print.
-    
-    When aspect ratio produces an exact height (e.g., 16/10 = 131.25mm), browsers may 
-    experience precision issues where content height exactly equals container height,
-    causing grid centering to fail and content to disappear during print/PDF export.
-    
-    Adding 0.001mm is imperceptible but prevents this boundary condition.
-    
-    This elegant solution was discovered with the help of Claude Opus 4.5,
-    who also solved a months-long struggle with grid centering during print
-    by suggesting `position: absolute` for collapsed elements - removing them
-    from document flow while keeping them in DOM for links to work.
-    
-    Sometimes the simplest fixes are the hardest to find! 🎉
-    """
-    return round(210 / aspect, 2) + 0.001
-
 def style_css(colors, fonts, layout, _root = False):
-    maxheight = f'calc({_safe_height(layout.aspect)}mm - 16px - var(--paddingBottom, 23px))' # for nested items
     uclass = get_unique_css_class()
     _root_dict = {**{f"--{k}-color":v for k,v in colors.items()}, # Only here change to CSS variables
         '--text-size':f'{fonts.size}px',
+        '--pad-footer': '8px', # default padding for footer, when no content, will be handled by css class below
         '--jp-content-font-family': f'{fonts.text}, -apple-system, "BlinkMacSystemFont", "Segoe UI", "Oxygen", "Ubuntu", "Cantarell", "Open Sans", "Helvetica Neue", "Icons16"',
         '--jp-code-font-family': f'{fonts.code}, "Ubuntu Mono", "SimSun-ExtB", "Courier New"',
     }
+    maxheight = f'calc({layout._height} - 16px - var(--pad-footer, 23px))' # for nested items
     return _build_css(() if _root else (uclass,),{ # uclass is not used in root for exporting purpose
         **(_root_dict if not _root else {':root': _root_dict}),
+        '^.has-footer-text': {'--pad-footer': '23px'}, # when footer has content, extra padding is needed
+        '^.has-flow-content .SlideArea *': {'max-height':'max-content !important',}, # allow content to fully grow in flow mode
+        '^:not(.has-inline-notes) .speaker-notes': {'display':'none !important'}, # hide notes in print if not enabled
         '^.SlidesWrapper, .jupyter-widgets, .jp-RenderedHTMLCommon': { # widgets have their own fonts, but make same
             'font-family': 'var(--jp-content-font-family) !important',
             'color': 'var(--fg1-color)', # important to put here for correct export
@@ -392,6 +378,7 @@ def style_css(colors, fonts, layout, _root = False):
             'font-size':'var(--text-size) !important',
             'background':'var(--bg1-color)',
             'max-width':'100vw', # This is very important
+            'max-height': f'{100/layout.aspect:.2f}vw' if not _root else 'unset', # avoid slides giong tall in small screens, maintain aspect, but not in export
             '^, *, *::before, *::after': { # single reset for all inside slides
                 'box-sizing':'border-box !important',
             },
@@ -576,15 +563,20 @@ def style_css(colors, fonts, layout, _root = False):
             **({f"--{k}-color":v for k,v in colors.items()}), # need for per slide based CSS set by user to not effect all
             'position': 'absolute !important',
             'width':'210mm !important', # A4 width letter page can have a little extra margin, important to have fixed width
-            'height': f'{_safe_height(layout.aspect)}mm !important',
+            'height': f'{layout._height} !important',
             'container-type': 'size !important', # allows using cqh,cqw type relative units for better content scaling
             'transform-origin': 'center !important' if layout.centered else 'left top !important',
             'transform': 'translateZ(0) scale(var(--contentScale,1)) !important', # Set by Javascript , translateZ is important to avoid blurry text
             'padding' : '8px !important', # don't make 1em to avoid change size with fonts
-            'padding-bottom': 'var(--paddingBottom, 23px) !important',
+            'padding-bottom': 'var(--pad-footer, 23px) !important',
             'overflow': 'hidden !important', # important to avoid scroll of slide area, output area will handle it
             'display': 'grid !important', # can use align-content with block, but its came in 2024, so avoid new stuff
             'align-items': 'center !important' if layout.centered else 'start !important',
+            '@media print': {
+                'width': '100vw !important', # avoid size mismatch with page in calculations
+                'height': '100vh !important',
+                'margin': '0 !important', # avoid page margin in print
+            },
             '.jp-OutputArea': {
                 'max-height': f'{maxheight} !important', # avoid things get overflowing
                 'overflow': 'auto',
@@ -608,27 +600,16 @@ def style_css(colors, fonts, layout, _root = False):
                     '.jp-OutputArea-child.print-invisible, .columns.writer > div.print-invisible': hide_node(True),
                 },
             },
-            '@media print': { # For PDF printing dynamically set page size
-                'padding-bottom': 'var(--printPadding, var(--paddingBottom, 23px)) !important',
-                '@page': {
-                    'margin': '0 !important',
-                    'size': f'210mm {_safe_height(layout.aspect)}mm !important', # 1pt ~ 0.35mm, so no more than one decimal required
-                },
-            },
             '^.n0': { 
                 "align-items": "center !important", 
                 "justify-items": "center !important", 
                 "padding": "16px !important", # A little less compact title slide
                 "padding-top": "16px !important", 
-                "padding-bottom": "var(--paddingBottom, 23px) !important", # it get's overridden otherwise
+                "padding-bottom": "max(16px, var(--pad-footer, 23px)) !important", # it get's overridden otherwise
                 ":is(h1, h2, h3, h4, h5, h6)": { # even headings need to be centered on title slide
                     "text-align": "center", # not important to allow user override
                 },
             }, # no yoffset on title slide, leave it centered globally, unless user applys yoffset there
-            **({'*': { # Reflow content on user request
-                'max-height':'max-content !important',
-                }
-            } if layout._reflow else {}), # clean way to reflow all content
             '* .jp-OutputArea:has(.ips-pinned-item), .jp-OutputArea-child:has(.ips-pinned-item)': {
                 'overflow': 'visible !important', # avoid clipping of pinned content, but avoid top Area under slide
             },
@@ -640,8 +621,7 @@ def style_css(colors, fonts, layout, _root = False):
                     'transform': 'translateZ(0) !important', # create stacking context here to contain elements
                 },
             },
-            '.speaker-notes': {
-                **({} if layout._inotes else {'display':'none !important',}), # hide notes if not choosen to include in print
+            '.speaker-notes': { # display is set none above if not enabled in inline mode
                 'border-radius':'0.2em !important',
                 'background':'var(--bg2-color) !important',
                 'border':'1px dashed var(--pointer-color) !important',
@@ -751,7 +731,7 @@ def style_css(colors, fonts, layout, _root = False):
                 }, 
                 '^.next': {'opacity':'0.5',},
             },
-            '^.FirstTOC .toc-item.next' : {'opacity':'1',}, # In start, see full as same opacity
+            '^.main-toc .toc-item.next' : {'opacity':'1',}, # In start, see full as same opacity
             'ul li::marker, ol li::marker': {'color':'var(--accent-color)',},
             '.raw-text': { # Should follow theme under slides 
                 'color':'var(--fg1-color) !important',

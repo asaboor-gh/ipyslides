@@ -224,10 +224,17 @@ function printSlides(box, model) {
     box.querySelectorAll(':scope .print-invisible').forEach(el => el.classList.remove('print-invisible'));
     box.querySelectorAll(':scope .SlideArea.print-clone').forEach(el => el.remove());
     box.querySelectorAll(':scope > .print-cleanup-btn').forEach(btn => btn.remove());
+    attachPrintClass(box); // mark only this view for printing
 
     window._printOnlyObjs = [];
+    // Per slide instance page, to avoid clashes with other notebooks in jupyterlab
+    const pageCss = model.get('_page_css') || '';
+    const styleEl = document.createElement('style');
+    styleEl.textContent = pageCss;
+    document.head.appendChild(styleEl);
+    window._printOnlyObjs.push(styleEl); // ensure cleanup after print
+    
     const parts = model.get('_parts') || {}; // get part info for all slides
-    const fpad = model.get('_fpad') || 23; // get footer padding
     const frameCounts = slides.map((slide) => {
         const slideNum = parseInt([...slide.classList].find(cls => /^n\d+$/.test(cls))?.slice(1)) || null;
         if (slideNum === null || !Array.isArray(parts[slideNum])) {
@@ -236,7 +243,6 @@ function printSlides(box, model) {
         return parts[slideNum].length || 1;
     });
     
-    box.style.setProperty('--printPadding', `${fpad}px`); // set padding for print mode
     zoom.reset(box); // reset any zoom before print to avoid weird scaling 
     
     for (let n = 0; n < slides.length; n++) {
@@ -302,6 +308,7 @@ function printSlides(box, model) {
         for (let obj of window._printOnlyObjs || []) {
             obj.remove(); // Remove cloned slides
         }
+        removePrintClass(); // cleanup print nodes classes
         box.querySelectorAll(':scope .SlideArea.print-clone').forEach(el => el.remove());
         delete window._printOnlyObjs;
         box.querySelectorAll(':scope > .print-cleanup-btn').forEach(btn => btn.remove());
@@ -320,7 +327,7 @@ function printSlides(box, model) {
     cleanupBtn.onclick = afterPrintHandler;
     window.addEventListener('afterprint', afterPrintHandler, { once: true }); 
     box.querySelectorAll(':scope .SlideArea').forEach(sa => { 
-        void sa.offsetHeight; // force reflow of CSS
+        void sa.offsetHeight; // force recalculation of CSS
      }); 
     setTimeout(() => {   
         box.appendChild(cleanupBtn); // should not be visible immediately to distract user
@@ -633,9 +640,7 @@ function setScale(box, model) {
     if(!scale) { // Only set if there is one, don't set null
         return false; // This will ensure if Notebook is hidden, scale stays same
     }
-    const pad = model.get('_fpad') || 23; // padding bottom, default 23px for footer space
     box.style.setProperty('--contentScale',scale);
-    box.style.setProperty('--paddingBottom',Number(pad) + "px");
 }
 
 function handleScale(box, model) {
@@ -857,13 +862,17 @@ function linkSwitchesSlide(model, box) {
     });
 }
 
-function markPrintable(el, className) {
-  // First, remove the class from any previously marked elements
-  document.querySelectorAll('.' + className).forEach(node => node.classList.remove(className));
-  
-  // Then walk up from the given element to <body>, adding the class
+function removePrintClass() {
+    document.querySelectorAll('.ipyslides-print-node').forEach(
+        node => node.classList.remove('ipyslides-print-node')
+    );
+}
+
+function attachPrintClass(el) {
+  removePrintClass(); // clean up if any previous print nodes
+  // Walk up from the given element to <body>, adding the class
   while (el && el !== document.body) {
-    el.classList.add(className);
+    el.classList.add('ipyslides-print-node');
     el = el.parentElement;
   }
 }
@@ -973,9 +982,6 @@ function render({ model, el }) {
 
         setMainBgImage(box.querySelector(':scope .ShowSlide'), box) // set background image if any on current slide
         tldrawLinks(box, model); // fix draw links for all slides
-        
-        // Add classes to mark ancestors for printing
-        markPrintable(box, 'ipyslides-print-node');
 
         // Store cleanup function (it removes itself from map when called)
         _viewCleanups.set(box, () => {

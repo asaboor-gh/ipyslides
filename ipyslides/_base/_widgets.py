@@ -23,7 +23,7 @@ class InteractionWidget(anywidget.AnyWidget):
     _colors = traitlets.Dict(jupyter_colors).tag(sync=True) # for export
     _parts = traitlets.Dict().tag(sync=True) # parts data for each slide, for js side use
     _main_end = traitlets.Int(default_value=0).tag(sync=True) # last main slide index
-    _fpad = traitlets.Int(16).tag(sync=True) # padding for footer, used in export
+    _page_css = traitlets.Unicode('').tag(sync=True) # page size and margin for print/export
     
     msg_topy = traitlets.Unicode('').tag(sync=True)
     msg_tojs = traitlets.Unicode('').tag(sync=True)

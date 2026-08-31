@@ -28,7 +28,6 @@ _script = '''<script>
         let scale = scaleH > scaleW ? scaleW : scaleH;
         if (scale) { // Only add if not null or somethings
             document.documentElement.style.setProperty('--contentScale',scale);
-            document.documentElement.style.setProperty('--paddingBottom',Number(__PADBTM__/scale) + "px");
         };
     };
     window.dispatchEvent(new window.Event('resize')); // First time programatically
@@ -111,7 +110,7 @@ class _HhtmlExporter:
                 theme_kws["colors"] = self.main.widgets.iw._colors
                     
         dom_classes = tuple(self.main._box._dom_classes)
-        css_classes = [c for c in dom_classes if c.startswith('Slides')]
+        css_classes = [c for c in dom_classes if c.startswith('Slides') or c.startswith('has-')] # only export relevant classes
         if self.main.uid in dom_classes:
             css_classes.append(self.main.uid)
             
@@ -122,7 +121,7 @@ class _HhtmlExporter:
             content     = content, 
             script      = _script, 
             css_class   = ' '.join(css_classes),
-            padding_bottom = self.main.widgets.iw._fpad,
+            page_css    = self.main.html('style', self.main.widgets.iw._page_css).value,
             )
 
 

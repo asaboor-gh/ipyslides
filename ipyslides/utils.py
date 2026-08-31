@@ -1083,6 +1083,19 @@ def _save_clipboard_image(filename, quality = 95, overwrite = False):
         else:
             raise ValueError('No image on clipboard/file or not supported format.')
 
+def update_class(widget, css_class:str, condition:bool):
+    """Add or remove a class from a widget based on a condition. If condition is True, add the class(es), otherwise remove them.
+    css_class should be a string with many classes separated by space.
+    """
+    if not isinstance(widget, ipw.DOMWidget):
+        raise TypeError(f'widget should be an ipywidgets.DOMWidget, got {type(widget)}')
+    if not isinstance(css_class, str):
+        raise TypeError(f'css_class should be a string, got {type(css_class)}')
+    
+    action = widget.add_class if condition else widget.remove_class
+    for cls in css_class.split():
+        action(cls)
+
 # for css_syntax
 _css_info = (f"""
 {textwrap.dedent(_build_css.__doc__)}
@@ -1190,7 +1203,7 @@ class steps(ipw.GridBox):
         
         if slides := get_slides_instance(): # must before changing view window to take effect
             # Allow animation on selection any time
-            getattr(slides.widgets.slidebox, 'remove_class' if forward else 'add_class')('AnimPrev') 
+            update_class(slides.widgets.slidebox, 'AnimPrev', not forward)
             slides._send_nav_msg(forward, parts=True, selector=f'.{self._uclass}')
         
         selector = f'.{self._uclass} > div > .jp-OutputArea-child'

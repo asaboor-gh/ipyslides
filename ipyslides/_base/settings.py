@@ -4,6 +4,7 @@ and then provided to other classes via composition, not inheritance.
 """
 import json, re
 import traitlets
+import textwrap
 
 from traitlets import HasTraits, Int, Unicode, Bool, Float, TraitError
 from pathlib import Path
@@ -11,7 +12,7 @@ from inspect import Signature, Parameter
 from ipywidgets.widgets.trait_types import InstanceDict
 
 from ..formatters import code_css, htmlize
-from ..utils import html, today, _clipbox_children, _resolve_img, get_clips_dir, set_dir
+from ..utils import html, today, update_class, _clipbox_children, _resolve_img, get_clips_dir, set_dir
 from . import styles, _layout
 from ..dashlab import disabled
 
@@ -126,21 +127,23 @@ class Footer(ConfigTraits):
     date = Unicode("today", allow_none=True, help="Set date string or use 'today' for current date.")
     controls = Bool(True, help="Show/hide controls like next/prev buttons and clickers in PDF/export mode.")
     progress = Bool(True, help="Show/hide progress bar at bottom of slides.")
-
+    
     def _apply_change(self,change):
         # change is None when called as footer(...), so we update all things together
         self._update_footer() # html content updated
         wgts = self.main._widgets
         wgts._progbar.layout.display = "" if self.progress else "none" # show/hide progress bar
-        wgts.iw._fpad = 23 if any([self.text, self.date, self.section, self.numbering]) else 16 # 16 is same around all sides unless footer needs more
         wgts.controls.layout.visibility = "visible" if self.controls else "hidden"
-        wgts.iw.msg_tojs = 'RESCALE' # sets padding etc
 
         if not self.controls:
             self.main._slides.notify("Navigation controls hidden. But keyboard and edge click is still working!")
         
         for slide in self.main._slides:
             self._set_on(slide) # update footer per slide for print/export
+        
+        hastext = any([self.text, self.date, self.section, self.numbering])
+        update_class(self.main._widgets.mainbox, 'has-footer-text', hastext)
+        wgts.iw.msg_tojs = 'RESCALE' # keep class update first so scale uses latest footer padding
 
     def _running_section_text(self, slide):
         "Get running section title via Slides._sectionindex and return stripped text." 
@@ -192,12 +195,9 @@ class Layout(ConfigTraits):
     centered = Bool(True)
     scroll   = Bool(True)
     width    = Int(100)
-    aspect   = Float(16/9.001, help="Aspect ratio of slides, width/height. Add a small value to avoid exact 16/9, 16/10 etc. which causes bottom border gap in some browsers.")
+    aspect   = Float(16/9, help="Aspect ratio of slides, width/height.")
     ncol_refs = Int(2)
     theme    = Unicode('Jupyter')
-
-    _reflow = False # internal use only
-    _inotes = False # internal use only
     
     @traitlets.validate('width')
     def _limit_width(self, proposal):
@@ -206,6 +206,7 @@ class Layout(ConfigTraits):
         return proposal["value"]
   
     def _apply_change(self, change):
+        self._set_page_css() # set page size for print/export
         if change and change['owner'] == "theme":
             return self.main._update_theme({'owner':'layout'}) # otherwise colors don't apply to icons
         self.main._update_size(change = None) # will reset theme and send RESCALE message
@@ -217,12 +218,27 @@ class Layout(ConfigTraits):
             raise ValueError(f"Theme value expect on the followings: {themes!r}")
         self.main._widgets.theme.value = proposal["value"] # needs a robust update
         return proposal["value"] 
+    
+    @property
+    def _height(self) -> str:
+        "Get height of slides in mm based on aspect and width (210mm)."
+        return f"{round(210 / self.aspect, 2)}mm"
+    
+    def _set_page_css(self):
+        "Set page size and margin for print/export. Must be done once per view to avoid clashes."
+        self.main._widgets.iw._page_css = textwrap.dedent(f'''
+            @page {{
+                margin: 0 !important;
+                size: 210mm {self._height} !important; /* 1pt ~ 0.35mm, so no more than one decimal required */
+            }}
+        ''')
 
 @fix_sig
 class Toggle(ConfigTraits):
     "Toggle ON/OFF checks in settings panel."
-    reflow = Bool(False)
+    flow = Bool(False)
     notes  = Bool(False)
+    inotes = Bool(False)
     toast  = Bool(True)
     focus  = Bool(True, help="Focus on slide area when a slide is built or rebuilt.")
     rebuild= Bool(True, help="Auto rebuild markdown slides when an included notebook-scoped variable is updated.")
@@ -233,7 +249,9 @@ class Toggle(ConfigTraits):
             if widget := getattr(self.main._widgets.checks, trait, None):
                 traitlets.link((self,trait),(widget, "value"))
 
-    def _apply_change(self, change): pass
+    def _apply_change(self, change):
+        update_class(self.main._widgets.mainbox, 'has-flow-content', self.flow) # content flow on/off
+        update_class(self.main._widgets.mainbox, 'has-inline-notes', self.inotes) # inline notes on/off
 
 class AutoUnicode(Unicode):
     def validate(self, obj, value):
@@ -256,7 +274,7 @@ class Logo(ConfigTraits):
     @traitlets.validate('src')
     def _fix_path(self, proposal):
         if isinstance(proposal["value"], Path):
-            return str(Path)
+            return str(proposal["value"])
         return proposal["value"]
 
     def _set_props(self, **kwargs):
@@ -305,9 +323,7 @@ class Settings:
 
         self._widgets.sliders.fontsize.observe(lambda c: self.fonts(size=c.new), names=["value"])
         self._widgets.theme.observe(self._update_theme, names=["value"])
-        self._widgets.checks.reflow.observe(self._update_theme, names=["value"]) # set reflow through layout._reflow
-        self._widgets.checks.inotes.observe(self._update_theme, names=["value"]) # set inline notes through layout._inotes
-        self._widgets.checks.merge.observe(self._set_merge_class, names=["value"])
+        self._widgets.checks.merge.observe(self._set_merge_ctx, names=["value"])
         self._widgets.buttons.print.on_click(self._print_pdf)
         self._wslider.observe(self._update_size, names=["value"])
         self._update_theme({'owner':'layout'})  # Trigger Theme with aspect changed as well
@@ -334,12 +350,10 @@ class Settings:
             raise AttributeError(f"Can't reset attribute {name!r} on {self!r}")
         self.__dict__[name] = value
 
-    def _set_merge_class(self, change=None):
-        if self._widgets.checks.merge.value:
-            self._widgets.mainbox.add_class('SlidesMerged')
-        else:
-            self._widgets.mainbox.remove_class('SlidesMerged')
-
+    def _set_merge_ctx(self, change=None):
+        if curr := self._slides._current:
+            curr.update_display() # force update to reset frames
+        
     def _print_pdf(self, btn):
         if self._slides._next_pending:
             return self._slides.notify(
@@ -368,7 +382,7 @@ class Settings:
         if len(self._slides) < 5 or slide.number == 0:
             return '' # no clicks for few slides or title page
         
-        items = [getattr(item,'_sec_id','') for item in self._slides if item.index <= self._slides._lms_idx] # only before supplemnetal
+        items = [getattr(item,'_sec_id','') for item in self._slides if (item.index or 0) <= self._slides._lms_idx] # only before supplemnetal
         imax = len(items) - 1
         items = [items[int(round(i,0))] for i in [0, imax/4,imax/2, 3*imax/4, imax]]
         labels = '●●●●●'
@@ -400,10 +414,6 @@ class Settings:
                 _layout.layout_css(self._colors['accent'],self.layout.aspect)
             ).value + _layout.loading_style # loading style should be always there
             
-        # before applying style_css theme, set reflow and inotes
-        self.layout._reflow = self._widgets.checks.reflow.value
-        self.layout._inotes = self._widgets.checks.inotes.value
-        
         theme_css = styles.style_css(**self._theme_kws)
         self._widgets.htmls.theme.value = html("style", theme_css).value
         if self._widgets.checks.notes.value:

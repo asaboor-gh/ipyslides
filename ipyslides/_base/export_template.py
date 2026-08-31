@@ -1,6 +1,6 @@
 # Template for building HTML from slides 
 
-def doc_html(code_css, style_css, content, script, css_class, padding_bottom):
+def doc_html(code_css, style_css, content, script, css_class, page_css = ''):
     return f'''<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -13,8 +13,9 @@ def doc_html(code_css, style_css, content, script, css_class, padding_bottom):
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script> 
     
     {style_css}
-    {slides_css.replace("__PADBTM__",str(padding_bottom))}
+    {slides_css}
     {code_css}
+    {page_css}
 
     <!-- Custom stylesheet, it must be in the same directory as the html file -->
     <link rel="stylesheet" href="overrides.css">
@@ -50,7 +51,7 @@ def doc_html(code_css, style_css, content, script, css_class, padding_bottom):
     </div>
 </div>
 </body>
-{script.replace("__PADBTM__",str(padding_bottom))}
+{script}
 </html>
 '''
 
@@ -106,7 +107,7 @@ section .SlideBox {
 
 .SlidesWrapper.Scrolling .slide-footer {
     visibility: hidden !important;
-    transition: visbility 200ms ease-in;
+    transition: visibility 200ms ease-in;
 }
 
 @media print {
@@ -140,12 +141,15 @@ section .SlideBox {
         margin: 0 !important;
         padding: 0 !important;
         page-break-inside: avoid !important;
-        page-break-after: always !important;
+        page-break-before: always !important;
+        break-before: page !important;
+        break-inside: avoid !important;
         overflow: hidden !important; /* otherwise it throws text to next page */
-        padding-bottom: __PADBTM__px !important; /* for avoiding overflow to bottom,same as under SlideArea */
+        padding-bottom: var(--pad-footer, 23px) !important; /* for avoiding overflow to bottom,same as under SlideArea */
     }
-    section:last-of-type {
-        page-break-after: avoid !important;
+    section:first-of-type {
+        page-break-before: avoid !important;
+        break-before: avoid !important;
     }
     section .SlideBox {
         margin-bottom: 0 !important;
@@ -156,7 +160,6 @@ section .SlideBox {
         position: static !important; /*override from document as printing absolute is issue */
         overflow: hidden !important;
         page-break-inside: avoid !important;
-        --paddingBottom: __PADBTM__px; /* fixed for printing, padding set in style_css */
     }
 }
 </style>

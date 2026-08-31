@@ -15,22 +15,23 @@
     html, body, .ipyslides-print-node {
         margin: 0 !important;
         padding: 0 !important;
+        overflow: auto !important;
     }
     .jp-ThemedContainer {
         all: unset !important; /* show all slides in print mode set in devtools */
     }
-    .ipyslides-print-node:not(.SlidesWrapper) {
+    .ipyslides-print-node:not(.SlidesWrapper),
+    .ipyslides-print-node.SlidesWrapper > .SBoxWrapper,
+    .ipyslides-print-node.SlidesWrapper > .SBoxWrapper > .SlideBox {
         all: unset !important;
         display: contents !important; /* collapse all parent nodes */
-        margin: 0 !important;
-        padding: 0 !important;
+    } 
+    .ipyslides-print-node.SlidesWrapper.SlidesWrapper {
+        display: contents !important; /* bypass this container as well, but let other styles apply, so no all:unset here */
+        --contnetScale : 1 !important; /* Defualt for printing at same value */
     }
     .ipyslides-print-node .jupyter-only {
         display: none !important;
-    }
-    .ipyslides-print-node.SlidesWrapper.SlidesWrapper {
-        display: table !important; /* Manages auto height for multiple slides */
-        --contnetScale : 1 !important; /* Defualt for printing at same value */
     }
     .ipyslides-print-node.ipyslides-print-node,
     .ipyslides-print-node.SlidesWrapper > * { 
@@ -39,40 +40,19 @@
     .ipyslides-print-node.SlidesWrapper > .LogoHtml.LogoHtml { 
         visibility: visible !important; /* keep logo visible*/
     }
-    .ipyslides-print-node.SlidesWrapper > .SBoxWrapper { /* This is main culprit to mess up print */
-        position: absolute !important; /* otherwise it leaves some space at top unknown way */
-        left: 0 !important;
-        top: 0 !important;
-        width: 100vw !important; /* exact page width */
-        max-width: 100vw !important;  /* can't work without it */
-        overflow: auto !important;
-        height: max-content !important;
-        z-index: -1 !important; /* behind everything */
-    }
-    .ipyslides-print-node.SlidesWrapper .SlideBox {
-        display: flex !important;
-        flex-direction: column !important;
-        flex: 0 0 auto !important;   /* size to content; don't grow/shrink */
-        height: auto !important;     /* expand to fit all slides */
-        width: 100% !important;
-        overflow: hidden !important;
-        min-height: max-content !important;
-    }
     .ipyslides-print-node.SlidesWrapper .SlideBox .SlideArea {
         position:  relative !important; /* to hold background image and stuff properly and itself in order */
         visibility: visible !important;
         transform: translateZ(0) scale(1) !important; /* still need to contain stuff properly inside it and have crispy text*/
         page-break-inside: avoid !important; /* avoid for slides printing */
-        page-break-after: always !important;
+        page-break-before: always !important;
+        break-before: page !important;
+        break-inside: avoid !important;
     }
     .ipyslides-print-node.SlidesWrapper .SlideBox .SlideArea.SlideArea {
         background: var(--bg1-color) !important; /* user can set bg color per slide */
     }
-    .ipyslides-print-node.SlidesWrapper .SlideBox .SlideArea:last-of-type  {
-        page-break-after: avoid !important;
-        break-after: avoid !important;
-    }
-    .ipyslides-print-node.SlidesWrapper .SlideBox .SlideArea:first-of-type  {
+    .ipyslides-print-node.SlidesWrapper .SlideBox .SlideArea:first-child {
         page-break-before: avoid !important;
         break-before: avoid !important;
     }
@@ -171,7 +151,7 @@
     animation-duration: var(--kf-time, var(--time)) !important;
     animation-delay: var(--kf-delay, var(--delay, 0s)) !important;
     animation-timing-function: var(--kf-ease, ease) !important;
-    animation-fill-mode: var(--kf-fill, both) !important;
+    animation-fill-mode: var(--kf-fill, none) !important;
     animation-iteration-count: var(--kf-count, 1) !important;
     animation-direction: var(--kf-direction, normal) !important;
 }
@@ -243,7 +223,7 @@
         animation-duration: 0s !important; 
         animation-delay: 0s !important;
         animation-iteration-count: 1 !important;
-        animation-fill-mode: forwards !important;
+        animation-fill-mode: none !important; /*othereise some objects like footers do not show up in print */
     }
 }
 

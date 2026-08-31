@@ -394,8 +394,8 @@ class Slides(BaseSlides,metaclass=Singleton):
             
         # may be slider can't go there due to single slide, enforce it
         if index == 0 and self._iterable:
-            self._iterable[0]._set_css_classes('ShowSlide', 'HideSlide ShowSlide')
-            for slide in self._iterable[1:]: slide._set_css_classes(add = 'HideSlide') # safegaurd
+            self._iterable[0]._update_class('ShowSlide', 'HideSlide ShowSlide')
+            for slide in self._iterable[1:]: slide._update_class(add = 'HideSlide') # safegaurd
         
         self._current._set_progress()  # update progress bar and footer
         self._current._widget.layout.visibility = 'visible'  # ensure visibility, as JS may not be able to yet get it
@@ -466,7 +466,7 @@ class Slides(BaseSlides,metaclass=Singleton):
                 how_to_slide],sizes=[14,1, 85]).display()
         
         self._unregister_postrun_cell() # This also clears slides per cell
-        self.settings.footer.text = self.get_logo('14px') + ' IPySlides'
+        self.settings.footer.text = self.get_logo('1em') + ' IPySlides'
         self.navigate_to(0)  # Go to title slide
 
     def clear(self, keep):
@@ -532,7 +532,7 @@ class Slides(BaseSlides,metaclass=Singleton):
             if slide._markdown:
                 slide._rebuild(go_there=False)
             else:
-                slide._set_css_classes(add = 'Out-Sync') # will go synced after rerun
+                slide._update_class(add = 'Out-Sync') # will go synced after rerun
 
     def set_citations(self, data):
         r"""Set citations from dictionary or string in yaml format with content like `key: citation value` on their own lines or json format., 
@@ -746,7 +746,7 @@ class Slides(BaseSlides,metaclass=Singleton):
             slide._src_func(slide) # call to build slide now
             
             # clean up after building the slide
-            slide._set_css_classes(remove = 'Stale') # lazy slides will be back here to be built
+            slide._update_class(remove = 'Stale') # lazy slides will be back here to be built
             del slide._src_func # remove build function for building once
         
     def _click_build_if_pending(self, btn):
@@ -766,12 +766,9 @@ class Slides(BaseSlides,metaclass=Singleton):
             if slide._pending(): return slide # get and exit
 
     def _update_content(self, change):
-        if self.wprogress.value == 0:  # First slide
-            self._box.add_class("InView-Title").remove_class("InView-Last")
-        elif self.wprogress.value == self.wprogress.max:  # Last slide
-            self._box.add_class("InView-Last").remove_class("InView-Title")
-        else:
-            self._box.remove_class("InView-Title").remove_class("InView-Last")
+        utils.update_class(self._box, "InView-Title InView-Last", False)  # remove both classes
+        utils.update_class(self._box, "InView-Title", self.wprogress.value == 0) # first slide
+        utils.update_class(self._box, "InView-Last", self.wprogress.value == self.wprogress.max) # last slide
 
         if self._iterable and change:
             self.notes.display()  # Display notes first
@@ -815,6 +812,7 @@ class Slides(BaseSlides,metaclass=Singleton):
         self.widgets.slidebox.children = [it._widget for it in self._iterable]
         for i, s in enumerate(self._iterable):
             s._index = i  # Update index
+            self.settings.footer._set_on(s) # update footer
 
         self.widgets.iw._main_end = self._lms_idx # set for frontend
         if not any(['ShowSlide' in c._dom_classes for c in self.widgets.slidebox.children]):
@@ -963,7 +961,7 @@ class Slides(BaseSlides,metaclass=Singleton):
             raise ValueError("@src decorator function must accept a single argument, slide.")
         
         self.this._src_func = func # store for later build
-        self.this._set_css_classes(add = 'Stale') # mark as stale to build later
+        self.this._update_class(add = 'Stale') # mark as stale to build later
 
     def __xmd(self, line, cell=None):
         r"""Turns to cell magics `%%xmd` and line magic `%xmd` to display extended markdown.
@@ -994,12 +992,7 @@ class Slides(BaseSlides,metaclass=Singleton):
 
     def _collect_slides(self):
         slides_iterable = tuple(sorted(self._slides_dict.values(), key= lambda s: s.number))
-        
-        if len(slides_iterable) <= 1:
-            self._box.add_class("SingleSlide")
-        else:
-            self._box.remove_class("SingleSlide")
-
+        utils.update_class(self._box, 'SingleSlide', len(slides_iterable) <= 1) # must to handle single slide view
         return slides_iterable
     
     def _update_toc(self):

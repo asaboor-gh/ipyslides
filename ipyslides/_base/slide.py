@@ -11,7 +11,7 @@ from ipywidgets import HTML as ipwHTML, VBox
 from . import styles
 from ._layout import background_css, get_unique_css_class, loading_skeleton
 from .styles import collapse_node, hide_node
-from ..utils import XTML, html, _resolve_img, _styled_css, _build_css
+from ..utils import XTML, html, update_class, _resolve_img, _styled_css, _build_css
 from ..xmd import capture_content
 from ..formatters import _Output, widget_from_data, slidebound
 
@@ -135,7 +135,7 @@ class Slide:
         self._has_widgets = False # Update in _build_slide function
         self._has_vars = () # Update in _slide function for markdown slides only
         self._toc_args = () # empty by default
-        self._widget.add_class(f"n{self.number}")
+        self._update_class(add=f"n{self.number}")
         self._fcss = ipwHTML(layout={"margin": "0","padding": "0","heigh": "0"}) # frame separator CSS
         self._bg_ikws = {} # rebuild always re-derives background mapping from content
   
@@ -206,7 +206,7 @@ class Slide:
             # Clean up delimiters: trailing, empty, adjacent PAUSE delimiters
             self._contents = self._cleanup_delimiters(outputs)
             self._contents.extend(self._handle_refs()) # add at end if any
-            self._set_css_classes(remove = 'Out-Sync') # Now synced
+            self._update_class(remove = 'Out-Sync') # Now synced
             self.update_display()    
 
             if self._app.widgets.checks.focus.value: # User preference
@@ -311,13 +311,9 @@ class Slide:
             if s._section:
                 items.append({"c":"next", "s":s})
         
-        first_toc = True
+        first_toc_slide = next((s for s in self._app[:] if s._toc_args), None)
         for s in self._app[:]:
-            if s._toc_args and first_toc:
-                s._widget.add_class('FirstTOC')
-                first_toc = False
-            else:
-                s._widget.remove_class('FirstTOC')
+            update_class(s._widget, 'main-toc', s is first_toc_slide) # first TOC slide is special
 
         items = [XTML(textwrap.dedent('''
             <li class="toc-item {c}">
@@ -344,7 +340,7 @@ class Slide:
         
         self._frame_idxs = tuple(frames) if len(frames) > 1 else ()
         if self._frame_idxs:
-            self._widget.add_class('HasFrames') # make sure class is added
+            self._update_class(add='HasFrames') # make sure class is added
             self._reveal_frames() # quick preview of how built frames will appear
         elif hasattr(self, '_frame_idxs'): # from previous run may be
             del self._frame_idxs
@@ -398,18 +394,12 @@ class Slide:
     
     def _update_view(self, which):
         self._set_progress()
-        getattr(self._app.widgets.slidebox, 
-            'remove_class' if which == 'next' else 'add_class'
-        )('AnimPrev') # set content animation direction between parts
-        
+        update_class(self._app.widgets.slidebox, 'AnimPrev', which == 'prev') # set content animation direction between parts
         frame = self._fidxs[self.indexf] if self._fidxs else {}
         self._update_transition_objs(animation=False) # avoid animations between frames
 
         if self.index == self._app.wprogress.max: # This is last slide
-            if self.indexf + 1 == self.nf:
-                self._app._box.add_class("InView-Last")
-            else:
-                self._app._box.remove_class("InView-Last")
+            update_class(self._app._box, "InView-Last", self.indexf + 1 == self.nf) # only if last frame
         
         self._app._send_nav_msg(
             which == 'next',
@@ -690,19 +680,13 @@ class Slide:
         if not self._app.this: # Otherwise it has side effects
             self._app.navigate_to(self.index) 
 
-    def _set_css_classes(self, add=None, remove=None):
+    def _update_class(self, add=None, remove=None):
         "Set CSS classes on this slide separated by space. classes are remove first and add after it."
         if remove is not None: # remove first to enable toggle
-            if not isinstance(remove, str):
-                raise TypeError("CSS classes should be a string with each class separated by space")
-            for c in remove.split():
-                self._widget.remove_class(c)
+            update_class(self._widget, remove, False)
         
-        if add is not None:
-            if not isinstance(add, str):
-                raise TypeError("CSS classes should be a string with each class separated by space")
-            for c in add.split():
-                self._widget.add_class(c)
+        if add is not None: # add after remove to enable toggle
+            update_class(self._widget, add, True)
 
     @property
     def _css_class(self):

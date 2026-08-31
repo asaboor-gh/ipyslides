@@ -3,6 +3,8 @@ Author Notes: Classes in this module should only be instantiated in Slides class
 and then provided to other classes via composition, not inheritance.
 """
 
+from ..utils import update_class
+
 class Navigation:
     def __init__(self, _instanceSlides):
         "Instnace should be inside `Slides` class."
@@ -16,17 +18,15 @@ class Navigation:
         self.btn_next.on_click(self._shift_right)
         
     def _shift_right(self,change):
-        self.widgets.slidebox.remove_class('Prev') # remove backwards animation safely
-        self.widgets.slidebox.remove_class('AnimPrev') # content animation flag
+        update_class(self.widgets.slidebox, 'Prev AnimPrev', False) # remove backwards animation safely
         if change and not self.slides._current.next_frame():
             if self.wprogress.value < self.wprogress.max:
                 self.wprogress.value = self.wprogress.value + 1 # Forwards
             
     def _shift_left(self,change):
-        self.widgets.slidebox.remove_class('Prev') # remove backwards animation safely, need trigger before adding
+        self.widgets.slidebox.remove_class('Prev') # remove backwards animation safely, need trigger before adding, but avoid resetting AnimPrev here
         if change and not self.slides._current.prev_frame():
-            self.widgets.slidebox.add_class('Prev') # Backwards Animation
-            self.widgets.slidebox.add_class('AnimPrev') # content animation flag, need to stay persistent to avoid trigger removal too early
+            update_class(self.widgets.slidebox, 'Prev AnimPrev', True)
             if self.wprogress.value > 0:
                 self.wprogress.value = self.wprogress.value - 1 # Backwards
                
