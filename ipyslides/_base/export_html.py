@@ -4,7 +4,6 @@ not by end user.
 """
 import os, re
 import textwrap
-from contextlib import suppress
 from pathlib import Path
 
 from .export_template import doc_html
@@ -109,18 +108,14 @@ class _HhtmlExporter:
             if self.main.widgets.iw._colors:
                 theme_kws["colors"] = self.main.widgets.iw._colors
                     
-        dom_classes = tuple(self.main._box._dom_classes)
-        css_classes = [c for c in dom_classes if c.startswith('Slides') or c.startswith('has-')] # only export relevant classes
-        if self.main.uid in dom_classes:
-            css_classes.append(self.main.uid)
-            
+        dom_classes = [c for c in self.main._box._dom_classes if c.startswith('Slides') or c.startswith('has-')] # only export relevant classes
         overall_css = ''.join(f'{s._yoffset_css(True)}\n{s._style_css(True)}' for s in self.main[:1]) # only one time
         return doc_html(
             code_css    = self.main.widgets.htmls.hilite.value.replace(f'.{self.main.uid}',''), # remove id from code here
             style_css   = self.main.html('style', styles.style_css(**theme_kws, _root=True) + self._stacking_css()).value + overall_css,
             content     = content, 
             script      = _script, 
-            css_class   = ' '.join(css_classes),
+            css_class   = ' '.join(dom_classes),
             page_css    = self.main.html('style', self.main.widgets.iw._page_css).value,
             )
 
@@ -184,9 +179,7 @@ class _HhtmlExporter:
             return self.main.notify(f'File {path!r} already exists. Select overwrite checkbox if you want to replace it.')
         
         self.export_html(path, overwrite = self.main.widgets.checks.confirm.value)
-        self.main.notify(f'File saved: {path!r}',10)
-        with suppress(BaseException): # Does not work on some systems, so safely continue.
-            os.startfile(path) 
+        self.main.notify(f'File saved: <a href="{path}" target="_blank"><em style="color:var(--accent-color)">{path}</em></a>',15)
     
     def _export_ready(self):
         if not self.main._next_pending: return True

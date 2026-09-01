@@ -31,7 +31,7 @@
         --contnetScale : 1 !important; /* Defualt for printing at same value */
     }
     .ipyslides-print-node .jupyter-only,
-    .ipyslides-print-node.SlidesWrapper > *:not(.printable-child) { 
+    .ipyslides-print-node.SlidesWrapper > *:not(.IncludeInPDF) { 
         display: none !important; /* avoid unessary elements/backgrounds in print, that may create ghost pages */
         /* NOTE: styles in the theme/layout widget still apply desite display:none, that really made it simple */
     }
