@@ -352,7 +352,7 @@ class Settings:
 
     def _set_merge_ctx(self, change=None):
         if curr := self._slides._current:
-            curr.update_display() # force update to reset frames
+            curr._reveal_frames() # user sees change visually
         
     def _print_pdf(self, btn):
         if self._slides._next_pending:

@@ -1083,8 +1083,8 @@ def _save_clipboard_image(filename, quality = 95, overwrite = False):
         else:
             raise ValueError('No image on clipboard/file or not supported format.')
 
-def update_class(widget, css_class:str, condition:bool):
-    """Add or remove a class from a widget based on a condition. If condition is True, add the class(es), otherwise remove them.
+def update_class(widget, css_class:str, keep:bool):
+    """Add or remove a class from a widget based on the `keep` flag. If `keep` is True, add the class(es), otherwise remove them.
     css_class should be a string with many classes separated by space.
     """
     if not isinstance(widget, ipw.DOMWidget):
@@ -1092,7 +1092,7 @@ def update_class(widget, css_class:str, condition:bool):
     if not isinstance(css_class, str):
         raise TypeError(f'css_class should be a string, got {type(css_class)}')
     
-    action = widget.add_class if condition else widget.remove_class
+    action = widget.add_class if keep else widget.remove_class
     for cls in css_class.split():
         action(cls)
 

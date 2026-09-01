@@ -30,15 +30,10 @@
         display: contents !important; /* bypass this container as well, but let other styles apply, so no all:unset here */
         --contnetScale : 1 !important; /* Defualt for printing at same value */
     }
-    .ipyslides-print-node .jupyter-only {
-        display: none !important;
-    }
-    .ipyslides-print-node.ipyslides-print-node,
-    .ipyslides-print-node.SlidesWrapper > * { 
-        visibility: hidden !important; /* avoid unessary elements/backgrounds in print */
-    }
-    .ipyslides-print-node.SlidesWrapper > .LogoHtml.LogoHtml { 
-        visibility: visible !important; /* keep logo visible*/
+    .ipyslides-print-node .jupyter-only,
+    .ipyslides-print-node.SlidesWrapper > *:not(.printable-child) { 
+        display: none !important; /* avoid unessary elements/backgrounds in print, that may create ghost pages */
+        /* NOTE: styles in the theme/layout widget still apply desite display:none, that really made it simple */
     }
     .ipyslides-print-node.SlidesWrapper .SlideBox .SlideArea {
         position:  relative !important; /* to hold background image and stuff properly and itself in order */

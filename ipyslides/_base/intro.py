@@ -123,7 +123,7 @@ Use `Save as PDF` option instead of Print PDF in browser to make links work in o
     - PDF printing may not work as expected in all browsers/IDEs and tested only in JupyterLab.
     - In case of issues with frames not displaying properly using `Ctrl + P`, export to HTML and then print.
     - Make sure your presentation is clean for print. "Inline Notes" are only meant for personal reference or sharing slides with notes.
-    - If print shows blank/gray pages, adjust printer setting settings such as margin and it would resolve the issue. If not, export to HTML and then print.
+    - If print shows blank/gray pages, adjust printer settings such as margin and it would resolve the issue. If not, export to HTML and then print.
 
 **Printing from Exported HTML File**<br>
 You can also get PDF from exported HTML file. Use `Save as PDF` and enable background graphics when printing to keep links working.

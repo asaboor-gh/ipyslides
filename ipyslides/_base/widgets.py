@@ -310,7 +310,7 @@ class _Htmls:
     theme   = HTML()
     usercss = HTML() # Persistent user CSS mount for overall + all per-slide styles
     main    = HTML() 
-    logo    = HTML().add_class('LogoHtml') # somehow my defined class is not behaving well in this case
+    logo    = HTML().add_class('LogoHtml').add_class('printable-child') # somehow my defined class is not behaving well in this case
     pointer = LaserPointer() # For beautiful pointer
     hilite  = HTML() # Updated in settings on creation. For code blocks.
 @dataclass(frozen=True)
@@ -385,7 +385,7 @@ class Widgets:
             HBox([ #Slide_box must be in a box to have animations work
                 self.slidebox , 
             ],layout= Layout(width='100%',max_width='100%',height='100%',overflow='hidden')
-            ).add_class('SBoxWrapper'), # overflow should be hidden for animation purpose, class added to handle print PDF
+            ).add_class('SBoxWrapper').add_class('printable-child'), # overflow should be hidden for animation purpose, class added to handle print PDF
             self.htmls.footer, # footer below controls
             self.controls, # Importnat for unique display
             self.drawer, 
