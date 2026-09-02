@@ -13,7 +13,7 @@ from .settings import Settings
 from .notes import Notes
 from .export_html import _HhtmlExporter
 from ..formatters import XTML, htmlize, slidebound
-from ..xmd import error, resolve_included_files, _parse_as_steps, _stream_chunks
+from ..xmd import error, _load_files, _parse_as_steps, _stream_chunks
 from ..utils import _css_info
 from ..dashlab import FileWatcher
 
@@ -104,15 +104,14 @@ class BaseSlides:
         
     def _exec_synced_src(self, content):
         if not isinstance(content, str): #check path later or it will throw error
-            raise TypeError(f"content expects a makrdown string, got {content!r}")
-        
-        # included files should be able to trigger updates even if main file not edited yet, so we track them as assets
-        if hasattr(self, '_src_watcher'):
-            self._src_watcher.assets = re.findall(r'include\`(.*?)\`',content, flags = re.DOTALL)
+            raise TypeError(f"content expects a markdown string, got {content!r}")
         
         # Now flatten incuded files, after detecting them as assets above
-        content = resolve_included_files(content)
-        content = self._process_citations(content) # after resolve, enable citations form included files
+        assets, content = _load_files(content)
+        content = self._process_citations(content) # after loading files, enable citations form included files
+        # included files should be able to trigger updates even if main file not edited yet, so we track them as assets
+        if hasattr(self, '_src_watcher'):
+            self._src_watcher.assets = assets
         
         chunks = list(_stream_chunks(content, '---'))
         handles = self.create(range(0, len(chunks))) # create slides faster or return older
@@ -152,14 +151,14 @@ class BaseSlides:
         You can add citations at end of main synced file using `--- citations ---` block, which will be parsed and added to slides. This syntax is
         exclusive to synced file only. Under that block, you can add plain citations or load a file as shown in below example.
 
-        You can add files inside synced file using include\\`file_path.md\\` syntax, which are also watched for changes.
+        You can add files inside synced file using [load\! file_path.md \.. start:optional, end:optional \/] syntax, which are also watched for changes.
         This helps modularity of content, and even you can link a citation file in markdown format as shown below. Read more in `Slides.xmd.syntax` about it.
 
         ```markdown
          --- citations ---
          key1: Saboor et. al., 2025
          key2: A citations can span multiple lines, but key should start on new line
-         <!-- Or put this content in a file 'bib.md' and then inside citations block use include`bib.md` -->
+         <!-- Or put this content in a file 'bib.md' and then use [load! bib.md/] above -->
         ```
         
         ::: note-tip

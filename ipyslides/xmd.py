@@ -256,56 +256,12 @@ class esc:
 @_internal_xmd_call('load')
 def load(filepath : str, start:int=None, end=None):
     "Load markdown file content in place. Use `start` and `end` to specify line numbers range."
-    return error('NotImplementedError', 'The load function is not implemented yet. include`file.md[start:end]` syntax for now!').value
-    
-    # # This must get indentation after return in the top function using it
-    # # And need to be single pass to avoid nesting, on next nest it must raise error
-    # # So a separate resolve_included_files function is must to flatten content first
-    # try:
-    #     with open(filepath, "r", encoding="utf-8") as f:
-    #         lines = f.readlines()[slice(start,end)]
-    #         return "".join(lines)
-    # except Exception as e:
-    #     return error('Exception', f'Could not include file or markdown snippet {filepath!r}:\n{e}').value
-
-# This shoul be outside, as needed in other modules
-def resolve_included_files(text_chunk):
-    "Markdown files added by include`file.md[start:end]` should be inserted as plain."
-    all_matches = re.findall(r"^(\s*)include\`(.*?)\`", text_chunk, flags=re.DOTALL | re.MULTILINE)
-    for indent, match in all_matches:
-        # Parse match into file path and range
-        range_match = re.search(r'\[(.*?)\]$', match)
-        if range_match:
-            filepath = match[:range_match.start()].strip()
-            range_str = range_match.group(1).strip()
-            
-            start, end = None, None
-            try:
-                if ':' in range_str:
-                    start_str, end_str = range_str.split(':', 1)
-                    start = int(start_str.strip()) - 1 if start_str.strip() else None
-                    end = int(end_str.strip()) if end_str.strip() else None
-                elif range_str: # single line number
-                    start = int(range_str) - 1
-                    end = start + 1
-            except (ValueError, IndexError):
-                # Invalid range, treat whole match as filename
-                filepath = match
-                start, end = None, None
-        else:
-            filepath = match
-            start, end = None, None
-
-        try:
-            with open(filepath, "r", encoding="utf-8") as f:
-                lines = f.readlines()[slice(start,end)]
-                text = textwrap.indent("\n" + "".join(lines) + "\n", indent) # need inside ::: blocks
-                text_chunk = text_chunk.replace(f"include`{match}`", text, 1)
-        except Exception as e:
-            err_msg = error('Exception', f'Could not include file or markdown snippet {filepath!r}:\n{e}').value
-            text_chunk = text_chunk.replace(f"include`{match}`", err_msg, 1)
-
-    return text_chunk
+    try:
+        with open(filepath, "r", encoding="utf-8") as f:
+            lines = f.readlines()[slice(start,end)]
+            return filepath, "".join(lines)
+    except Exception as e:
+        return filepath, error('Exception', f'Could not load content from file {filepath!r}:\n{e}').value
 
 _extensions = Extensions() # Global instance of Extensions, don't delete class Extensions still
 
@@ -404,7 +360,10 @@ class XMarkdown(Markdown):
         if not isinstance(xmd, str):
             issue = error("TypeError",f"Expected a string for markdown content, got {type(xmd).__name__} instead.")
             return issue.value if returns else display(issue) # return value or display
-
+        
+        # resolve loading files first, before any processing
+        _, xmd = _load_files(xmd)
+        
         # Mask HTML comments before any splitting so their content (:::, ++, ```) is not treated as markers.
         # Python-Markdown passes <!--...--> through unchanged, so short placeholders survive convert().
         xmd = cmnt_esc.escape(char_esc.escape(xmd))  # Escape characters as well before processing
@@ -459,15 +418,7 @@ class XMarkdown(Markdown):
             return content
         else:
             return display(*outputs)
-        
-    def _load_files(self, content):
-        # Parse stuff here
-        # Nested loading should be avoided, but move it inside so user know which included file has nested load inside
-        content = re.sub(r"(\[load\!.*?\/\])", error(r"Nested loading of files is not supported \1").value, content)
-        # after loading content, raise deprecation warning for old syntax instead of silently adopting it.
-        content = re.sub(r"(?<![\`\.\\])\bload\[?(.*?)\]?\`([^\`]*)\`", r"[alert! Use [load\! \2 \.. \1 \/] syntax instead! /]", content)
-        return content    
-    
+            
     def _parse_params(self, param_string):
         """Parse parameter string with simple regex."""
         RE_PARAM = re.compile(
@@ -606,7 +557,6 @@ class XMarkdown(Markdown):
 
     def _parse_block(self, header, data):
         "Returns list of parsed block or columns or code, input is without ``` but includes langauge name."
-        data = resolve_included_files(textwrap.dedent(data)) # clean up data  before processing 
         typ, mode, widths, _class, css_props, attrs = self._parse_params(header)
         
         if typ == "citations": # avoid using citations block
@@ -751,7 +701,7 @@ class XMarkdown(Markdown):
     def _fix_legacy_col_sep(self, data):
         if re.search(r"^\+\+\+\s*$", data, flags=re.MULTILINE):
             data = re.sub(r"^\+\+\+\s*$", "--", data, flags=re.MULTILINE)  # Change to -- for backward compatibility
-            data = "\n".join([warn('Use -- instead of legacy +++ to separate columns.', 'SyntaxWarning').value, data]) # Prepend warning to the data once
+            data = "\n".join([error('SyntaxError','Use -- instead of legacy +++ to separate columns.').value, data]) # Prepend error to the data once
         return data
     
     def _parse_columns(self, data, widths, _class, css_props, mode=None):
@@ -801,13 +751,12 @@ class XMarkdown(Markdown):
         """Replaces variables with placeholder after conversion to respect all other extensions.
         Returns str or list of outputs based on context. To ensure str, use `parse(..., returns=True)`.
         """
-        text = resolve_included_files(text)
         text = self._resolve_md_vars(text)  # Resolve [md-var/] variables stored during md-var blocks
         text = self._resolve_nested(text)  # To be deprecated, but still supported for backward compatibility
         # Reolve link targets as invisible span with id
         text = re.sub(r"(?<![\`\\])\[\#([\w\-]+)/\](?!\S)", r"<span id='\1' class='slide-link-target'></span>", text)
         # Resolve (deprecated) <link:label:origin text> and <link:label:target text?>
-        warning = warn(r'The `<link: ...>` syntax is deprecated. Use `link` function instead.', 'SyntaxWarning')
+        warning = error('SyntaxError', r'The `<link: ...>` syntax is deprecated. Use `link` function instead.')
         text = re.sub(r"<link:([\w\d-]+):origin\s*(.*?)>", rf"<a href='#target-\1' id='origin-\1' class='slide-link'>\2</a>{warning}", text)
         text = re.sub(r"<link:([\w\d-]+):target\s*(.*?)>", rf"<a href='#origin-\1' id='target-\1' class='slide-link'>\2</a>{warning}", text)
         # Resolve citations before variable substitution to avoid conflicts with citation keys
@@ -822,7 +771,7 @@ class XMarkdown(Markdown):
     def _resolve_md_vars(self, text):
         # Replace [md-var/] variables stored during md-var blocks, 
         # but reusing snippets expose internal state, AVOID THAT
-        warning = warn(r'The `<md-var/>` syntax is deprecated. Use `[md-var/]` instead.', 'SyntaxWarning')
+        warning = error('SyntaxError', r'The `<md-var/>` syntax is deprecated. Use `[md-var/]` instead.')
         text = re.sub(r"(?<![\`\\])\<md-([\w]+)/\>", rf"{warning} [md-\1/]", text) # update legacy to new syntax
         
         all_matches = re.findall(r"(?<![\`\\])\[md-([\w]+)/\](?!\S)", text) # avoid `\ and end must
@@ -936,17 +885,16 @@ class XMarkdown(Markdown):
         # Check if there is at least one macro format to process
         if re.search(FUNC_RE, html_output, flags=re.DOTALL | re.MULTILINE):
             # Single inline warning in start instead of clutter everywhere
-            html_output = self._handle_var(warn(
+            html_output = self._handle_var(error("SyntaxError",
                 'Legacy syntax for func`...` is being deprecated and will be removed in future releases. '
-                'Use [func! ... /] format for flexible automatic nesting, see slides.xmd.funcs for details.',
-                "SyntaxWarning"
+                'Use [func! ... /] format for flexible automatic nesting, see slides.xmd.funcs for details.'
             )) + "\n" + html_output
             
             with self.active_parser(): # set instance parser to pass variables
                 html_output = re.sub(FUNC_RE, self.repl_inline_func, html_output, flags=re.DOTALL | re.MULTILINE)
 
         # These will be deprecated in future alongwith bactick functions
-        warning = warn(r'Legacy syntax for superscript ^\`...\` and subscript _\`...\` is being deprecated. Use `sub/sup` functions instead.', "SyntaxWarning")
+        warning = error('SyntaxError', r'Legacy syntax for superscript ^\`...\` and subscript _\`...\` is being deprecated. Use `sub/sup` functions instead.')
         html_output = re.sub(r'(?: )?\^\`([^\`]*?)\`',rf'<sup>\1</sup>{warning}', html_output) # superscript, leading space for readability consumed
         html_output = re.sub(r'(?: )?\_\`([^\`]*?)\`',rf'<sub>\1</sub>{warning}', html_output) # subscript
         
@@ -1040,6 +988,9 @@ class XMarkdown(Markdown):
                 res = error('Exception', f"Could not parse '{match.group(0)}': \n{e}\n"
                     f"<div class='block-yellow'>⚠️ Function '{fname}' expects arguments <code>{inspect.signature(func)}</code>, "
                     f"got <code>{args}, {kwargs}</code></div>")
+        
+        if fname == "load":
+            return res # load function needs to flatten the content
         
         if cap.outputs:
             return self._handle_var(cap) + self._handle_var(res)
@@ -1344,7 +1295,7 @@ def _split_parts(content, delimited=False):
     def _part_delim():
         delim = _delim("PAUSE")
         if opt == 'isolate':
-            warn("The '[isolate]' option after ++ is deprecated. Use 'columns.paused' directive instead.", name="DeprecationWarning").display()
+            error("SyntaxError", "The '[isolate]' option after ++ is deprecated. Use 'columns.paused' directive instead.").display()
         return delim
     
     start = 0
@@ -1368,3 +1319,48 @@ def _split_parts(content, delimited=False):
     if tail := content[start:].rstrip():
         yield tail
 
+# This shoul be outside, as needed in other modules
+def _load_files(content):
+    content = re.sub(r"^(\s*)include\`(.*?)\`", 
+        error("SyntaxError",f"include is deprecated. Use load function instead!").value, 
+        content, flags=re.DOTALL | re.MULTILINE
+    ) # error for legacy include usage
+    
+    loader_func = XMarkdown().repl_py_func # needed instance method
+    files, chunks, last_pos = [], [], 0
+    for match in MACRO_RE.finditer(content):
+        macro_name, *_ = match.groups()
+        # only intercept load macros here
+        if macro_name != "load":
+            continue
+
+        # Resolve the current line prefix so [load! ... /] can only appear after whitespace.
+        line_start = content.rfind("\n", 0, match.start()) + 1
+        line_prefix = content[line_start:match.start()]
+
+        if line_prefix.strip():
+            chunks.append(content[last_pos:match.start()])
+            escaped_match = match.group(0).replace('!', r'\\!').replace('/', r'\\/')  # Escape ! and / for display as info
+            chunks.append("\n" + error("SyntaxError",f"load macro must start at the beginning of a line with optional indentation only: '{line_prefix}{escaped_match}'").value)
+            last_pos = match.end()
+            continue
+
+        chunks.append(content[last_pos:line_start])
+        file, filecontent = loader_func(match)
+        
+        # Nested loading is not allowed
+        nested_err = error("SyntaxError",f"Nested loading of files is not supported in a top loaded file: {file!r}").value
+        filecontent = MACRO_RE.sub(nested_err, filecontent)
+
+        if line_prefix:
+            filecontent = textwrap.indent(filecontent, line_prefix)
+
+        chunks.append(filecontent)
+        files.append(file)
+        last_pos = match.end()
+
+    if chunks:
+        chunks.append(content[last_pos:])
+        content = "".join(chunks)
+
+    return files, content    

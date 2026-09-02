@@ -30,12 +30,17 @@ IPySlides embeds a frame-aware presentation engine directly into your computatio
 
 By replacing copy-paste duplication and artificial cell chopping with programmatic framing, a single cell acts as a canonical source that natively understands structure, progressing in precise, incremental steps. It keeps execution code, rich outputs, and custom layouts perfectly synchronized while supporting active Jupyter widgets for real-time data manipulation. When it's time to export, it generates a production-grade HTML or crisp PDF backup that accurately mirrors your presentation. 
 
+#### A Practical Win: Reuse Publication Figures Without Rework
+Fixed 210 mm (8.3 in) slide width means paper/report figures usually drop in with little or no resizing. You never have to
+make two figures again, one for publication and one for presentation.
+
 ## Features
 
 - 📊 Support for plots, widgets, and rich media
+- 📐 210 mm (8.3 in) width: just reuse paper figures
 - 🎨 Customizable themes and layouts
 - 📱 Responsive design for various screen sizes
-- 📤 Export to HTML/PDF (widgets no more interactive or discarded)
+- 📤 Export to HTML/PDF (widgets are no more interactive)
 - 🎯 Frame-by-frame animations
 - 📝 Speaker notes support
 - 🔄 Markdown, citations and settings files synchronization
@@ -172,7 +177,7 @@ See more examples in [DashLab repository](https://github.com/asaboor-gh/dashlab)
 Use `slides.export_html` to build static slides that you can print to PDF. Read export details in settings panel, where you can also export with a single click. 
 
 - **PDF Export**
-Support for direct PDF printing from slides using `Ctrl + P` (use options in side panel to prepare for print) is available, although some IDEs like VSCode may not allow it. Use `Save as PDF` option and enable background graphics if necessary. If issues arise in direct printing, consider exporting to HTML first and printing from there.
+Support for direct PDF printing from slides with visuals that perfectly match the live notebook presentation is available using `Ctrl + P` (use options in side panel to prepare for print), although some IDEs like VSCode may not allow it. Use `Save as PDF` and enable background graphics if necessary. If issues arise in direct printing, export to HTML first and print from there.
 
 See [demo.pdf](demo.pdf) for an example exported PDF.
 

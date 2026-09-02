@@ -886,26 +886,18 @@ def fa(name: str, color:str = 'currentColor', size:str = '1em',rotation:int = 0,
     style_kws = {'color': color, 'font-size': size, 'transform': f'rotate({rotation}deg)' if rotation else '', **css_props}
     return XTML(f'<i class="fa {name}" {_inline_style(style_kws)}></i>')
 
-# deprecate this call from markdown and let user use ::: columns.inline
-@_internal_xmd_call('stack')
+# Do not add this in markdown which has ::: columns.inline equivalent
 def stack(objs, sizes=None, vertical=False, css_class=None, **css_props):
     """Stacks given objects in a column or row with given sizes. Markdown equivalent to `stack(..., vertical=False)` is `::: columns.inline` block.
     
-    - objs: list/tuple of objects. Markdown strings in list will be parsed to html. 
+    - objs: list/tuple of objects. Markdown strings in list will be parsed to html in non-display mode. 
     - sizes: list/tuple of sizes(int, float) for each object, if not given, all objects will have equal size.
     - vertical: bool, to stack objects vertically or horizontally, default is horizontal.
     - css_class: str, to add a class to the container div.
     - css_props: dict, applied to the container div, so you can control top layout.
     """
-    if isinstance(objs, str):
-        objs = [v.strip() for v in objs.replace(r'\|','COL-SEP-PIPE').split('||')] # Split by pipes if given a string
-        if objs:
-            objs[0] = warn(
-                "Direct markdown input to stack() is being deprecated, use `::: columns.inline` for a column stack instead and rows is direct flow in markdown."
-            ).value + '\n' + objs[0] # add warning in start
-    
     if not isinstance(objs, (list, tuple)):
-        raise TypeError(f'objs should be a markdown string, list or tuple of objects, got {type(objs)}')
+        raise TypeError(f'objs should be list or tuple of objects, got {type(objs)}')
     
     kwargs = {
         'gap': '0.25em', 

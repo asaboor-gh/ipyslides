@@ -61,7 +61,7 @@ If multiple `bg` calls are used in one slide, the last one wins.
 Use [alert! [bg\! image_src_or_path \.. opacity=0.4, contain=True, filter='blur(2px)' \/] /] for options. `contain` must be `True` or `False`.
 
 Including Files
-: [alert! include\`markdown_file.md[optional list slicing to pick lines from file such as [2:5], [10:]]\` /] to include a file in markdown format.
+: [alert! [load\! markdown_file.md \.. start:optional, end:optional \/] /] to load a file in markdown format and flatten its content inline.
 These files are watched for edits if included in synced markdown file via `Slides.sync_with_file`.
 
 Citations
@@ -240,7 +240,7 @@ Inline functions can be nested, thanks to new function call pattern that must en
 **General Syntax**{{.text-big}}
 
 - To avoid any further markdown parsing, use ` Slides.esc ` while interpolating variables or expressions in f-strings, such as `f"Hello {{esc(var)}}"` or `f"Hello {{esc(func())}}"`.
-- Use [alert! include\`markdown_file.md[optional list slicing to pick lines from file such as [2:5], [10:]]\` /] to include a file in markdown format.
+- Use [alert! [load\! markdown_file.md \..  start:optional, end:optional \/] /] to include a file in markdown format. Nested loading is not supported.
 - Use [alert! [fa\! icon_name \/] /] to add FontAwesome icons, e.g. [fa\! arrow-right \/] → [fa! arrow-right /], [fa\! check .. "green" \/] → [fa! check .. "green" /] etc.
 - Drop a link target in any place using `[#target_id/]` and use `target_id` in `link` commnad or html anchor to jump to that target. Use `Slides.link` for more details.
 - Use syntax `[link\!! "target_id", "Jump to slide" \/]` to jump between slides. See `Slides.link` for more details.

@@ -535,7 +535,9 @@ class Slides(BaseSlides,metaclass=Singleton):
                 slide._update_class(add = 'Out-Sync') # will go synced after rerun
 
     def set_citations(self, data):
-        r"""Set citations from dictionary or string in yaml format with content like `key: citation value` on their own lines or json format., 
+        r"""Set citations from dictionary or string in yaml format with content like `key: citation value` on their own lines or json format.
+        If yaml format is used and you have special characters inside values like :, = or starting with * etc., you should quote them. 
+        For example, `key: *Bold citation*` will raise error, but `key: "*Bold citation*"` will work.
         key should be cited in markdown as `@key`, optionally comma separated keys. `@key!` will show citation inline.
         Number of columns in displayed citations are determined by [code! Slides.settings.layout(..., ncol_refs=N) /] or 
         per slide by [code! [refs\! N \/] /] / [code! Slides.refs(N) /].
@@ -571,7 +573,7 @@ class Slides(BaseSlides,metaclass=Singleton):
             
             d = yaml.safe_load(data) # parse as yaml to get dict
             if not isinstance(d, dict):
-                raise ValueError("Citations data should be a dictionary or string with key: value format, got something else.")
+                raise ValueError(f"Citations data should be a dictionary or string with key: value format, got {data!r}.")
             for k, v in d.items():
                 if not isinstance(k, str) or not isinstance(v, str):
                     raise ValueError(f"Citations keys and values should be strings, got {type(k)}:{type(v)} for {k}:{v}")

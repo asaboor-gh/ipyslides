@@ -183,5 +183,5 @@ class _HhtmlExporter:
     
     def _export_ready(self):
         if not self.main._next_pending: return True
-        self.main.notify(self.main.error("Export Error", "Please build pending slides by naviagting/clicking on 'Pending Slides' button before you can export to HTML.").value)
+        self.main.notify(self.main.error("Exception", "Please build pending slides by naviagting/clicking on 'Pending Slides' button before you can export to HTML.").value)
         return False

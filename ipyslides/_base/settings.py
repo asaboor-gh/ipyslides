@@ -357,7 +357,7 @@ class Settings:
     def _print_pdf(self, btn):
         if self._slides._next_pending:
             return self._slides.notify(
-                self._slides.error("Print Error", "Please build pending slides by naviagting/clicking on 'Pending Slides' button before you can print to PDF.").value
+                self._slides.error("Exception", "Please build pending slides by naviagting/clicking on 'Pending Slides' button before you can print to PDF.").value
             )
             
         with disabled(self._widgets.buttons.print): # disable button to avoid multiple clicks
