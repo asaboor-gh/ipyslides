@@ -917,7 +917,7 @@ def stack(objs, sizes=None, vertical=False, css_class=None, **css_props):
         sizes = [{'flex': '1 1','min-width':0}] * len(objs) # default sizes if not given
     
     return html('div', [
-        html('div', htmlize(obj).replace('COL-SEP-PIPE','|'), style=size) 
+        html('div', htmlize(obj), style=size) 
         for obj, size in zip(objs, sizes)
     ], style = kwargs, css_class=(f'{css_class or ""} {"" if vertical else "columns"}').strip()) 
     

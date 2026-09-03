@@ -148,10 +148,6 @@ def _resolve_citations(parser, content):
     
     # replace @key, @key2! etc with citation output
     content = AT_KEYS.sub(sub_cite, content)  
-    # warn for cite`*keys` usage
-    content = re.sub(r"(?<![\`\.])\bcite\`(.*?)\`;?", 
-        lambda m: error('SyntaxError',f'Use @key, @key2!, @key3 etc. {m.group()} syntax is deprecated.').value, 
-        content, flags=re.DOTALL) 
     return content
 
 
@@ -259,6 +255,8 @@ def load(filepath : str, start:int=None, end=None):
     try:
         with open(filepath, "r", encoding="utf-8") as f:
             lines = f.readlines()[slice(start,end)]
+            if lines:
+                lines = [f'<!-- begin: {filepath} -->\n', *lines, f'<!-- end: {filepath} -->\n']
             return filepath, "".join(lines)
     except Exception as e:
         return filepath, error('Exception', f'Could not load content from file {filepath!r}:\n{e}').value
@@ -301,11 +299,10 @@ class cmnt_esc:
         return cls._TOKEN_RE.sub(_unmask, text)
     
 
-_PLUS_RE = re.compile(r'^\+\+(?:\[(?P<opt>[^\]\n]+)\])?(?:\s*$|\s)', re.MULTILINE) # This is used to split by ++ on its own line,
-# Count only standalone ".." tokens (surrounded by whitespace or string boundaries)
-DOTS_RE = re.compile(r'(?<!\S)\.\.(?!\S)')
-
-MACRO_RE = re.compile(
+PLUS_RE = re.compile(r'^\+\+(?:\[(?P<opt>[^\]\n]+)\])?(?:\s*$|\s)', re.MULTILINE) # This is used to split by ++ on its own line,
+DOTS_RE = re.compile(r'(?<!\S)\.\.(?!\S)') # Count only standalone ".." tokens (surrounded by whitespace or string boundaries)
+VARS_RE = re.compile(r"%\{([^{]*?)\}", flags=re.DOTALL)
+FUNC_RE = re.compile(
     r"(?<![\\\`])"            # not preceded by backslash or backtick
     r"\[([a-zA-Z_]\w*)(!{1,2})(?![!])\s*"         # [name! / [name!! but not more !, with optional spaces, must not start with a digit
     r"((?:(?!\[[a-zA-Z_]\w*!)[\s\S])*?)"  # body; stop before a nested macro opener
@@ -358,7 +355,7 @@ class XMarkdown(Markdown):
         """
         self._returns = returns  # Must change here
         if not isinstance(xmd, str):
-            issue = error("TypeError",f"Expected a string for markdown content, got {type(xmd).__name__} instead.")
+            issue = error("TypeError",f"Expected a string for markdown content, got {type(xmd)} instead.")
             return issue.value if returns else display(issue) # return value or display
         
         # resolve loading files first, before any processing
@@ -537,23 +534,31 @@ class XMarkdown(Markdown):
             self._nesting_depth -= 1 # decrease nesting depth
         return out
 
-    def _resolve_nested(self, text_chunk):
-        has_syntax = False
-        def repl(m: re.Match):
-            nonlocal has_syntax
-            has_syntax = True
-            return f'`{self._parse_nested(m.group(1), returns = True, tag="")}`' # bare content
-
-        # match neseted `// //` upto many levels, will be deprecated
-        for depth in range(4,1,-1): # `////, `///, `// at least two slashes
-            op, cl = '/'*depth, '/'*depth
-            text_chunk = re.sub(rf"\`{op}(.*?){cl}\`", repl, text_chunk, flags=re.DOTALL | re.MULTILINE)
+    def _handle_syntax_error(self, content):
+        content = re.sub(r"<link:([\w\d-]+):(origin|target)\s*(.*?)>", error('SyntaxError', r'The `&lt;link: ...&gt;` syntax is deprecated. Use `link` function instead.').value, content)
+        content = re.sub(r"(?<![\`\\])\<md-([\w]+)/\>", error('SyntaxError', r'The `&lt;md-var/&gt;` syntax is deprecated. Use `[md-var/]` instead.').value, content)
+        content = re.sub(r'(?: )?[\^\_]\`([^\`]*?)\`',error('SyntaxError', r'Legacy syntax _\`...\`, ^\`...\` is deprecated. Use `sub/sup` functions instead.').value, content) 
         
-        if has_syntax:
-            text_chunk = self._handle_var(error("SyntaxError",
-                "Nested `// //` syntax is being deprecated. New format [func! ... /] automatically support nesting."
-            )) + "\n" + text_chunk
-        return text_chunk
+        # legacy nesting with 2+ slashes
+        if re.search(r"\`(?P<slashes>/{2,})(.*?)(?P=slashes)\`", content, flags=re.DOTALL | re.MULTILINE):
+            content = self._handle_var(error("SyntaxError",
+                "Nested `// //` syntax is deprecated. New format [func! ... /] automatically support nesting."
+            )) + "\n" + content
+        
+        # legacy functions syntax
+        legacy_funcs = rf"(?<![\`\.])\b({('|'.join(_XMD_FUNCS))})(\[.*?\])?\`([^\`]*)\`"
+        if match := re.search(legacy_funcs, content, flags=re.DOTALL | re.MULTILINE):
+            content = self._handle_var(error("SyntaxError",
+                f'Legacy inline function syntax {match.group()} is deprecated. '
+                f'Use [{match.group(1)}! ... /] format for flexible automatic nesting, see slides.xmd.funcs for details.'
+            )) + "\n" + content
+        
+        # legacy citations
+        content = re.sub(r"(?<![\`\.])\bcite\`(.*?)\`;?", 
+            lambda m: self._handle_var(error('SyntaxError',f'Use @key, @key2!, @key3 etc. {m.group()} syntax is deprecated.')), 
+            content, flags=re.DOTALL
+        )
+        return content
 
     def _parse_block(self, header, data):
         "Returns list of parsed block or columns or code, input is without ``` but includes langauge name."
@@ -590,7 +595,7 @@ class XMarkdown(Markdown):
     
     def _ignore_incremental(self, data):
         # Just ignore, don't ask user change their content if they can switch mode to paused or inline
-        return _PLUS_RE.sub('', data) # remove ++ lines, but keep content
+        return PLUS_RE.sub('', data) # remove ++ lines, but keep content
     
     def _handle_inline_cols(self, data):
         "Check if columns are on a single line and split them by | separator to make them multi-line for proper parsing."
@@ -751,14 +756,10 @@ class XMarkdown(Markdown):
         """Replaces variables with placeholder after conversion to respect all other extensions.
         Returns str or list of outputs based on context. To ensure str, use `parse(..., returns=True)`.
         """
+        text = self._handle_syntax_error(text) 
         text = self._resolve_md_vars(text)  # Resolve [md-var/] variables stored during md-var blocks
-        text = self._resolve_nested(text)  # To be deprecated, but still supported for backward compatibility
         # Reolve link targets as invisible span with id
         text = re.sub(r"(?<![\`\\])\[\#([\w\-]+)/\](?!\S)", r"<span id='\1' class='slide-link-target'></span>", text)
-        # Resolve (deprecated) <link:label:origin text> and <link:label:target text?>
-        warning = error('SyntaxError', r'The `<link: ...>` syntax is deprecated. Use `link` function instead.')
-        text = re.sub(r"<link:([\w\d-]+):origin\s*(.*?)>", rf"<a href='#target-\1' id='origin-\1' class='slide-link'>\2</a>{warning}", text)
-        text = re.sub(r"<link:([\w\d-]+):target\s*(.*?)>", rf"<a href='#origin-\1' id='target-\1' class='slide-link'>\2</a>{warning}", text)
         # Resolve citations before variable substitution to avoid conflicts with citation keys
         text = _resolve_citations(self, text)  
         
@@ -771,9 +772,6 @@ class XMarkdown(Markdown):
     def _resolve_md_vars(self, text):
         # Replace [md-var/] variables stored during md-var blocks, 
         # but reusing snippets expose internal state, AVOID THAT
-        warning = error('SyntaxError', r'The `<md-var/>` syntax is deprecated. Use `[md-var/]` instead.')
-        text = re.sub(r"(?<![\`\\])\<md-([\w]+)/\>", rf"{warning} [md-\1/]", text) # update legacy to new syntax
-        
         all_matches = re.findall(r"(?<![\`\\])\[md-([\w]+)/\](?!\S)", text) # avoid `\ and end must
         for match in all_matches:
             value = esc._store.pop(match, error('NameError', f'Markdown variable {match!r} is not defined or already used!'))
@@ -840,10 +838,9 @@ class XMarkdown(Markdown):
         return key
     
     def _sub_vars(self, html_output):
-        "Substitute variables in html_output given as %{var}."   
+        "Substitute variables in html_output given as %{var} and inline functions."   
         # Check for variables first
-        var_pattern = r"%\{([^{]*?)\}"
-        if re.search(var_pattern, html_output, flags=re.DOTALL):
+        if VARS_RE.search(html_output):
             user_ns = self.user_ns() # get once, will be called multiple time
             def handle_match(match):
                 key,*_ = _matched_vars(match.group()) 
@@ -876,52 +873,17 @@ class XMarkdown(Markdown):
                     return self._handle_var(value,ctx = match.group()) 
                 return self._handle_var(hfmtr.vformat(f"{{{match.group()[2:-1].strip()}}}", (), user_ns)) # clear spaces around variable
 
-            html_output = re.sub(var_pattern, handle_match, html_output, flags=re.DOTALL)
+            html_output = VARS_RE.sub(handle_match, html_output) # replace all variables in html_output
 
-        
-        # Replace inline functions, keep it nested for accessing inner state
-        all_func = '|'.join(_XMD_FUNCS) # escape ^ and _ for regex, as they are special characters
-        FUNC_RE = rf"(?<![\`\.])\b({all_func})(\[.*?\])?\`([^\`]*)\`"
-        # Check if there is at least one macro format to process
-        if re.search(FUNC_RE, html_output, flags=re.DOTALL | re.MULTILINE):
-            # Single inline warning in start instead of clutter everywhere
-            html_output = self._handle_var(error("SyntaxError",
-                'Legacy syntax for func`...` is being deprecated and will be removed in future releases. '
-                'Use [func! ... /] format for flexible automatic nesting, see slides.xmd.funcs for details.'
-            )) + "\n" + html_output
-            
-            with self.active_parser(): # set instance parser to pass variables
-                html_output = re.sub(FUNC_RE, self.repl_inline_func, html_output, flags=re.DOTALL | re.MULTILINE)
-
-        # These will be deprecated in future alongwith bactick functions
-        warning = error('SyntaxError', r'Legacy syntax for superscript ^\`...\` and subscript _\`...\` is being deprecated. Use `sub/sup` functions instead.')
-        html_output = re.sub(r'(?: )?\^\`([^\`]*?)\`',rf'<sup>\1</sup>{warning}', html_output) # superscript, leading space for readability consumed
-        html_output = re.sub(r'(?: )?\_\`([^\`]*?)\`',rf'<sub>\1</sub>{warning}', html_output) # subscript
-        
-        # New style function call [name! content /]
-        # Match only innermost blocks by forbidding nested openers like [other! inside body.
+        # Replace macros after variable, keep it nested for accessing inner state, but limit depth to avoid infinite recursion
         with self.active_parser(): # set instance parser to pass variables
             depth = 0
-            while MACRO_RE.search(html_output):
+            while FUNC_RE.search(html_output):
                 depth += 1
-                html_output = MACRO_RE.sub(self.repl_py_func, html_output)
+                html_output = FUNC_RE.sub(self.repl_py_func, html_output)
                 if depth > 16: # prevent infinite loop
-                    return self._handle_var(error('RecursionError', 
-                        f"Too many nested macros (> 16) in '{html_output}'")
-                    )
+                    return self._handle_var(error('RecursionError', f"Too many nested macros (> 16) in '{html_output}'"))
         return html_output 
-    
-    def repl_inline_func(self, m):
-        # This will be deprecated
-        func, argvs, content = m.groups()
-        if content is not None and not content.strip(): 
-            content = None # explicit None to avoid passing first parameter
-        
-        if argvs:
-            argvs = argvs[1:-1] # remove brackets
-            if content is None:
-                content = "" # pass empty string if no content, but args are tried
-        return self._exec_py_func(m, func, content, argvs)
     
     def repl_py_func(self, match):
         fname, bangs, body = match.groups()
@@ -942,10 +904,8 @@ class XMarkdown(Markdown):
                     argvs, content = content, argvs # swap for [tag!! params .. content /] case
             elif argvs.strip(): 
                 content, argvs = (None, argvs) if ParamsFirst else (argvs, "") # if no .., its content unless params first (then no content passed)
-         
-        return self._exec_py_func(match, fname, content, argvs)
         
-    def _exec_py_func(self, match, fname, content, argvs):
+        # Process the function content and arguments, and call the corresponding function
         if fname == "anyTag":
             return self._handle_var(error('Exception', f"anyTag function cannot be called directly, use valid html [tag! node content .. **node_attributes /] instead!"))
         
@@ -1295,14 +1255,14 @@ def _split_parts(content, delimited=False):
     def _part_delim():
         delim = _delim("PAUSE")
         if opt == 'isolate':
-            error("SyntaxError", "The '[isolate]' option after ++ is deprecated. Use 'columns.paused' directive instead.").display()
+            error("SyntaxError", "The '[isolate]' option after ++ is deprecated. Use 'columns.paused' directive followed by a '++' instead.").display()
         return delim
     
     start = 0
     first = True
 
     content = textwrap.dedent(content)  # Dedent content before processing to make sure ++ is at start of line
-    for m in _PLUS_RE.finditer(content):
+    for m in PLUS_RE.finditer(content):
         opt = (m.group('opt') or '').strip().lower().replace('_', '-')
         chunk = content[start:m.start()].rstrip() # preserve leading indentation, clear trailing junk
 
@@ -1321,14 +1281,10 @@ def _split_parts(content, delimited=False):
 
 # This shoul be outside, as needed in other modules
 def _load_files(content):
-    content = re.sub(r"^(\s*)include\`(.*?)\`", 
-        error("SyntaxError",f"include is deprecated. Use load function instead!").value, 
-        content, flags=re.DOTALL | re.MULTILINE
-    ) # error for legacy include usage
-    
+    "Load files from [load! file_path /] macros in content. Returns list of loaded files and modified content."
     loader_func = XMarkdown().repl_py_func # needed instance method
     files, chunks, last_pos = [], [], 0
-    for match in MACRO_RE.finditer(content):
+    for match in FUNC_RE.finditer(content):
         macro_name, *_ = match.groups()
         # only intercept load macros here
         if macro_name != "load":
@@ -1341,7 +1297,7 @@ def _load_files(content):
         if line_prefix.strip():
             chunks.append(content[last_pos:match.start()])
             escaped_match = match.group(0).replace('!', r'\\!').replace('/', r'\\/')  # Escape ! and / for display as info
-            chunks.append("\n" + error("SyntaxError",f"load macro must start at the beginning of a line with optional indentation only: '{line_prefix}{escaped_match}'").value)
+            chunks.append("\n" + error("SyntaxError",f"load macro must be on its own line with optional indentation only: '{line_prefix}{escaped_match}'").value)
             last_pos = match.end()
             continue
 
@@ -1350,7 +1306,7 @@ def _load_files(content):
         
         # Nested loading is not allowed
         nested_err = error("SyntaxError",f"Nested loading of files is not supported in a top loaded file: {file!r}").value
-        filecontent = MACRO_RE.sub(nested_err, filecontent)
+        filecontent = re.sub(r'(?<![\\\`])\[load!.*?/\]', nested_err, filecontent, flags=re.DOTALL)
 
         if line_prefix:
             filecontent = textwrap.indent(filecontent, line_prefix)
@@ -1362,5 +1318,8 @@ def _load_files(content):
     if chunks:
         chunks.append(content[last_pos:])
         content = "".join(chunks)
-
+    
+    # This error must be hard (and at end to include loaded files) to avoid error content being passed to citations etc.
+    if re.search(r"^(\s*)include\`(.*?)\`", content, flags=re.DOTALL | re.MULTILINE):
+        raise SyntaxError("Legacy include`file` syntax is deprecated. Use [load! file /] instead.")
     return files, content    

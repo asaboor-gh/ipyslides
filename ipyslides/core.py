@@ -576,7 +576,7 @@ class Slides(BaseSlides,metaclass=Singleton):
                 raise ValueError(f"Citations data should be a dictionary or string with key: value format, got {data!r}.")
             for k, v in d.items():
                 if not isinstance(k, str) or not isinstance(v, str):
-                    raise ValueError(f"Citations keys and values should be strings, got {type(k)}:{type(v)} for {k}:{v}")
+                    raise ValueError(f"Citations keys and values should be strings, got {type(k)}:{type(v)} for {k}:{v}, you may need to use quotes!")
                 if not re.fullmatch(r'[A-Za-z_]\w*', k): # Same as captured by AT_KEY regex
                     raise ValueError(f"Citation key {k!r} is not a valid identifier, it should start with a letter or underscore and contain only letters, digits, or underscores.")
             self._set_ctns(d)
