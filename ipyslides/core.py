@@ -9,7 +9,7 @@ from pathlib import Path
 from IPython import get_ipython
 from IPython.display import display, clear_output
 
-from .xmd import xmd, esc, fmt, get_main_ns, _matched_vars, _internal_xmd_call
+from .xmd import xmd, esc, get_main_ns, _matched_vars, _internal_xmd_call
 from .writer import hold, write, group
 from .formatters import bokeh2html, plt2html, plt2image, serializer, _delim, slidebound
 from . import formatters
@@ -119,7 +119,7 @@ class Slides(BaseSlides,metaclass=Singleton):
         - In JupyterLab, right click on the cell containing slides (outside slides) and select `Create New View for Output` for optimized display.
         - To jump to source cell and back to slides by clicking buttons, set `Windowing mode` in Notebook settings to `defer` or `none`.
         - See [code! Slides.xmd.syntax /] for extended markdown syntax, especially variables formatting.
-        - Inside python scripts or for encapsulation, use `Slides.fmt` to pick variables from local scope.
+        - Inside python scripts or for encapsulation, use `xmd.gather` to pick variables from local scope.
     
     ::: note
         - `Slides` can be indexed same way as list for sorted final indices. 
@@ -162,7 +162,6 @@ class Slides(BaseSlides,metaclass=Singleton):
         self.group      = group
         self.hold       = hold  # Hold display of a function until it is captured in a column of `Slides.write`
         self.xmd        = xmd  # Extended markdown parser
-        self.fmt        = fmt # will be deprecated
         self.esc        = esc # lazy escape for variables in markdown
         self.serializer = serializer  # Serialize IPython objects to HTML
 
@@ -946,7 +945,7 @@ class Slides(BaseSlides,metaclass=Singleton):
         Only single `src` can exist per slide, so last call will override any previous `src` call. The decorator call takes precedence 
         over string calls unless string calls are made inside the function body itself.
         """
-        # AVOID fmt HERE, THAT DOES NOT ALLOW LATER REBUILDS
+        # AVOID BOUNDXMD HERE, THAT DOES NOT ALLOW LATER REBUILDS
         if isinstance(obj, str):
             self.this._src_args = (obj, vars) # this is must to clear other stuff after src as well as to ensure last call
             return None

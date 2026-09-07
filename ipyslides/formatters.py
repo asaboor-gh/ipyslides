@@ -182,15 +182,15 @@ def plt2image(plt_fig=None, transparent=True, width=None, caption=None, format='
     _fig = plt_fig or plt.gcf()
     
     # Determine format
-    fmt = format.lower()
-    if fmt in ('jpg', 'jpeg'):
-        fmt = 'jpeg'
+    frmt = format.lower()
+    if frmt in ('jpg', 'jpeg'):
+        frmt = 'jpeg'
         transparent = False  # JPEG doesn't support transparency
-    elif fmt == 'png':
-        fmt = 'png'
+    elif frmt == 'png':
+        frmt = 'png'
     
     plot_bytes = BytesIO()
-    _fig.savefig(plot_bytes, format=fmt, transparent=transparent, dpi=dpi, bbox_inches='tight')
+    _fig.savefig(plot_bytes, format=frmt, transparent=transparent, dpi=dpi, bbox_inches='tight')
     plt.close(_fig)  # Close after saving
     
     # Seek to beginning before reading
@@ -207,7 +207,7 @@ def plt2image(plt_fig=None, transparent=True, width=None, caption=None, format='
         'caption': _fig_caption(caption) if caption else '',
         'attrs': 'class="focus-child"',
     }
-    return IMG({f'image/{fmt}': img_base64}, metadata)
+    return IMG({f'image/{frmt}': img_base64}, metadata)
 
 def bokeh2html(bokeh_fig,title=""):
     """Write bokeh figure as HTML string to use in `ipyslide.utils.write`.

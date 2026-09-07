@@ -12,7 +12,6 @@ import traceback
 
 from itertools import chain, accumulate
 from collections.abc import Iterable
-from turtle import mode
 from types import MethodType
 from pathlib import Path
 from io import BytesIO # For PIL image

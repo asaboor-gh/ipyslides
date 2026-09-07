@@ -4,7 +4,7 @@ You can import Slides, write, xmd, pause, esc etc. directly from top level.
 """
 
 
-from .core import Slides, fmt, esc, xmd, write, demo, docs # fmt will be deprecated
+from .core import Slides, esc, xmd, write, demo, docs
 from .__version__ import __version__
 
 pause = Slides.pause  # pause delimiter

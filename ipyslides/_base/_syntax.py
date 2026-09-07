@@ -207,7 +207,7 @@ Variables from Python code can be embedded directly into Markdown.
 **Variable Scope & Updates**
 : - **Live Updates**: Variables are automatically updated in your slides when their values change in the notebook if not held inside `Slide[number,].vars` deepest scope.
 - **Scope Resolution**: Variables are resolved from per-slide variables (set by `build` or `Slide.vars.update`), then from the notebook's global scope if a slide is built purely from markdown.
-    In functions which take markdown string such as `write`, `html`, variables are taken from notebook's global scope only. Use `fmt` to encapsulate variables from local scopes.
+    In functions which take markdown string such as `write`, `html`, variables are taken from notebook's global scope only. Use `xmd.gather` to encapsulate variables from local scopes.
 - **Forcing Updates**: You can force a refresh of variables on a specific slide using [code! Slide[number,].vars.update(**kwargs) /]. This is also useful for setting unique variable values on different slides.
 - **Attribute/Index Access**: When using expressions like `\%{{var.attr}}` or `\%{{var['key']}}`, the output will only update if the base variable `var` itself is reassigned.
 

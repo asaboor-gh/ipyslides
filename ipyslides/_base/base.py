@@ -1,5 +1,5 @@
 "Inherit Slides class from here. It adds useful attributes and methods."
-import re, textwrap
+import re
 import traceback
 import inspect
 from pathlib import Path

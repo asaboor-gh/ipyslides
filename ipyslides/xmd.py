@@ -1066,18 +1066,6 @@ class BoundXMD:
         keys = ', '.join(map(repr, self.vars.keys())) # only show keys for brevity
         return f"{self.__class__.__name__}(content={self.content!r}, vars=[{keys}])"
 
-class fmt(BoundXMD):
-    """Use xmd.gather instead of this class. This class is deprecated and will be removed in future releases."""
-    def __init__(self, content: str, **vars):
-        warn("`fmt` is deprecated and will be removed in future releases. Use `xmd.gather` instead.").display()
-        super().__init__(content, vars=vars, _rel_depth=1) # _rel_depth=1 to account for this __init__ call
-
-    def _ipython_display_(self): # to be correctly captured in write etc. commands
-        with altformatter.reset(): # don't let it be caught in html conversion
-            self.parse(returns = False)
-        
-    def _repr_html_(self): # for functions to consume as html and for export
-        return self.parse(returns=True)
 
 class _XMDMeta(type):
     @property

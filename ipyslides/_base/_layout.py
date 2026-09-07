@@ -2,8 +2,6 @@
 
 from ..utils import _build_css
 from ..xmd import get_unique_css_class
-from .icons import Icon, _inline_svg
-from .intro import get_logo
 
 
 def layout_css(accent_color, aspect):
