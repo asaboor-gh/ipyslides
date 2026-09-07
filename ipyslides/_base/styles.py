@@ -341,6 +341,7 @@ def view_nodes(selector: str, first: int = 0, last: int = None) -> dict:
 def style_css(colors, fonts, layout, _root = False):
     uclass = get_unique_css_class()
     _root_dict = {**{f"--{k}-color":v for k,v in colors.items()}, # Only here change to CSS variables
+        '--head-color': 'var(--fg3-color)', # default head color as the heading color
         '--text-size':f'{fonts.size}px',
         '--pad-footer': '8px', # default padding for footer, when no content, will be handled by css class below
         '--jp-content-font-family': f'{fonts.text}, -apple-system, "BlinkMacSystemFont", "Segoe UI", "Oxygen", "Ubuntu", "Cantarell", "Open Sans", "Helvetica Neue", "Icons16"',
@@ -938,56 +939,75 @@ def style_css(colors, fonts, layout, _root = False):
             'text-align':'right !important',
             'padding':'0 12px !important', # to avoid cuts in rtl 
         },
-        '.info, .warning, .success, .error, .note, .tip': {
-            '^ > *:last-child': {'margin-bottom':'0.1em !important'},
-            '^.admonition > .admonition-title': {'display':'none !important'}, # Remove admonition title if get overlapped
-        },
-        '.warning, .warning *:not(span)': {'color':'#FFAC1C !important',},
-        '.success, .success *:not(span)': {'color':'green !important',},
-        '.error, .error *:not(span)': {'color':'red !important',},
-        '.info, .tip, .info *:not(span), .tip *:not(span)' : {'color':'skyblue !important',},
-        '.note, .note-info, .note-warning, .note-success, .note-error, .note-tip' : {
-            'padding-left': '0.5em',
-            'padding-right': '0.5em',
-            'border-radius': '2px',
-            'border-left': '2px inset var(--accent-color)',
-            'margin-top': '0.25em',
-            'margin-bottom': '0.5em !important',
-            'background': 'hsl(from var(--bg3-color) h s l / 0.9)',
-            '^.admonition > .admonition-title': {'display':'none !important'}, # Remove admonition title
-            '^::before': {
-                'content': '"📝 Note"',
-                'display':'block',
-                'color': 'var(--accent-color)',
-                'border-bottom': '1px solid #8988',
-            },
-            '^-info::before': {'content': '"❇️ Info" !important'},
-            '^-warning::before': {'content': '"⚠️ Alert" !important'},
-            '^-success::before': {'content': '"✅ Important" !important'},
-            '^-error::before': {'content': '"⚡ Danger" !important'},
-            '^-tip::before': {'content': '"💡 Tip" !important'},
-        },
-        '.block' : {
-            '^, ^-red,^-green,^-blue, ^-yellow, ^-magenta, ^-cyan': {
+        '.warning, .warning *:not(span)': {'color':'hsl(from var(--fg1-color) 34 88% calc(l * 0.72 + 18)) !important',},
+        '.success, .success *:not(span)': {'color':'hsl(from var(--fg1-color) 142 58% calc(l * 0.68 + 20)) !important',},
+        '.alert, .alert *:not(span)': {'color':'hsl(from var(--fg1-color) 8 78% calc(l * 0.68 + 18)) !important',},
+        '.info, .info *:not(span)' : {'color':'hsl(from var(--fg1-color) 208 72% calc(l * 0.70 + 20)) !important',},
+        '.note': {
+            **(block_props := {
                 '--bg-color': 'var(--bg2-color)',
-                '--bg1-altcolor': r'hsl(from var(--bg-color) h 80% l)', # make table rows, text show etc align with block color
+                '--bg1-altcolor': 'hsl(from var(--bg-color) h 80% l)', # make table rows, text show etc align with block color
                 'border-radius': '8px',
                 'background': 'hsl(from var(--bg-color) h s l / 0.7)', 
                 'padding': '4px',
                 'margin-block-start': '0.2em', # avoid two blocks touching, same gap as columns
                 '^:is(ul,ol)': {'padding-left':'1.5em'} # align list inside block, same as normal lists
-            },
-            **({
-                '^-red':     {'--bg-color': 'hsl(from var(--bg2-color) 10 100% l)'},
-                '^-yellow':  {'--bg-color': 'hsl(from var(--bg2-color) 60 95% l)'}, 
-                '^-green':   {'--bg-color': 'hsl(from var(--bg2-color) 120 80% l)'},
-                '^-cyan':    {'--bg-color': 'hsl(from var(--bg2-color) 180 90% l)'}, 
-                '^-blue':    {'--bg-color': 'hsl(from var(--bg2-color) 210 100% l)'},
-                '^-magenta': {'--bg-color': 'hsl(from var(--bg2-color) 310 100% l)'},
             }),
+        },
+        '.block' : {
+            '^, ^-red,^-green,^-blue, ^-yellow, ^-orange, ^-magenta, ^-purple, ^-cyan': block_props,
+            **({
+                '^-red':     {'--bg-color': 'hsl(from var(--bg2-color)  10 100% l)', '--head-color': 'hsl(from var(--bg-color) h 90% calc(72 - l * 0.35))'},
+                '^-yellow':  {'--bg-color': 'hsl(from var(--bg2-color)  54  72% l)', '--head-color': 'hsl(from var(--bg-color) h 78% calc(68 - l * 0.26))'}, 
+                '^-orange':  {'--bg-color': 'hsl(from var(--bg2-color)  28  78% l)', '--head-color': 'hsl(from var(--bg-color) h 84% calc(70 - l * 0.30))'},
+                '^-green':   {'--bg-color': 'hsl(from var(--bg2-color) 120  80% l)', '--head-color': 'hsl(from var(--bg-color) h 90% calc(72 - l * 0.35))'},
+                '^-cyan':    {'--bg-color': 'hsl(from var(--bg2-color) 188  62% l)', '--head-color': 'hsl(from var(--bg-color) h 82% calc(69 - l * 0.30))'}, 
+                '^-blue':    {'--bg-color': 'hsl(from var(--bg2-color) 210 100% l)', '--head-color': 'hsl(from var(--bg-color) h 90% calc(72 - l * 0.35))'},
+                '^-magenta': {'--bg-color': 'hsl(from var(--bg2-color) 310 100% l)', '--head-color': 'hsl(from var(--bg-color) h 90% calc(72 - l * 0.35))'},
+                '^-purple':  {'--bg-color': 'hsl(from var(--bg2-color) 268  68% l)', '--head-color': 'hsl(from var(--bg-color) h 82% calc(70 - l * 0.30))'},
+            }),
+        },
+        '.ips-block-head, .note:not(:has(.ips-block-head))::before': {
+            'display': 'flex',
+            'align-items': 'center',
+            'gap': '0.45em',
+            'margin-bottom': '0.25em',
+            'font-family': f'{fonts.heading}, var(--jp-content-font-family)',
+            'font-size': '0.88em',
+            'font-weight': 'bold',
+            'line-height': '1.5', # keep generous space
+            'letter-spacing': '0.015em',
+            'text-shadow': '0 1px var(--bg2-color)',
+            'color': 'var(--head-color)',
+        },
+        '.ips-block-head .head-text': {
+            'white-space': 'nowrap',
+            'overflow': 'hidden',
+            'text-overflow': 'ellipsis',
+        },
+        '.note:not(:has(.ips-block-head))::before': {
+            'content': r"'\f304   Note'",
+            'white-space': 'pre',
+            'padding': '4px 4px 0 4px', # adopt block padding style
+            'font-family': f'{fonts.heading}, var(--jp-content-font-family), "Font Awesome 5 Free"', # keep text in heading font; icon falls back to Font Awesome
         },
         '.hrules > *:not(:last-child)': {'border-bottom': '1px solid #8988 !important'},
         '.vrules > *:not(:last-child)': {'border-right': '1px solid #8988 !important'},
+        '.ips-badge': {
+            'display': 'inline-flex',
+            'align-items': 'center',
+            'vertical-align': 'middle',
+            'font-family': 'var(--jp-code-font-family, inherit)',
+            'font-size': '0.76em',
+            'font-weight': '600',
+            'line-height': '1',
+            'padding': '0.1em 0.25em',
+            'border-radius': '0.2em',
+            'color': 'var(--badge-color, #9898)',
+            'text-shadow': '0 1px var(--bg2-color)',
+            'background-color': 'color-mix(in srgb, var(--badge-color, #9898) 12%, transparent)',
+            'border': '1px solid color-mix(in srgb, var(--badge-color, #9898) 25%, transparent)',
+        },
         'details': {
             'padding': '4px',
             'position': 'relative', # keeps content inside

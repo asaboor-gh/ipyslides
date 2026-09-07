@@ -13,12 +13,11 @@ Use any or combination of these styles in markdown blocks or `css_class` argumen
  `text-[value]`     | [value] should be one of tiny, small, big, large, huge.
  `align-[value]`    | [value] should be one of center, left, right.
  `rtl`              | اردو،  فارسی، عربی، ۔۔۔ {: .rtl}
- `info`             | Blue text. Icon ℹ️  for note-info class. {: .info}
- `tip`              | Blue text. Icon💡 for note-tip class. {: .tip}
- `warning`          | Orange text. Icon ⚠️ for note-warning class. {: .warning}
- `success`          | Green text. Icon ✅ for note-success class. {: .success}
- `error`            | Red text. Icon⚡ for note-error class. {: .error}
- `note`             | Text with note icon, can combine other classes as shown above. {: .note}
+ `info`             | Blue text. {: .info}
+ `warning`          | Orange text. {: .warning}
+ `success`          | Green text. {: .success}
+ `alert`            | Red text. {: .alert}
+ `note`             | Text with note icon, use `::: node.mode` blocks for flexible notes. {: .note}
  `export-only`      | Hidden on main slides, but will appear in exported slides.
  `jupyter-only`     | Hidden on exported slides, but will appear on main slides.
  `block`            | Block of text/objects {: .block}
@@ -85,7 +84,7 @@ Citations
 
 The general block syntax is `::: type-or-classes [args] attributes`.
 
-- You can use `/` to divide css properties from node attributes such as `::: note-info border="1px solid red" / id="mynote" dir="ltr"`. 
+- You can use `/` to divide css properties from node attributes such as `::: note.info border="1px solid red" / id="mynote" dir="ltr"`. 
   Node attributes come after `/` and can include non-value attributes such as `open`, `disabled` etc. 'data-' prefixed attributes can appear anywhere.
 - You can create inline blocks by adding `..` in header (only takes effect if body is empty), such as `::: block-red .. text` will create a block with red background and text inside.
 - Both `..` and `/` can be escaped in header by backslash to interpret them as literal characters instead of block body and attributes splitters respectively. 
@@ -111,6 +110,7 @@ The general block syntax is `::: type-or-classes [args] attributes`.
     | `::: columns.inline [widths]` | Create inline columns with relative widths, e.g. `columns.inline 4 6` for 40% and 60% width. This block does not support incremental reveal and `--` separator is optional (but superceded if used) because distinct text blocks are automatically considered columns. |
     | `::: md-[before,after,var_name] [focused lines]` | Parse markdown in the block, with showing source code at before or after or assign a variable name and use as `[md-var_name/]`. Use `md-[name].inline` and `md-[name].collapsed` for specific view. |
     | `::: table [col widths]` | Create a table with optional column widths, e.g. `::: table 1 2` for 33% and 66% width. Use `caption-side=top/bottom` to place caption on top/bottom.|
+    | `::: note.mode` | Create a note block with specific mode, e.g. `note.tip`, `note.warn`, `note.info` (with `head="custom header"` to tweek header text) or use `head` function with `mode` parameter in general to use the header text anywhere. |
     | `::: display css_classes` | Create a block with specific CSS classes forcing display mode, it can break dom flow, but usefull to embed widget variables under blocks. |
 
 ::: details
@@ -223,7 +223,7 @@ Variables from Python code can be embedded directly into Markdown.
 
 {esc(xmd.funcs)}
 
-::: note-info
+::: note
     You can also use `Slides.esc`/`isd.esc` class to lazily escape variables/expressions/output of functions from being parsed inside f-strings.
     This should be rarely used when your markdown contains a lot of $ \LaTeX $ equations to avoid excessively escaping them with curly braces in favor of few escaped variables.
 

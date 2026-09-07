@@ -1,6 +1,6 @@
 # This package exports xmd at top level.
 
-import textwrap, sys, string, builtins, inspect, ast
+import textwrap, sys, string, builtins, inspect, ast, traceback
 import re, secrets # secrets for unique keys
 from itertools import islice
 from functools import partial
@@ -254,9 +254,7 @@ def load(filepath : str, start:int=None, end=None):
     "Load markdown file content in place. Use `start` and `end` to specify line numbers range."
     try:
         with open(filepath, "r", encoding="utf-8") as f:
-            lines = f.readlines()[slice(start,end)]
-            if lines:
-                lines = [f'<!-- begin: {filepath} -->\n', *lines, f'<!-- end: {filepath} -->\n']
+            lines = f.readlines()[slice(start,end)] # keep lines pure to avoid errors with citations/data etc
             return filepath, "".join(lines)
     except Exception as e:
         return filepath, error('Exception', f'Could not load content from file {filepath!r}:\n{e}').value
@@ -302,13 +300,26 @@ class cmnt_esc:
 PLUS_RE = re.compile(r'^\+\+(?:\[(?P<opt>[^\]\n]+)\])?(?:\s*$|\s)', re.MULTILINE) # This is used to split by ++ on its own line,
 DOTS_RE = re.compile(r'(?<!\S)\.\.(?!\S)') # Count only standalone ".." tokens (surrounded by whitespace or string boundaries)
 VARS_RE = re.compile(r"%\{([^{]*?)\}", flags=re.DOTALL)
+
 FUNC_RE = re.compile(
     r"(?<![\\\`])"            # not preceded by backslash or backtick
-    r"\[([a-zA-Z_]\w*)(!{1,2})(?![!])\s*"         # [name! / [name!! but not more !, with optional spaces, must not start with a digit
+    r"\[([a-zA-Z_]\w*)(!{1,2})(?![!])"         # [name! / [name!! but not more !, must not start with a digit
     r"((?:(?!\[[a-zA-Z_]\w*!)[\s\S])*?)"  # body; stop before a nested macro opener
     r"\s*/\]",            # closing /] must stay free so sub/sup before text can stay closer
     flags = re.DOTALL | re.MULTILINE
 )
+
+_head_modes = {
+    "alert":  {"bc":"block-red",    "title": "Alert!",   "icon": "fa-bolt",            "color": "hsl(from var(--fg3-color) 0 calc(s * 1.15) calc(l * 0.95))",},
+    "warn":   {"bc":"block-orange", "title": "Warning!", "icon": "fa-warning",         "color": "hsl(from var(--fg3-color) 34 calc(s * 0.78) calc(l * 0.72))",},
+    "cheer":  {"bc":"block-green",  "title": "Cheers!",  "icon": "fa-check-circle",    "color": "hsl(from var(--fg3-color) 136 calc(s * 1.05) calc(l * 0.9))",},
+    "info":   {"bc":"block-blue",   "title": "Info",     "icon": "fa-info-circle",     "color": "hsl(from var(--fg3-color) 210 calc(s * 1.05) l)",},
+    "tip":    {"bc":"block-purple", "title": "Tip",      "icon": "fa-lightbulb",       "color": "hsl(from var(--fg3-color) 222 calc(s * 1.1) calc(l * 1.03))",},
+    "note":   {"bc":"block-blue",   "title": "Note",     "icon": "fa-pen",             "color": "hsl(from var(--fg3-color) 188 s l)",},
+    "quote":  {"bc":"block-purple", "title": "Quote",    "icon": "fa-quote-left",      "color": "hsl(from var(--fg3-color) 282 s calc(l * 1.08))",},
+    "todo":   {"bc":"block-yellow", "title": "Todo",     "icon": "fa-tasks",           "color": "hsl(from var(--fg3-color) 142 s calc(l * 0.95))",},
+    "prompt": {"bc":"block-orange", "title": "Prompt",   "icon": "fa-question-circle", "color": "hsl(from var(--fg3-color) 20 s calc(l * 1.05))",},
+}
 
 def strip_ptags(content):
     "Strip <p> and </p> tags from the start and end of the content, if present."
@@ -563,6 +574,7 @@ class XMarkdown(Markdown):
     def _parse_block(self, header, data):
         "Returns list of parsed block or columns or code, input is without ``` but includes langauge name."
         typ, mode, widths, _class, css_props, attrs = self._parse_params(header)
+        data = textwrap.dedent(data) # ensure clean data for each block
         
         if typ == "citations": # avoid using citations block
             return [error("ValueError", f"Use '--- citations ---' syntax at the end of the synced markdown file instead of a citations block.")]
@@ -602,12 +614,43 @@ class XMarkdown(Markdown):
         if (line := data.strip()) and re.fullmatch('^.*$', line): # single line columns
             data = re.sub(r'\s+\|\s+', '\n--\n', line) # ensure | is spaced
         return data
+    
+    def _resolve_note_content(self, tag, mode, props, data):
+        "Insert the note header if not in the data!"
+        if tag.startswith("note-"):
+            data = error("ValueError", f"Invalid note tag '{tag}'. For note blocks, use 'note' or 'note.mode' instead."
+                ).value + "\n" + data
+        
+        if not mode: 
+            mode = "note" # defult itself to make sure it adds a header if missing
+            
+        if not re.search(r'\[head!', data):
+            head, _ = _XMD_FUNCS["head"]
+            return head(props.get("head", None), mode=mode).value + "\n" + data
+        return data
+
+    def _resolve_note_class(self, mode, _class):
+        "Add a block-* variant class for note.mode blocks unless user already provided one explicitly."
+        if not mode or re.search(r'\bblock-(red|yellow|green|cyan|blue|magenta|orange|purple)\b', _class):
+            return _class
+
+        if bc := _head_modes.get(mode.lower(),{}).get("bc", None):
+            if re.search(rf'\b{re.escape(bc)}\b', _class):
+                return _class
+            return f"{_class} {bc}".strip()
+        return _class
+        
         
     def _parse_colon_block(self, header, data):
         STRICT_TAGS = ("pre","raw") # code is handled separately
         CAPTURED_TAGS = ("p","details","summary","center","blockquote","ul","ol", "li", "nav", *STRICT_TAGS) # tags that are captured by this parser
         
         tag, mode, widths, _class, css_props, attrs = self._parse_params(header)
+        
+        if tag == "note" or tag.startswith("note-"):
+            data = self._resolve_note_content(tag, mode, css_props, data)
+            _class = self._resolve_note_class(mode, _class)
+            tag = "note" # normalize note after resolving its content
         
         if tag == "columns":
             if mode != "inline": # columns with display mode were already handled
@@ -945,7 +988,8 @@ class XMarkdown(Markdown):
                 res =  func(*args, **kwargs)
                 res = res.inline if fname == "code" else res # code function returns SourceCode object, not inline
             except Exception as e:
-                res = error('Exception', f"Could not parse '{match.group(0)}': \n{e}\n"
+                e, text = traceback.format_exc(limit=0).split(':',1) # only get last error for information
+                res = error('Exception', f"Could not parse '{match.group(0)}': \n{error(e,text)}\n"
                     f"<div class='block-yellow'>⚠️ Function '{fname}' expects arguments <code>{inspect.signature(func)}</code>, "
                     f"got <code>{args}, {kwargs}</code></div>")
         
@@ -1025,7 +1069,7 @@ class BoundXMD:
 class fmt(BoundXMD):
     """Use xmd.gather instead of this class. This class is deprecated and will be removed in future releases."""
     def __init__(self, content: str, **vars):
-        print("⚠️ Warning: `fmt` is deprecated and will be removed in future releases. Use `xmd.gather` instead.")
+        warn("`fmt` is deprecated and will be removed in future releases. Use `xmd.gather` instead.").display()
         super().__init__(content, vars=vars, _rel_depth=1) # _rel_depth=1 to account for this __init__ call
 
     def _ipython_display_(self): # to be correctly captured in write etc. commands

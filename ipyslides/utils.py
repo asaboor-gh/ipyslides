@@ -12,6 +12,7 @@ import traceback
 
 from itertools import chain, accumulate
 from collections.abc import Iterable
+from turtle import mode
 from types import MethodType
 from pathlib import Path
 from io import BytesIO # For PIL image
@@ -26,7 +27,7 @@ from dashlab.utils import _build_css, _fix_init_sig # This is very light weight 
 
 from ._base.icons import Icon as icon # for export and overrides in fa function
 from .formatters import ipw, XTML, IMG, frozen, get_slides_instance, fix_ipy_image, _inline_style, htmlize, _fig_caption, slidebound, slidesready
-from .xmd import xmd, get_unique_css_class, capture_content, raw, error, warn, _internal_xmd_call
+from .xmd import xmd, get_unique_css_class, capture_content, raw, error, warn, _internal_xmd_call, _head_modes
 from .source import code
 from .writer import write, _style_for_widget, _fmt_html
 from ._base.styles import animations, view_nodes
@@ -195,7 +196,7 @@ def alt(exportable_data, obj):
     slides.alt(lambda w: f'<input type="range" min="{w.min}" max="{w.max}" value="{w.value}">', ipw.IntSlider()).display()
     ```
 
-    ::: note-info
+    ::: note
         - If you happen to be using `alt` many times for same type, you can use `Slides.serializer.register` and then pass that type of widget without `alt`.
         - `ipywidgets`'s `HTML`, `Box` and `Output` widgets and their subclasses directly give html representation if used inside `write` command.
     """
@@ -465,7 +466,7 @@ def css(props: dict=None, applyto=None, **css_vars):
     Under a slide builder (including markdown), if `applyto` is None, it applies to current slide, 
     if 'all', it applies to all slides, otherwise it should be index or list of indices of slides.
 
-    ::: note-tip
+    ::: note.tip
         - See [code! Slides.css_syntax /] for information on how to write CSS dictionary.
         - Underscores in CSS property and variable names are replaced with dashes, so `font_size` becomes `font-size` and `my_var` becomes `--my-var`.
         - You can define global/slide level CSS animation variables like `--time`, `--delay` etc. See `Slides.css_animations` for details of various animations usage.
@@ -579,7 +580,7 @@ def styled(obj, css_class=None, **css_props):
     A widget will be wrapped in a Box to apply class and styles which otherwise may not work properly for some widgets.
     If you need a styled, yet not a block level widget, use `display="inline-grid"` in `css_props`.
 
-    ::: note-tip
+    ::: note.warn head="Be Aware!"
         Objects other than widgets will be wrapped in a 'div' tag. Use `html` function if you need more flexibility.
     """
     klass = css_class if isinstance(css_class, str) else ''
@@ -619,7 +620,7 @@ def pin(obj, x=None, y=None, width=None, height=None, center=False, zorder=0, ro
     
     `css_class` and `css_props` are applied to pinned object for further customizations.
     
-    ::: note-warning
+    ::: note.warn head="Be Careful!"
         - Beaware that pinning is contained relative to columns and containers with animation classes, use outside of any of those context to align to whole slide.
         - Use animation classes inside the pinned content, otherwise it will conflict with pin's CSS properties and may not work as expected.
     """
@@ -723,7 +724,7 @@ def html(tag, children = None,css_class = None, style=None, void_attrs=None,**no
     html('img',src='ir_uv.jpg') #Returns IPython.display.HTML("<img src='ir_uv.jpg'></img>") and displays image if last line in notebook's cell.
     ```
     
-    ::: note-tip 
+    ::: note.tip 
         To keep an image persistently embeded, use `ipyslides.utils.imge` function instead of just an html tag.
     """
     if not isinstance(tag, str):
@@ -851,6 +852,34 @@ def sup(text, **css_props):
 def sub(text, **css_props):
     "Returns subscript text with given css properties."
     return XTML(f"<sub {_inline_style(css_props)}>{xmd(text, True,'')}</sub>")
+
+@_internal_xmd_call('badge')
+def badge(text, color='var(--accent-color)'):
+    "Creates a badge with given text and color."
+    style = {'--badge-color':color} if color else {}
+    return html('span', xmd(text, True,''), css_class='ips-badge', style = style)
+
+@_internal_xmd_call('head')
+def head(text: str | None = None, mode: str | None = None):
+    """Renders a block header with optional semantic mode styling.
+    Adopts styling based on the specified mode or based on containing block.
+    
+    ::: note.tip
+        You can use `::: note.mode` to create notes without explicity using the `head` function
+        and can also tweek header text, e.g. `::: note.tip head="Custom Tip"` in the block itself.
+    """
+    if mode and not mode in _head_modes:
+        raise ValueError(f"Invalid mode '{mode}'. mode must be None or one of: {', '.join(_head_modes.keys())}")
+
+    meta = _head_modes.get(mode, {}) # handle None
+    style = {"--head-color": meta["color"]} if "color" in meta else {}
+
+    content = ""
+    if meta.get('icon', None):
+        content += f"<i class='fa {meta.get('icon')}'></i>"
+    if title := (text or meta.get('title', text)): # prefer user text
+        content += f"<span class='head-text'>{xmd(title, True, '')}</span>"
+    return XTML(f"<div class='ips-block-head' {_inline_style(style)}>{content}</div>")
 
 @_internal_xmd_call('textbox')
 def textbox(text, **css_props):
@@ -1092,7 +1121,7 @@ def update_class(widget, css_class:str, keep:bool):
 _css_info = (f"""
 {textwrap.dedent(_build_css.__doc__)}
 
-::: note-info
+::: note
     In the output of [code! Slides.html('style',props) /], [code! Slides.css(props) /] etc. functions, top selector 
     would be different if it is called under slide context or not.
 
@@ -1125,8 +1154,9 @@ class steps(ipw.GridBox):
             klasses.extend(css_class.split())
             
         key = 'grid_template_columns' if dots_loc in ("left","right") else 'grid_template_rows'
-        value = '24px 1fr' if dots_loc in ("left","top") else '1fr 24px'
-        super().__init__(layout={'display': 'grid', key: value}, _dom_classes=klasses)
+        value = '28px 1fr' if dots_loc in ("left","top") else '1fr 28px' # 4px extra space for scrollbar
+        cross_template = {f'grid_template_{"rows" if "columns" in key else "columns"}': '100%'} # need to set explicitly to avoid overflow
+        super().__init__(layout={'display': 'grid', key: value, **cross_template}, _dom_classes=klasses)
         
         self._sidxs, outputs = self._process_objs(objs)
         

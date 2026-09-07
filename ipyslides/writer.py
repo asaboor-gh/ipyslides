@@ -264,7 +264,7 @@ def write(*objs,widths = None, css_class=None, paused=False, **css_props):
             - `IPython.core.formatters` API for third party libraries.
         - A whole column in `write` can be multiple captured outputs from a `capture_content` context manager, which can be used as alternative to `Slides.hold`.
             
-    ::: note
+    ::: note.info
         - Use `Slides.frozen` to avoid display formatting and markdown parsing over objects in `write` and for some kind of objects in `display` too.
         - `write` is a robust command that can handle most of the cases. If nothing works, `repr(obj)` will be displayed.
         - You can avoid `repr(obj)` by `Slides.hold(func, ...)` e.g. `Slides.hold(plt.show)`. This can also be used to delay display until it is captured in a column.
@@ -275,7 +275,7 @@ def write(*objs,widths = None, css_class=None, paused=False, **css_props):
         - Use `++` before `::: columns.paused` to isolate previous content from the first reveal step.
         - A single object/block with `column` class inside `write`/`::: columns` will stretch to full height of columns no matter how deeply nested it is.
     
-    ::: note-tip
+    ::: note.tip
         To make a group of rows as single item visually for incremental display purpose, wrap them in a nested list/tuple.
         A single column is flattened up to 2 levels, so `[[obj1], row2, [item1, item2]]` will be displayed as 3 rows.
         

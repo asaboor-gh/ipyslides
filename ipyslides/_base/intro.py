@@ -62,11 +62,11 @@ with slides.slide(-1):
 slides # This displays slides if on the last line of cell, or use [code! slides.show() /].
 ```
 
-::: note-info
+::: note
     - Use `-m` flag in `%%slide` magic if whole cell is markdown. Alternatively, you can use `slides.src("markdown content")` within a slide context to add markdown content programmatically.
     - Use `-1` in place of a slide number to add numbering automatically in Jupyter Notebook and python file! Other cell code is preserved. You may need to rerun cell if creating slides in a for loop.
 
-::: note-tip
+::: note.tip head="Useful Resources"
     - Use `ipyslides.docs` to see upto date documentation.
     - Use `ipyslides.demo` to create example slides.
     - Use  `Slides.sync_with_file` to live edit and update slides through a markdown file.
@@ -119,7 +119,7 @@ how_to_print = f"""
 You can print slides to PDF using `Ctrl + P`. Use options in settings panel to prepare slides for print.
 Use `Save as PDF` option instead of Print PDF in browser to make links work in output PDF. Also enable background graphics in print dialog if necessary.
 
-::: note-warning
+::: note.warn head="Print Caveats!"
     - PDF printing may not work as expected in all browsers/IDEs and tested only in JupyterLab.
     - In case of issues with frames not displaying properly using `Ctrl + P`, export to HTML and then print.
     - Make sure your presentation is clean for print. "Inline Notes" are only meant for personal reference or sharing slides with notes.
@@ -132,13 +132,14 @@ For widgets and other objects to appear reliably in exported
 slides, use [alert! slides.alt /]. You can paste screenshots from system tool
 into Clips GUI in side panel. On Linux, you need [alert! xclip /] or [alert! wl-paste /] installed.
 
-::: note-tip
+::: note.tip head="Content Tips!"
     - You might want to flow content for export purpose. Use checkbox in settings panel to enable it.
-    - Print slides with notes by enabling `Inline Notes` option in settings panel before print/export. Notes appear at top to grab immediate attetion of the speaker.
+    - Print slides with notes by enabling `Inline Notes` option in settings panel before print/export. 
+      Notes appear at top to grab immediate attetion of the speaker.
     - Use `Merge Parts` option in settings panel to show all parts of a page/slide as one page/slide.
 """
 more_instructions = f"""{get_logo('2em', 'IPySlides')}
-::: note-tip
+::: note.info head="Jupyter Tips"
     - Right click (or click on footer) to open context menu for accessing settings, table of contents etc.  
     - In JupyterLab, right click on the cell containing slides (outside slides) and select `Create New View for Output` for optimized display.
     - To jump to source cell and back to slides by clicking buttons, set `Windowing mode` in Notebook settings to `defer` or `none`.
@@ -152,7 +153,7 @@ more_instructions = f"""{get_logo('2em', 'IPySlides')}
 
 {how_to_slide}
 
-::: note-warning
+::: note.warn head="Caution!"
     Restart Kernel if you make mistake in slide numbers to avoid hidden state problem.
 """
 
@@ -177,7 +178,7 @@ pio.templates.default = "plotly_white"
 #pio.templates #gives list of styles
 ```
 Wrap your plotly figures in `plotly.graph_objects.FigureWidget` for quick rendering.
-{{.note-info}}
+{{.note}}
 
 **Altair**{{.success}}
 ```python

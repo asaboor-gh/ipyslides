@@ -12,7 +12,7 @@ from . import styles
 from ._layout import background_css, get_unique_css_class, loading_skeleton
 from .styles import collapse_node, hide_node
 from ..utils import XTML, html, update_class, _resolve_img, _styled_css, _build_css
-from ..xmd import capture_content
+from ..xmd import capture_content, error
 from ..formatters import _Output, widget_from_data, slidebound
 
 class Vars:
@@ -26,7 +26,7 @@ class Vars:
     - `slides[1:3].vars.pop('title')` removes variable 'title' from slide 1 and 2 only
     - `slides[0].vars.scope` see variables with scope set on slide 0
     
-    ::: note-tip
+    ::: note.info head="Variable Scope Resolution"
         If variables are not set on slide, they are picked from notebook scope if `Auto Rebuild` is enabled in side panel.
     """
     def __init__(self, *slides):
@@ -198,7 +198,7 @@ class Slide:
 
             if captured.stderr:
                 if 'warning' in captured.stderr.lower():
-                    print(captured.stderr) # Don't throw error on soft warnings
+                    error("Warning", captured.stderr).display() # Don't throw error on soft warnings
                 else:
                     raise RuntimeError(f'Error in building {self}: {captured.stderr}')
             
@@ -285,7 +285,7 @@ class Slide:
     
     def _rebuild(self, go_there=False):
         if not self._markdown and go_there: # this avoid printing logs during bacth rebuilds
-            return print("Exception: Can only rebuild slides created purely from markdown!")
+            return error("Exception", "Can only rebuild slides created purely from markdown!").display()
         
         with self._app.navigate_back(self.index if go_there else None):
             self._app._slide(f'{self.number} -m', self._markdown)
@@ -623,7 +623,7 @@ class Slide:
                 display(*objs)
     
     @property
-    def index(self): return self._index
+    def index(self): return -1 if self._index is None else self._index
 
     @property
     def indexf(self):

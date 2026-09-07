@@ -106,11 +106,11 @@ class Slides(BaseSlides,metaclass=Singleton):
         print('This will not be printed either')
         display('Something') # This will be printed
     ```
-    ::: note-info
+    ::: note
         The traitlets callables under settings returns settings back to enable chaining 
         without extra typing, like [code! Slides.settings.logo().layout()... /] .
     
-    ::: note-tip
+    ::: note.tip
         - Use [code! Slides.instance() /] class method to keep older settings. [code! Slides() /] apply default settings every time.
         - Run [code! ipyslides.demo() /] to see a demo of some features.
         - Run [code! ipyslides.docs() /] to see documentation.
@@ -121,7 +121,7 @@ class Slides(BaseSlides,metaclass=Singleton):
         - See [code! Slides.xmd.syntax /] for extended markdown syntax, especially variables formatting.
         - Inside python scripts or for encapsulation, use `Slides.fmt` to pick variables from local scope.
     
-    ::: note-info
+    ::: note
         - `Slides` can be indexed same way as list for sorted final indices. 
         - For indexing slides with given number, use comma as [code! Slides[number,] → Slide /] 
         - Access many via list as [code! Slides[[n1,n2,..]] → SlideGroup /] or slice as [code! Slides[start:stop:step] → SlideGroup /].
@@ -457,7 +457,7 @@ class Slides(BaseSlides,metaclass=Singleton):
                 self.styled("""
                     [color!! 'var(--accent-color)' .. Replace this with creating a slide with number [alert! 0 /] /]
                     
-                    ::: note-tip
+                    ::: note.tip
                         Right click (or click on footer) to open context menu for accessing settings, table of contents etc.  
                     """,
                     padding = "8em 8px",
@@ -484,7 +484,7 @@ class Slides(BaseSlides,metaclass=Singleton):
                 if hasattr(slide, '_src_func'): del slide._src_func
                 if hasattr(slide, '_scroll_btn'): del slide._scroll_btn
         
-        self._slides_dict = {k: s for k, s in self._slides_dict.items() if s.index is not None and s.index < keep}
+        self._slides_dict = {k: s for k, s in self._slides_dict.items() if s.index < keep}
         self.refresh() # Reset internal structures
         self._next_number = self[-1].number + 1 if self._slides_dict else 0 # reset next number
 
@@ -708,7 +708,7 @@ class Slides(BaseSlides,metaclass=Singleton):
             return None
 
         unit = 100/(self._lms_idx or 1)
-        value = round(unit * ((slide.index or 0) - (slide.nf - fidx - 1)/slide.nf), 4)
+        value = round(unit * (slide.index - (slide.nf - fidx - 1)/slide.nf), 4)
         return max(0, min(100, value))
 
 
@@ -862,7 +862,7 @@ class Slides(BaseSlides,metaclass=Singleton):
             ---------------- Cell ----------------
             %%slide 2 -m
             Everything here and below is treated as markdown, not python code.
-            ::: note-info
+            ::: note
                 Find special syntax to be used in markdown by `Slides.xmd.syntax`.
         ::: note
             - You can add ++ (plus plus) in the content staring on new line to add parts which reveal incrementally.

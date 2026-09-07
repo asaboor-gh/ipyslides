@@ -9,7 +9,7 @@ class Notes:
     enabling `Notes Popup` option in settings panel. Notes can also be printed in PDF (after export too) by 
     enabling `Inline Notes` option in settings panel, useful for sharing slides with notes or for personal reference.
     
-    ::: note-tip     
+    ::: note.tip     
         - In markdown, you can use [alert! [notes\! notes content \/] /].
         - Place your (extended) projector on top/bottom of laptop screen while presenting 
           in Jupyter Notebook to allow right/left edges click navigation work smoothly.

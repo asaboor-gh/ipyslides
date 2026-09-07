@@ -8,7 +8,7 @@ from dashlab.utils import _fix_init_sig, _fix_trait_sig
 jupyter_colors = { # used in styles.py and interaction.js
     'fg1':'--jp-content-font-color0',
     'fg2':'--jp-content-font-color3',
-    'fg3':'--jp-content-font-color2',
+    'fg3':'--jp-brand-color2',
     'bg1':'--jp-layout-color0',
     'bg2':'--jp-cell-editor-background',
     'bg3':'--jp-layout-color2',

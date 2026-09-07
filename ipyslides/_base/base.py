@@ -87,7 +87,7 @@ class BaseSlides:
         
         See `ipyslides.docs()` for few examples.
 
-        ::: note-warning
+        ::: note.warn head="Watch Out!"
             - If you use this to change global state of slides, return a clean up function which accepts slide as argument.
             - This can be used only single time per slide, overwriting previous function.
         """
@@ -161,11 +161,11 @@ class BaseSlides:
          <!-- Or put this content in a file 'bib.md' and then use [load! bib.md/] above -->
         ```
         
-        ::: note-tip
+        ::: note.tip
             Synced file includes all slides from title slide onwards, you can insert placeholder variables using `\%{variable_name}` 
             in the content that will receive values from the notebook's global scope as soon as that variable is defined.
         
-        ::: note-tip
+        ::: note.tip head="Debugging"
             To debug the linked file or included file, use EOF on its own line to keep editing and clearing errors.
         """
         if not self.inside_jupyter_notebook(self.sync_with_file):

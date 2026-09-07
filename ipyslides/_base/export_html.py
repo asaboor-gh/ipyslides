@@ -162,7 +162,7 @@ class _HhtmlExporter:
         - If a slide has only widgets or does not have single object with HTML representation, it will be skipped.
         - You can take screenshot (using system's tool) of a widget, save it using Clips GUI in side panel and laod as image to keep PNG view of a widget. 
         
-        ::: note-info
+        ::: note
             - PDF printing of slide width is 210mm (8.25in). Height is determined by aspect ratio provided.
             - Use `Save as PDF` option instead of Print PDF in browser to make links work in output PDF. Alsp enable background graphics in print dialog.
         """

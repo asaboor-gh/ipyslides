@@ -382,7 +382,7 @@ class Settings:
         if len(self._slides) < 5 or slide.number == 0:
             return '' # no clicks for few slides or title page
         
-        items = [getattr(item,'_sec_id','') for item in self._slides if (item.index or 0) <= self._slides._lms_idx] # only before supplemnetal
+        items = [getattr(item,'_sec_id','') for item in self._slides if item.index <= self._slides._lms_idx] # only before supplemnetal
         imax = len(items) - 1
         items = [items[int(round(i,0))] for i in [0, imax/4,imax/2, 3*imax/4, imax]]
         labels = '●●●●●'
