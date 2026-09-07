@@ -247,7 +247,7 @@ class SidePanel(VBox):
     
     def toggle(self, visible):
         "Show/hide side panel."
-        self.ws._ctxmenu._update_state('panel', visible) # keep menu state in sync, important due to internal calls
+        self.ws.ctxmenu._update_state('panel', visible) # keep menu state in sync, important due to internal calls
         self.layout.width = "min(400px, 100%)" if visible else "0"
         self.layout.overflow = 'auto' if visible else 'hidden'
     
@@ -300,6 +300,7 @@ class _Buttons:
     export  =  Button(icon='file',description="Export to HTML File",layout= Layout(width='max-content'))
     print   =  Button(icon='file-pdf',description="Print Slides",layout= Layout(width='max-content'), tooltip='Ctrl + P')
     build   =  Button(icon='warning',description="Build Pending Slides",layout= Layout(width='max-content'), tooltip='Click to Build This/First Pending Slide [B]').add_class('Build-Btn')
+    cmenu   =  Button(icon='caret-right',description="").add_class('CtxMenu-Btn')
 
 @dataclass(frozen=True)
 class _Htmls:
@@ -355,7 +356,7 @@ class Widgets:
         self.checks  = _Checks()
         self.htmls   = _Htmls()
         self.drawer  = DrawWidget(self)
-        self._ctxmenu= CtxMenu(self, description='Shift + Right Click for Browser Menu')
+        self.ctxmenu = CtxMenu(self, description='Shift + Right Click for Browser Menu')
         self.iw      = InteractionWidget(self)
         self.notes   = NotesWidget(value = 'Notes Preview')
         self.drawer.layout = dict(width='100%',height='0',overflow='hidden') # height will be chnaged by button
@@ -391,7 +392,8 @@ class Widgets:
             self.drawer, 
             self.htmls.logo,# on top of things
             self.buttons.build, # build button for lazy slides
-            self._ctxmenu, # at top 
+            self.buttons.cmenu,
+            self.ctxmenu, # at top 
             self._progbar # progressbar should come last
             ],layout= Layout(width=f'{self.sliders.width.value}vw', height=f'{int(self.sliders.width.value*9/16)}vw',margin='auto') # 9/16 is default, will change by setting
         ).add_class('SlidesWrapper')  #Very Important to add this class
@@ -403,6 +405,13 @@ class Widgets:
         for btn in [self.buttons.next, self.buttons.prev]:
             btn.style.button_color= 'transparent'
             btn.layout.min_width = 'max-content' #very important parameter
+        
+        self.buttons.cmenu.on_click(self._on_cmenu_click)
+    
+    def _on_cmenu_click(self, b):
+        "Open context menu"
+        # Implement the logic for context menu click here
+        self.ctxmenu.show(12,4,'px') # open in top left to avoid overflow 
         
     def _push_toast(self,content,timeout=5):
         "Send inside notifications for user to know whats happened on some button click."

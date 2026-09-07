@@ -43,7 +43,7 @@ make two figures again, one for publication and one for presentation.
 - 📤 Export to HTML/PDF (widgets are no more interactive)
 - 🎯 Frame-by-frame animations
 - 📝 Speaker notes support
-- 🔄 Markdown, citations and settings files synchronization
+- 🔄 Extended Markdown, citations and settings files synchronization
 - ✏️ Drawing support during presentations
 
 --- 

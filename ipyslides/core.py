@@ -183,8 +183,8 @@ class Slides(BaseSlides,metaclass=Singleton):
         self._set_saved_citations() # from previous session
         self.wprogress = self.widgets.sliders.progress
         self.wprogress.observe(self._update_content, names=["value"])
-        self.widgets._ctxmenu._callback('refresh',self._force_update) # only single callback is allowed
-        self.widgets._ctxmenu._callback('source',self._jump_to_source_cell) 
+        self.widgets.ctxmenu._callback('refresh',self._force_update) # only single callback is allowed
+        self.widgets.ctxmenu._callback('source',self._jump_to_source_cell) 
         self.widgets.checks.rebuild.observe(self._auto_rebuild, names=['value'])
         self.widgets.buttons.build.on_click(self._click_build_if_pending)
 
@@ -453,17 +453,17 @@ class Slides(BaseSlides,metaclass=Singleton):
 
     def _add_clean_title(self):
         with _build_slide(self, 0):
-            self.stack([
-                self.styled("""
-                    [color!! 'var(--accent-color)' .. Replace this with creating a slide with number [alert! 0 /] /]
-                    
-                    ::: note.tip
-                        Right click (or click on footer) to open context menu for accessing settings, table of contents etc.  
-                    """,
-                    padding = "8em 8px",
-                ), 
-                '', # empty column for space 🤣
-                how_to_slide],sizes=[14,1, 85]).display()
+            self.stack([f"""
+                # IPySlides
+                ::: note.tip block-clear .. Replace this with creating a slide with number [color! 0 /]
+                
+                ::: note.prompt block-clear head="Looking for Slides Controls?"
+                    - Right-click (or click the footer) to open the context menu for settings and contents.
+                    - Hover top-left and click [fa! caret-right /] to open the menu when the footer or right-click is unavailable.
+                    - Click a footer section (when shown) to jump there quickly.
+                """,
+                self.styled(how_to_slide, max_height='98cqh', overflow='auto') # add scroll only on this, not whole
+            ], sizes=[40, 60], max_height='99cqh').display()
         
         self._unregister_postrun_cell() # This also clears slides per cell
         self.settings.footer.text = self.get_logo('1em') + ' IPySlides'

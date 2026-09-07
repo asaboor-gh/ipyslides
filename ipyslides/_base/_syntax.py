@@ -21,7 +21,7 @@ Use any or combination of these styles in markdown blocks or `css_class` argumen
  `export-only`      | Hidden on main slides, but will appear in exported slides.
  `jupyter-only`     | Hidden on exported slides, but will appear on main slides.
  `block`            | Block of text/objects {: .block}
- `block-[color]`    | Block of text/objects with specific background color from <br> red, green, blue, yellow, cyan, magenta and gray.
+ `block-[color]`    | Block of text/objects with specific background color from <br> clear, red, green, blue, yellow, cyan, magenta, purple, orange.
  `[h,v]rules`       | Horizontal and vertical rules between children of a node. Combined with `ul` or `ol` for lists gives nice effect and can be used to create tabular grids.
  `raw-text`         | Text will be shown as printed style. {: .raw-text}
  `focus-self`       | Double-click on element to zoom into popup view. Double-click again or navigate slides to exit. {: .focus-self}

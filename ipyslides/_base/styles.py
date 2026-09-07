@@ -965,6 +965,7 @@ def style_css(colors, fonts, layout, _root = False):
                 '^-blue':    {'--bg-color': 'hsl(from var(--bg2-color) 210 100% l)', '--head-color': 'hsl(from var(--bg-color) h 90% calc(72 - l * 0.35))'},
                 '^-magenta': {'--bg-color': 'hsl(from var(--bg2-color) 310 100% l)', '--head-color': 'hsl(from var(--bg-color) h 90% calc(72 - l * 0.35))'},
                 '^-purple':  {'--bg-color': 'hsl(from var(--bg2-color) 268  68% l)', '--head-color': 'hsl(from var(--bg-color) h 82% calc(70 - l * 0.30))'},
+                '^-clear':   {'--bg-color': 'var(--bg1-color)', '--head-color': 'var(--fg3-color)'}, # default same background style block, transparent looks bad
             }),
         },
         '.ips-block-head, .note:not(:has(.ips-block-head))::before': {
@@ -977,7 +978,7 @@ def style_css(colors, fonts, layout, _root = False):
             'font-weight': 'bold',
             'line-height': '1.5', # keep generous space
             'letter-spacing': '0.015em',
-            'text-shadow': '0 1px var(--bg2-color)',
+            'text-shadow': '0 0.5px color-mix(in srgb, var(--head-color) 30%, transparent)',
             'color': 'var(--head-color)',
         },
         '.ips-block-head .head-text': {

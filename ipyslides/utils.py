@@ -466,7 +466,7 @@ def css(props: dict=None, applyto=None, **css_vars):
     Under a slide builder (including markdown), if `applyto` is None, it applies to current slide, 
     if 'all', it applies to all slides, otherwise it should be index or list of indices of slides.
 
-    ::: note.tip
+    ::: note.tip block-clear head="CSS Usage Tips"
         - See [code! Slides.css_syntax /] for information on how to write CSS dictionary.
         - Underscores in CSS property and variable names are replaced with dashes, so `font_size` becomes `font-size` and `my_var` becomes `--my-var`.
         - You can define global/slide level CSS animation variables like `--time`, `--delay` etc. See `Slides.css_animations` for details of various animations usage.

@@ -140,7 +140,7 @@ into Clips GUI in side panel. On Linux, you need [alert! xclip /] or [alert! wl-
 """
 more_instructions = f"""{get_logo('2em', 'IPySlides')}
 ::: note.info head="Jupyter Tips"
-    - Right click (or click on footer) to open context menu for accessing settings, table of contents etc.  
+    - Right click (or click on top-left button/footer) to open context menu for accessing settings, table of contents etc.  
     - In JupyterLab, right click on the cell containing slides (outside slides) and select `Create New View for Output` for optimized display.
     - To jump to source cell and back to slides by clicking buttons, set `Windowing mode` in Notebook settings to `defer` or `none`.
 

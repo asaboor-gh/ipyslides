@@ -315,7 +315,7 @@ _head_modes = {
     "cheer":  {"bc":"block-green",  "title": "Cheers!",  "icon": "fa-check-circle",    "color": "hsl(from var(--fg3-color) 136 calc(s * 1.05) calc(l * 0.9))",},
     "info":   {"bc":"block-blue",   "title": "Info",     "icon": "fa-info-circle",     "color": "hsl(from var(--fg3-color) 210 calc(s * 1.05) l)",},
     "tip":    {"bc":"block-purple", "title": "Tip",      "icon": "fa-lightbulb",       "color": "hsl(from var(--fg3-color) 222 calc(s * 1.1) calc(l * 1.03))",},
-    "note":   {"bc":"block-blue",   "title": "Note",     "icon": "fa-pen",             "color": "hsl(from var(--fg3-color) 188 s l)",},
+    "note":   {"bc":"block",        "title": "Note",     "icon": "fa-pen",             "color": "hsl(from var(--fg3-color) 188 s l)",},
     "quote":  {"bc":"block-purple", "title": "Quote",    "icon": "fa-quote-left",      "color": "hsl(from var(--fg3-color) 282 s calc(l * 1.08))",},
     "todo":   {"bc":"block-yellow", "title": "Todo",     "icon": "fa-tasks",           "color": "hsl(from var(--fg3-color) 142 s calc(l * 0.95))",},
     "prompt": {"bc":"block-orange", "title": "Prompt",   "icon": "fa-question-circle", "color": "hsl(from var(--fg3-color) 20 s calc(l * 1.05))",},
@@ -631,7 +631,7 @@ class XMarkdown(Markdown):
 
     def _resolve_note_class(self, mode, _class):
         "Add a block-* variant class for note.mode blocks unless user already provided one explicitly."
-        if not mode or re.search(r'\bblock-(red|yellow|green|cyan|blue|magenta|orange|purple)\b', _class):
+        if not mode or re.search(r'\bblock|block-\w+\b', _class):
             return _class
 
         if bc := _head_modes.get(mode.lower(),{}).get("bc", None):

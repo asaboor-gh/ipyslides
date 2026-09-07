@@ -14,6 +14,7 @@ import pygments
 import ipywidgets as ipw
 import dashlab.widgets as dlw
 
+from pygments.styles import get_all_styles # its generator, so cache it once
 from IPython.display import display, HTML, Audio, Video, Image as IPyImage
 from IPython.display import __dict__ as _all
 from IPython.utils.capture import RichOutput, CapturedIO, capture_output
@@ -23,6 +24,7 @@ from dashlab.utils import _inline_style
 # Patch CapturedIO to for a display method
 CapturedIO.display = CapturedIO.show # for completenes with other returns
 
+_pygments_styles = tuple(get_all_styles()) # lazy import creates issue otherwise
 __reprs = [rep.replace('display_','') for rep in _all if rep.startswith('display_')] # Can display these in write command
 
 supported_reprs = tuple(__reprs) # don't let user change it
@@ -267,8 +269,8 @@ def code_css(style='default',color = None, background = None, hover_color = 'var
     if lineno:
         _class += '.numbered'
     
-    if style not in pygments.styles.get_all_styles():
-        raise KeyError(f"Style {style!r} not found in {list(pygments.styles.get_all_styles())}")
+    if style not in _pygments_styles:
+        raise KeyError(f"Style {style!r} not found in {_pygments_styles}")
     _style = pygments.formatters.HtmlFormatter(style = style).get_style_defs(_class)
     if style == 'default':
         _bg_fg = {'background': 'var(--bg2-color)', 'color': 'var(--fg1-color)'} # Should match inherit theme
@@ -309,9 +311,9 @@ def code_css(style='default',color = None, background = None, hover_color = 'var
     }}\n</style>"""
 
 def _highlight(code, language='python', name = None, css_class = None, style='default', color = None, background = None, hover_color = 'var(--bg3-color)', lineno = True, height='400px'):
-    if style not in pygments.styles.get_all_styles():
-        raise KeyError(f"Style {style!r} not found in {list(pygments.styles.get_all_styles())}")
-    if css_class in pygments.styles.get_all_styles():
+    if style not in _pygments_styles:
+        raise KeyError(f"Style {style!r} not found in {_pygments_styles}")
+    if css_class in _pygments_styles:
         style = css_class
     
     if not isinstance(code, str):

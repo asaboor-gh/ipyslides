@@ -32,7 +32,7 @@ class InteractionWidget(anywidget.AnyWidget):
         self.ws = _widgets # keep reference to widgets
         super().__init__(*args, **kwargs)
         self.prog = _widgets.sliders.progress
-        self._menu = _widgets._ctxmenu
+        self._menu = _widgets.ctxmenu
         self._callbacks = {
             'CCTX': self._menu.hide, # close context menu
             'NEXT': self.ws.buttons.next.click,

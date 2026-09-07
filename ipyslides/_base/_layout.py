@@ -328,6 +328,7 @@ def layout_css(accent_color, aspect):
             ".FooterArea": {
                 "z-index": "3", # above slide content but below controls and popups
                 "overflow": "hidden !important",
+                "cursor": "pointer", # context menu opens on click here
                 ".widget-html-content": {
                     "display": "flex",
                     "align-items": "center",
@@ -413,6 +414,16 @@ def layout_css(accent_color, aspect):
                     "border": "none !important",
                     "font-weight": "normal !important",
                 },
+            },
+            ".CtxMenu-Btn": {
+                "position": "absolute",
+                "top": "0",
+                "left": "0",
+                "width": "28px",
+                "height": "28px",
+                "z-index": "7",  # below draw wrapper
+                "> i": {"opacity": "0", "transition": "opacity color 250ms ease-in-out"},
+                "^:hover > i": {"opacity": "0.75 !important",}, # slight dim tone
             },
             "<.jp-OutputArea-child": {
                 "^, .jp-OutputArea-output": {  # For some themes, but do not use important here
