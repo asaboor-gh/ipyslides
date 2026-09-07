@@ -419,11 +419,13 @@ def layout_css(accent_color, aspect):
                 "position": "absolute",
                 "top": "0",
                 "left": "0",
-                "width": "28px",
+                "min-width": "48px", # make enough space for click
+                "width": "max-content !important", # enable keep left
                 "height": "28px",
                 "z-index": "7",  # below draw wrapper
                 "> i": {"opacity": "0", "transition": "opacity color 250ms ease-in-out"},
                 "^:hover > i": {"opacity": "0.75 !important",}, # slight dim tone
+                "^:hover::after": {"content": "'Menu'"},
             },
             "<.jp-OutputArea-child": {
                 "^, .jp-OutputArea-output": {  # For some themes, but do not use important here

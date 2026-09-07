@@ -121,51 +121,7 @@ def plot(html, amplitude, frequency):
     html.value = slides.plt2html(). value
 ```
 
-- For comprehensive dashbords, subclass `DashboardBase` or use `Dashboard` from `ipyslides.dashlab`:
-
-```python
-import numpy as np
-import matplotlib.pyplot as plt
-from ipywidgets import HTML
-from ipyslides.dashlab import Dashboard
-
-dash = Dashboard(
-    html = HTML(),
-    amplitude = (0, 2),
-    frequency = (0, 5),
-)
-
-@dash.callback
-def plot(self, html, amplitude, frequency):
-    x = np.linspace(0, 2*np.pi, 100)
-    y = amplitude * np.sin(frequency * x)
-    plt.plot(x, y)
-    html.value = slides.plt2html().value # can be directly shown on out-main
-
-@dash.callback('out-text')
-def text(self, amplitude, frequency):
-    print(f"Amplitude: {amplitude}\n Frequency: {frequency}")
-
-dash.set_layout( 
-    left_sidebar = ['*ctrl'], # all controls in left sidebar 
-    center = ['html','out-.*'], # out-main, out-text collected in center
-    pane_widths = [3,5,0]
-)
-dash.set_css(
-    main = { # can also be set via post_init callback
-        'grid-gap': '4px', 'margin': '8px',
-        '.left-sidebar': {'background': '#eee','border-radius': '8px'},
-    },
-    center = { # can be set in main through '> .center' selector
-        '> *': {'background-color': 'whitesmoke', 'border-radius': '8px','padding':'8px'},
-        'grid-template-columns': '5fr 3fr', # side-by-side layout for outputs
-        'grid-gap': '4px', # central grid gap
-        '> *': {'background-color': 'whitesmoke', 'border-radius': '8px','padding':'8px'}
-})
-display(dash)
-```
-![Dashboard Example](interact.png)
-See more examples in [DashLab repository](https://github.com/asaboor-gh/dashlab) and try it out in [![](https://jupyterlite.rtfd.io/en/latest/_static/badge.svg)](https://asaboor-gh.github.io/litepad/notebooks/index.html?path=dashlab.ipynb)
+- For comprehensive dashbords, see [DashLab](https://github.com/asaboor-gh/dashlab) and try it out in [![](https://jupyterlite.rtfd.io/en/latest/_static/badge.svg)](https://asaboor-gh.github.io/litepad/notebooks/index.html?path=dashlab.ipynb)
 
 - And much more!
 

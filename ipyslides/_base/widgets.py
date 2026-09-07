@@ -300,7 +300,7 @@ class _Buttons:
     export  =  Button(icon='file',description="Export to HTML File",layout= Layout(width='max-content'))
     print   =  Button(icon='file-pdf',description="Print Slides",layout= Layout(width='max-content'), tooltip='Ctrl + P')
     build   =  Button(icon='warning',description="Build Pending Slides",layout= Layout(width='max-content'), tooltip='Click to Build This/First Pending Slide [B]').add_class('Build-Btn')
-    cmenu   =  Button(icon='caret-right',description="").add_class('CtxMenu-Btn')
+    cmenu   =  Button(icon='caret-down',description="").add_class('CtxMenu-Btn')
 
 @dataclass(frozen=True)
 class _Htmls:
@@ -411,7 +411,7 @@ class Widgets:
     def _on_cmenu_click(self, b):
         "Open context menu"
         # Implement the logic for context menu click here
-        self.ctxmenu.show(12,4,'px') # open in top left to avoid overflow 
+        self.ctxmenu.show(12,28,'px') # open in top left below button to avoid overflow 
         
     def _push_toast(self,content,timeout=5):
         "Send inside notifications for user to know whats happened on some button click."
