@@ -310,15 +310,16 @@ FUNC_RE = re.compile(
 )
 
 _head_modes = {
-    "alert":  {"bc":"block-red",    "title": "Alert!",   "icon": "fa-bolt",            "color": "hsl(from var(--fg3-color) 0 calc(s * 1.15) calc(l * 0.95))",},
-    "warn":   {"bc":"block-orange", "title": "Warning!", "icon": "fa-warning",         "color": "hsl(from var(--fg3-color) 34 calc(s * 0.78) calc(l * 0.72))",},
-    "cheer":  {"bc":"block-green",  "title": "Cheers!",  "icon": "fa-check-circle",    "color": "hsl(from var(--fg3-color) 136 calc(s * 1.05) calc(l * 0.9))",},
+    "alert":  {"bc":"block-red",    "title": "Alert",    "icon": "fa-bolt",            "color": "hsl(from var(--fg3-color) 0 s calc(l * 0.95))",},
+    "ask":    {"bc":"block-orange", "title": "Question", "icon": "fa-question-circle", "color": "hsl(from var(--fg3-color) 20 s calc(l * 1.05))",},
+    "check":  {"bc":"block-green",  "title": "Checked",  "icon": "fa-check-circle",    "color": "hsl(from var(--fg3-color) 136 calc(s * 1.05) calc(l * 0.9))",},
+    "example":{"bc":"block-blue",   "title": "Example",  "icon": "fa-book",            "color": "hsl(from var(--fg3-color) 220 calc(s * 1.15) l)",},
     "info":   {"bc":"block-blue",   "title": "Info",     "icon": "fa-info-circle",     "color": "hsl(from var(--fg3-color) 210 calc(s * 1.05) l)",},
-    "tip":    {"bc":"block-purple", "title": "Tip",      "icon": "fa-lightbulb",       "color": "hsl(from var(--fg3-color) 222 calc(s * 1.1) calc(l * 1.03))",},
     "note":   {"bc":"block",        "title": "Note",     "icon": "fa-pen",             "color": "hsl(from var(--fg3-color) 188 s l)",},
     "quote":  {"bc":"block-purple", "title": "Quote",    "icon": "fa-quote-left",      "color": "hsl(from var(--fg3-color) 282 s calc(l * 1.08))",},
+    "tip":    {"bc":"block-purple", "title": "Tip",      "icon": "fa-lightbulb",       "color": "hsl(from var(--fg3-color) 222 calc(s * 1.1) calc(l * 1.03))",},
     "todo":   {"bc":"block-yellow", "title": "Todo",     "icon": "fa-tasks",           "color": "hsl(from var(--fg3-color) 142 s calc(l * 0.95))",},
-    "prompt": {"bc":"block-orange", "title": "Prompt",   "icon": "fa-question-circle", "color": "hsl(from var(--fg3-color) 20 s calc(l * 1.05))",},
+    "warn":   {"bc":"block-orange", "title": "Warning",  "icon": "fa-warning",         "color": "hsl(from var(--fg3-color) 34 calc(s * 0.78) calc(l * 0.72))",},
 }
 
 def strip_ptags(content):

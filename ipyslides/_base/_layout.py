@@ -2,6 +2,7 @@
 
 from ..utils import _build_css
 from ..xmd import get_unique_css_class
+from .icons import Icon
 
 
 def layout_css(accent_color, aspect):

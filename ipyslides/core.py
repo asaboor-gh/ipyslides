@@ -94,7 +94,7 @@ class Singleton(type):
 
 
 class Slides(BaseSlides,metaclass=Singleton):
-    """Interactive Slides in IPython Notebook. Only one instance can exist. `settings` 
+    r"""Interactive Slides in IPython Notebook. Only one instance can exist. `settings` 
     are passed to [code! Slides.settings() /] if you like to set during initialization. You
     can also edit file .ipyslides-assets/settings.json to make settings persistent across sessions
     and load/sync them via GUI in sidepanel.
@@ -456,7 +456,7 @@ class Slides(BaseSlides,metaclass=Singleton):
                 # IPySlides
                 ::: note.tip block-clear .. Replace this with creating a slide with number [color! 0 /]
                 
-                ::: note.prompt block-clear head="Looking for Slides Controls?"
+                ::: note.ask block-clear head="Looking for Slides Controls?"
                     - Right-click (or click the footer) to open the context menu for settings and contents.
                     - Hover top-left and click [fa! caret-right /] to open the menu when the footer or right-click is unavailable.
                     - Click a footer section (when shown) to jump there quickly.

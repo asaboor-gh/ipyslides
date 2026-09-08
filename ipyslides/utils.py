@@ -793,7 +793,7 @@ def as_widget(obj=''): # should be useable empty
 # This is only intended to use for general tags in markdown, do not use in python
 @_internal_xmd_call('anyTag')
 def anyTag(tag, content = "", css_class = None, void_attrs=None, node_attrs=None, **css_props):
-    """Picks up html tag from markdown function calls and returns html node with given text and node attributes 
+    r"""Picks up html tag from markdown function calls and returns html node with given text and node attributes 
     like style, id etc. If an attribute needs '-' in its name, replace it with '_'.
     
     `void_attrs` are value-less attributes, such as `disabled`, `checked`, `open` etc. Must be a string of space separated attributes names.
