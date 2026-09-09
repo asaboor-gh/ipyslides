@@ -130,11 +130,11 @@ def _resolve_citations(parser, content):
         (?<!\\) # negative lookbehind: don't match if there's a backslash
         (?<!\w) # Don't match if a word before so example@google.com is safe
         (?<!\`) # Don't match keys inside backticks
-        @(?:[A-Za-z_]\w*!?)(?:\s*,\s*@(?:[A-Za-z_]\w*!?))*   # @key, @key2!, @key3 (single or comma-separated)
+        @(?:[A-Za-z_]\w*!?)(?:\s*[,;]\s*@(?:[A-Za-z_]\w*!?))*   # @key, @key2!; @key3 (single or comma-separated)
     ''', re.VERBOSE)
     
     def sub_cite(match):
-        keys = [k.strip().lstrip('@') for k in match.group().split(',')] # split by comma and remove leading @
+        keys = [k.strip().lstrip('@') for k in re.split(r'\s*[,;]\s*', match.group())] # split by comma or semicolon and remove leading @
         # group keys types, superscript citations first, then inline
         sup_keys = ",".join(k for k in keys if not k.endswith('!'))
         inline_keys = [k for k in keys if k.endswith('!')]

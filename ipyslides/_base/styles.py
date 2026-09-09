@@ -708,14 +708,26 @@ def style_css(colors, fonts, layout, _root = False):
                 'column-count' :f'{layout.ncol_refs} !important',
                 'column-gap':'1em',
                 'border-top':'1px solid #8988', # for all colors
-                'margin-block':'0.5em',
+                'margin-block':'0 0.2em',
             },
-            '.citetext': { # subtle difference from normal text
-                'border-radius':'4px',
-                'border-left': '1px solid var(--fg2-color)',
-                'border-right': '1px solid var(--fg2-color)',
-                'a': {'text-decoration': 'none !important',} # avoid underline there
+            '.icite': { # subtle difference from normal text
+                'font-size':'0.7em !important', # small text
+                'vertical-align':'middle !important',
+                'display':'inline !important',
+                'white-space':'break-spaces !important',
+                'font-family':'"IBM Plex Mono", "Consolas", var(--jp-code-font-family) !important',
+                '^, *': {'color':'color-mix(in srgb, currentColor 65%, transparent) !important',}, # muted color 
+                'a': {'text-decoration': 'none !important',}, # avoid underline there
+                '^:has(+ .icite)::after': {'content': '";"'},
+                '^:hover': {
+                    'font-weight': 'bold !important',
+                    '^, *': {'color':'var(--accent-color) !important',},
+                },
             },
+            '.icite-group': { # citation plain text make closer group
+                'line-height':'1.1 !important',
+                'margin-block':'0.2em', # have fair spacing around plain citations
+            }, 
             '.toc-list.toc-extra' : {
                 'margin-right': '1em',
                 '.toc-item.this' : {
@@ -738,19 +750,6 @@ def style_css(colors, fonts, layout, _root = False):
                 'color':'var(--fg1-color) !important',
                 'max-height': maxheight,
                 'white-space':'pre !important',
-            },
-            '.text-box': { # general text box for writing inline refrences etc. 
-                'font-size':'0.85em !important', 
-                'line-height':'1.2 !important',
-                'position':'relative', 
-                'left':'initial',
-                'top':'initial',
-                'padding':'2px 4px',
-                'color':'var(--fg2-color)',
-                # Below are required to override behavior of span tag
-                'display':'inline !important',
-                'white-space':'break-spaces !important',
-                '*': {'color':'var(--fg2-color)',}, # should be same color 
             },
             ".text-tiny" : {
                 "font-size": "0.5em !important",
@@ -917,23 +916,27 @@ def style_css(colors, fonts, layout, _root = False):
             'margin-block':'0.5px !important', # Two adjacant prints should look closer 
         },
         '.align-center:not(.columns), .align-center > *:not(.columns)': {
+            'width':'auto', # don't make it important
+            'text-align':'center',
             '^, .jp-OutputArea-output > *': {
                 'margin-left':'auto !important', 
                 'margin-right':'auto !important', 
             },
-            'width':'auto', # don't make it important
-            '^, p': {'text-align':'center !important'},
         },
         '.align-left:not(.columns)': { 
+            'text-align':'left',
             '^, .jp-OutputArea-output > *': {'margin-right':'auto !important'}, 
-            '^, p': {'text-align':'left !important'},
         },
         '.align-right:not(.columns)': { 
+            'text-align':'right',
             '^, .jp-OutputArea-output > *': {'margin-left':'auto !important'}, 
-            '^, p': {'text-align':'right !important'},
         },
         '.align-right:not(.columns), .align-left:not(.columns), .align-center:not(.columns)': {
             '> *:last-child': {'margin-bottom':'0.1em !important',}, 
+        },
+        '..jp-RenderedHTMLCommon p': { # This ovverride from Jupyter is must for alignment
+            'text-align': 'inherit',
+            'margin': 'inherit',
         },
         '.rtl, .rtl > *': {
             'text-align':'right !important',
@@ -943,6 +946,7 @@ def style_css(colors, fonts, layout, _root = False):
         '.success, .success *:not(span)': {'color':'hsl(from var(--fg1-color) 142 58% calc(l * 0.68 + 20)) !important',},
         '.alert, .alert *:not(span)': {'color':'hsl(from var(--fg1-color) 8 78% calc(l * 0.68 + 18)) !important',},
         '.info, .info *:not(span)' : {'color':'hsl(from var(--fg1-color) 208 72% calc(l * 0.70 + 20)) !important',},
+        '.muted, .muted *': {'color':'color-mix(in srgb, currentColor 80%, transparent) !important',}, # mute in same color
         '.note': {
             **(block_props := {
                 '--bg-color': 'var(--bg2-color)',
@@ -965,7 +969,7 @@ def style_css(colors, fonts, layout, _root = False):
                 '^-blue':    {'--bg-color': 'hsl(from var(--bg2-color) 210 100% l)', '--head-color': 'hsl(from var(--bg-color) h 90% calc(72 - l * 0.35))'},
                 '^-magenta': {'--bg-color': 'hsl(from var(--bg2-color) 310 100% l)', '--head-color': 'hsl(from var(--bg-color) h 90% calc(72 - l * 0.35))'},
                 '^-purple':  {'--bg-color': 'hsl(from var(--bg2-color) 268  68% l)', '--head-color': 'hsl(from var(--bg-color) h 82% calc(70 - l * 0.30))'},
-                '^-clear':   {'--bg-color': 'var(--bg1-color)', '--head-color': 'var(--fg3-color)'}, # default same background style block, transparent looks bad
+                '^-clear':   {'--bg-color': 'transparent', 'background': 'transparent', '--head-color': 'var(--fg3-color)'}, # explicity set to transparent, but also keep variable name for dependent styles
             }),
         },
         '.ips-block-head, .note:not(:has(.ips-block-head))::before': {

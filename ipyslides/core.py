@@ -503,9 +503,8 @@ class Slides(BaseSlides,metaclass=Singleton):
         return f'<a href="#{key}" class="citelink"><sup id ="{key}-back" style="color:var(--accent-color) !important;">{cited._id}</sup></a>'
     
     def _nocite(self, key): # @key! without adding to citations
-        if key in self._citations:
-            return self.html('span',self._citations[key], # citation value is stripped tag inline content
-            style = dict(left="initial",top="initial"), css_class = "citetext text-box text-small").value
+        if value := self._citations.get(key): # citation value is stripped tag inline content
+            return self.html('span', value, css_class = "icite").value
         return utils.error("KeyError",f"Set value for cited key {key!r} and build slide again!").value
 
     
@@ -576,7 +575,7 @@ class Slides(BaseSlides,metaclass=Singleton):
             for k, v in d.items():
                 if not isinstance(k, str) or not isinstance(v, str):
                     raise ValueError(f"Citations keys and values should be strings, got {type(k)}:{type(v)} for {k}:{v}, you may need to use quotes!")
-                if not re.fullmatch(r'[A-Za-z_]\w*', k): # Same as captured by AT_KEY regex
+                if not k.isidentifier(): # keys are strict
                     raise ValueError(f"Citation key {k!r} is not a valid identifier, it should start with a letter or underscore and contain only letters, digits, or underscores.")
             self._set_ctns(d)
         else:
@@ -631,28 +630,48 @@ class Slides(BaseSlides,metaclass=Singleton):
         """
         self.this._toc_args = (xmd(str(title).strip(), True, ""), highlight)
         return self.this._reset_toc()
-    
+        
     @_internal_xmd_call("refs", True)
     @slidebound
-    def refs(self, ncol=None, keys=None):
-        r"""Return XTML or None for references with all keys or a subset of keys (comma seperated string without @) which were used without `!` at end.
-        Unused keys from all calls to this function will be added at end of slide automatically. 
-        References are set in `Slides.set_citations`.
+    def refs(self, data=None, ncol=None):
+        r"""Return XTML for references or None.
+        
+        - If `data` is None or empty, all unused references on the slide are included.
+        - `data` should be a `;` separated string of plain references, citation keys
+          (without `@` prefix or trailing `!`), or a mix of both. Plain references will be displayed first.
+        - Any citations remaining unused after all calls to this function will be
+          automatically appended at the end of the slide.
+        
+        `ncol` specifies column count for displaying references (defaults to
+        `slides.settings.layout.ncol_refs`). References are set in `Slides.set_citations`.
         """
-        if keys is not None:
-            if not isinstance(keys, str):
-                raise TypeError(f"keys should be a comma separated string of keys or None, got {type(keys)}")
-            keys = [k.strip() for k in keys.split(',')]
-            
-        objs = self.this._citations.values() if not keys else [v for k,v in self.this._citations.items() if k in keys] 
-        for obj in objs:
-            obj._used = True  # mark as used to track unused ones
+        if data is None: data = ""
+        if not isinstance(data, str):
+            raise TypeError(f"data should be a ; separated string of keys/plain references or None, got {type(data)}")
         
-        # handle markdown input for ncol
-        if isinstance(ncol, str) and ncol.strip().isdigit():
-            ncol = int(ncol.strip())
+        if not isinstance(ncol, int | None):
+            raise TypeError(f"ncol should be an int or None, got {type(ncol)}")
         
-        return self.this._build_refs(objs, ncol=ncol)
+        plain, cited, data = [], [], data.strip() # cleanup data
+        for k in filter(None, map(str.strip, data.split(';'))):
+            if value := self.this._citations.get(k, None):
+                cited.append(value)
+            else:
+                plain.append(self.html('span', xmd(k, True, ""), css_class='icite').value)
+        
+        if not data: # include only unused ones so far on slide
+            cited = [v for v in self.this._citations.values() if not getattr(v, "_used", False)]
+        
+        for val in cited:
+            val._used = True  # mark as used to track unused ones
+        
+        content = " ".join(plain) # show plain ones first
+        if content:
+            content = f"<div class='icite-group'>{content}</div>" # wrap together
+        if cited and (block := self.this._build_refs(cited, ncol=ncol)):
+            content = f"{content}\n{block.value}" if content else block.value
+
+        return formatters.XTML(content) if content else None
 
     def show(self):
         "Display Slides."

@@ -17,6 +17,7 @@ Use any or combination of these styles in markdown blocks or `css_class` argumen
  `warning`          | Orange text. {: .warning}
  `success`          | Green text. {: .success}
  `alert`            | Red text. {: .alert}
+ `muted`            | Muted or less prominent text, preserves the original color but makes it less visible. {: .muted}
  `note`             | Text with note icon, use `::: node.mode` blocks for flexible notes. {: .note}
  `export-only`      | Hidden on main slides, but will appear in exported slides.
  `jupyter-only`     | Hidden on exported slides, but will appear on main slides.

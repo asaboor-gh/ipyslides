@@ -1,5 +1,5 @@
 _attrs = ['AnimationSlider', 'JupyTimer', 'ListWidget', 'alt', 'alert', 'as_html', 'as_widget', 'bullets', 'color', 'error', 'table', 'suppress_output','suppress_stdout','capture_content',
-    'details', 'set_dir', 'textbox', 'code', 'fa', 'gap', 'link', 'center', 'icon', 'image', 'svg','iframe','frozen', 'raw', 'warn', 'bg',
+    'details', 'set_dir', 'code', 'fa', 'gap', 'link', 'center', 'icon', 'image', 'svg','iframe','frozen', 'raw', 'warn', 'bg',
     'focus','html', 'sig','stack', 'styled', 'steps', 'doc', 'transition', 'today','get_child_dir','get_notebook_dir','is_jupyter_session','inside_jupyter_notebook','yoffset','css','pin']
 
 __all__ = sorted(_attrs)
@@ -879,13 +879,6 @@ def head(text: str | None = None, mode: str | None = None):
     if title := (text or meta.get('title', text)): # prefer user text
         content += f"<span class='head-text'>{xmd(title, True, '')}</span>"
     return XTML(f"<div class='ips-block-head' {_inline_style(style)}>{content}</div>")
-
-@_internal_xmd_call('textbox')
-def textbox(text, **css_props):
-    """Formats text in a box for writing e.g. inline refrences. `css_props` are applied to box and ` - ` should be ` _ ` like `font-size` → `font_size`. 
-    `text` is not parsed to general markdown i.e. only bold italic etc. applied, so if need markdown, parse it to html before. You can have common CSS for all textboxes using class `text-box`."""
-    css_props = {'display':'inline','white-space': 'pre-wrap', **css_props} # very important to apply text styles in order
-    return XTML(f'<span class="text-box" {_inline_style(css_props)}>{text}</span>')  # markdown="span" will avoid inner parsing
 
 @_internal_xmd_call('alert')
 def alert(text, css_class=None, bold=False, italic=False, **css_props):
