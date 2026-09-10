@@ -538,7 +538,7 @@ class Slides(BaseSlides,metaclass=Singleton):
         For example, `key: *Bold citation*` will raise error, but `key: "*Bold citation*"` will work.
         key should be cited in markdown as `@key`, optionally comma separated keys. `@key!` will show citation inline.
         Number of columns in displayed citations are determined by [code! Slides.settings.layout(..., ncol_refs=N) /] or 
-        per slide by [code! [refs\! N \/] /] / [code! Slides.refs(N) /].
+        per slide by [code! [refs\! \.. N \/] /] / [code! Slides.refs(ncol=N) /].
 
         ```python
         set_citations({"key1":"value1","key2":"value2"})
@@ -560,6 +560,9 @@ class Slides(BaseSlides,metaclass=Singleton):
             - You should set citations at the start if using voila or python script. Setting at the start in notebook is useful as well.
             - Citations are replaced with new ones, so latest use of this function represents available citations.
             - Markdown equivalent of this function is a `--- citations ---` block only supported at the end of synced file via `Slides.sync_with_file`.
+        
+        ::: note.tip
+            You can also add plain inline citations without storing keys using `refs` function both in markdown and python.
         """
         if isinstance(data, dict):
             self._set_ctns(data)

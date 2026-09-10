@@ -382,7 +382,9 @@ def layout_css(accent_color, aspect):
                     "height": "auto",
                     "width": "auto",
                     "font-size": "16px !important", # A litle larger
+                    "transition": "background-color 0.2s ease-in-out",
                 },
+                "^:hover > .list-widget": {"background": "var(--bg2-color) !important",},
             },
             ".CtxMenu": {
                 "position": "absolute",
