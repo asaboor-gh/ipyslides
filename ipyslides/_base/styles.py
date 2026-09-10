@@ -716,12 +716,14 @@ def style_css(colors, fonts, layout, _root = False):
                 'display':'inline !important',
                 'white-space':'break-spaces !important',
                 'font-family':'"IBM Plex Mono", "Consolas", var(--jp-code-font-family) !important',
+                'transition': 'font-size 0.2s ease-in, color 0.2s ease-in',
                 '^, *': {'color':'color-mix(in srgb, currentColor 65%, transparent) !important',}, # muted color 
                 'a': {'text-decoration': 'none !important',}, # avoid underline there
                 '^:has(+ .icite)::after': {'content': '";"'}, # avoid at line-break
-                '^:has(> .soft-br)': {'content': '"" !important',}, # ensure soft line-breaks holder do not get ;
+                '^:has(> .soft-br)::after': {'content': '"" !important',}, # ensure soft line-breaks holder do not get ;
                 '^:hover': {
                     'font-weight': 'bold !important',
+                    'font-size': '0.8em !important',
                     '^, *': {'color':'var(--accent-color) !important',},
                 },
                 '> .soft-br': {'display':'block !important', 'width':'0 !important', 'height':'0 !important'}, # blcok breaks soft line
@@ -772,6 +774,8 @@ def style_css(colors, fonts, layout, _root = False):
                 'font-size':'0.9em !important',
                 'display':'flex !important',
                 'flex-direction':'row !important',
+                'transition': 'font-size 0.2s ease-in',
+                '^:hover': {'font-size':'1em !important', 'font-weight':'bold !important'},
                 '> a': {'margin-right':'0.3em !important'},
                 '> div': {'margin':'0 !important'}, # Otherwise it will be huge space
             },
