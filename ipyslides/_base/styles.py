@@ -716,6 +716,7 @@ def style_css(colors, fonts, layout, _root = False):
                 'display':'inline !important',
                 'white-space':'break-spaces !important',
                 'font-family':'"IBM Plex Mono", "Consolas", var(--jp-code-font-family) !important',
+                'letter-spacing':'-0.05em', # make monospace text tighter
                 'transition': 'background-color 0.25s ease-in, color 0.2s ease-in',
                 '^, *': {'color':'color-mix(in srgb, currentColor 65%, transparent) !important',}, # muted color 
                 'a': {'text-decoration': 'none !important',}, # avoid underline there
@@ -726,6 +727,7 @@ def style_css(colors, fonts, layout, _root = False):
                 },
             },
             '.icite-group': { # citation plain text make closer group, but do not wrap icite, as they can be outside too
+                'display':'block !important', # make multiple citations as block
                 'line-height':'1.1 !important',
                 'margin-block':'0.2em', # have fair spacing around plain citations
             }, 

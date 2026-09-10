@@ -640,7 +640,7 @@ class Slides(BaseSlides,metaclass=Singleton):
         r"""Return XTML for references or None.
         
         - If `data` is None or empty, all unused references on the slide are included.
-        - `data` should be a `;` or newline separated string of plain references, citation keys
+        - `data` should be a `;` or newline (alternatively ;;) separated string of plain references, citation keys
           (without `@` prefix or trailing `!`), or a mix of both. Plain references will be displayed first including keys not cited on this slide.
         - Any citations remaining unused after all calls to this function will be
           automatically appended at the end of the slide.
@@ -656,6 +656,7 @@ class Slides(BaseSlides,metaclass=Singleton):
             raise TypeError(f"ncol should be an int or None, got {type(ncol)}")
         # Strip data first and then add soft line-breaks, one per all adjacent newlines
         data = re.sub(r'[\s;]*?\n+[\s;]*?', ';<br>;', data.strip()) 
+        data = re.sub(r';{2,}', ';<br>;', data) # replace multiple consecutive semicolons with a line break as well
         plain, cited = [], []
         for k in filter(None, map(str.strip, data.split(';'))):
             if k == '<br>':
@@ -673,8 +674,8 @@ class Slides(BaseSlides,metaclass=Singleton):
             val._used = True  # mark as used to track unused ones
         
         content = " ".join(plain) # show plain ones first
-        if content:
-            content = f"<div class='icite-group'>{content}</div>" # wrap together
+        if content and len(plain) > 1:  # wrap together if many, one should be inline
+            content = f"<span class='icite-group'>{content}</span>"
         if cited and (block := self.this._build_refs(set(cited), ncol=ncol)): # avoid duplicates
             content = f"{content}\n{block.value}" if content else block.value
 
