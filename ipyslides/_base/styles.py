@@ -718,13 +718,15 @@ def style_css(colors, fonts, layout, _root = False):
                 'font-family':'"IBM Plex Mono", "Consolas", var(--jp-code-font-family) !important',
                 '^, *': {'color':'color-mix(in srgb, currentColor 65%, transparent) !important',}, # muted color 
                 'a': {'text-decoration': 'none !important',}, # avoid underline there
-                '^:has(+ .icite)::after': {'content': '";"'},
+                '^:has(+ .icite)::after': {'content': '";"'}, # avoid at line-break
+                '^:has(> .soft-br)': {'content': '"" !important',}, # ensure soft line-breaks holder do not get ;
                 '^:hover': {
                     'font-weight': 'bold !important',
                     '^, *': {'color':'var(--accent-color) !important',},
                 },
+                '> .soft-br': {'display':'block !important', 'width':'0 !important', 'height':'0 !important'}, # blcok breaks soft line
             },
-            '.icite-group': { # citation plain text make closer group
+            '.icite-group': { # citation plain text make closer group, but do not wrap icite, as they can be outside too
                 'line-height':'1.1 !important',
                 'margin-block':'0.2em', # have fair spacing around plain citations
             }, 

@@ -651,8 +651,9 @@ class Slides(BaseSlides,metaclass=Singleton):
         
         if not isinstance(ncol, int | None):
             raise TypeError(f"ncol should be an int or None, got {type(ncol)}")
-        
-        plain, cited, data = [], [], data.strip() # cleanup data
+        # Strip data first and then add soft line-breaks, one per all adjacent newlines
+        data = re.sub(r'\s*\n+\s*', '<span class="soft-br"></span>', data.strip()) 
+        plain, cited = [], []
         for k in filter(None, map(str.strip, data.split(';'))):
             if value := self.this._citations.get(k, None):
                 cited.append(value)
@@ -668,7 +669,7 @@ class Slides(BaseSlides,metaclass=Singleton):
         content = " ".join(plain) # show plain ones first
         if content:
             content = f"<div class='icite-group'>{content}</div>" # wrap together
-        if cited and (block := self.this._build_refs(cited, ncol=ncol)):
+        if cited and (block := self.this._build_refs(set(cited), ncol=ncol)): # avoid duplicates
             content = f"{content}\n{block.value}" if content else block.value
 
         return formatters.XTML(content) if content else None
