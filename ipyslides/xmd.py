@@ -141,7 +141,7 @@ def _resolve_citations(parser, content):
         
         # First handle superscript citations in a group
         res = parser._handle_var(slides._cite(sup_keys)) if sup_keys else ""
-        # Then handle inline citations
+        # Then handle inline citations, can't group them in a div which is not allowed inside p tag
         for key in inline_keys:
             res += slides._nocite(key[:-1]) # remove ! at end for inline citations
         return res

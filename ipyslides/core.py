@@ -505,7 +505,7 @@ class Slides(BaseSlides,metaclass=Singleton):
     def _nocite(self, key): # @key! without adding to citations
         if value := self._citations.get(key): # citation value is stripped tag inline content
             return self.html('span', value, css_class = "icite").value
-        return utils.error("KeyError",f"Set value for cited key {key!r} and build slide again!").value
+        return utils.error("KeyError",f"Set value for cited key {key!r} and build slide again, or use plain citations with `refs` function").value
 
     
     def _set_ctns(self, d):
@@ -641,7 +641,7 @@ class Slides(BaseSlides,metaclass=Singleton):
         
         - If `data` is None or empty, all unused references on the slide are included.
         - `data` should be a `;` or newline separated string of plain references, citation keys
-          (without `@` prefix or trailing `!`), or a mix of both. Plain references will be displayed first.
+          (without `@` prefix or trailing `!`), or a mix of both. Plain references will be displayed first including keys not cited on this slide.
         - Any citations remaining unused after all calls to this function will be
           automatically appended at the end of the slide.
         
@@ -655,13 +655,16 @@ class Slides(BaseSlides,metaclass=Singleton):
         if not isinstance(ncol, int | None):
             raise TypeError(f"ncol should be an int or None, got {type(ncol)}")
         # Strip data first and then add soft line-breaks, one per all adjacent newlines
-        data = re.sub(r'[\s;]*?\n+[\s;]*?', '<span class="soft-br"></span>;', data.strip()) 
+        data = re.sub(r'[\s;]*?\n+[\s;]*?', ';<br>;', data.strip()) 
         plain, cited = [], []
         for k in filter(None, map(str.strip, data.split(';'))):
-            if value := self.this._citations.get(k, None):
+            if k == '<br>':
+                plain.append(k)
+            elif value := self.this._citations.get(k, None):
                 cited.append(value)
             else:
-                plain.append(self.html('span', xmd(k, True, ""), css_class='icite').value)
+                value = self._citations.get(k, xmd(k, True, "")) # fetch from stored citations or use text
+                plain.append(self.html('span', value, css_class='icite').value)
         
         if not data: # include only unused ones so far on slide
             cited = [v for v in self.this._citations.values() if not getattr(v, "_used", False)]

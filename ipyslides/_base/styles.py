@@ -719,13 +719,11 @@ def style_css(colors, fonts, layout, _root = False):
                 'transition': 'background-color 0.25s ease-in, color 0.2s ease-in',
                 '^, *': {'color':'color-mix(in srgb, currentColor 65%, transparent) !important',}, # muted color 
                 'a': {'text-decoration': 'none !important',}, # avoid underline there
-                '^:has(+ .icite)::after': {'content': '";"'}, # avoid at line-break
-                '^:has(> .soft-br)::after': {'content': '"" !important',}, # ensure soft line-breaks holder do not get ;
+                '^:has(+ .icite)::after': {'content': '";"'}, 
                 '^:hover': {
                     'background': 'var(--bg2-color) !important',
                     '^, *': {'color':'var(--accent-color) !important',},
                 },
-                '> .soft-br': {'display':'block !important', 'width':'0 !important', 'height':'0 !important'}, # blcok breaks soft line
             },
             '.icite-group': { # citation plain text make closer group, but do not wrap icite, as they can be outside too
                 'line-height':'1.1 !important',
