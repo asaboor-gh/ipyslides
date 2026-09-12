@@ -1,4 +1,4 @@
-_attrs = ['AnimationSlider', 'JupyTimer', 'ListWidget', 'alt', 'alert', 'as_html', 'as_widget', 'bullets', 'color', 'error', 'table', 'suppress_output','suppress_stdout','capture_content',
+_attrs = ['AnimationSlider', 'JupyTimer', 'ListWidget', 'alt', 'alert', 'as_html', 'as_widget', 'badge','bullets', 'color', 'error', 'table', 'suppress_output','suppress_stdout','capture_content',
     'details', 'set_dir', 'code', 'fa', 'gap', 'link', 'center', 'icon', 'image', 'svg','iframe','frozen', 'raw', 'warn', 'bg',
     'focus','html', 'sig','stack', 'styled', 'steps', 'doc', 'transition', 'today','get_child_dir','get_notebook_dir','is_jupyter_session','inside_jupyter_notebook','yoffset','css','pin']
 
@@ -853,9 +853,11 @@ def sub(text, **css_props):
     return XTML(f"<sub {_inline_style(css_props)}>{xmd(text, True,'')}</sub>")
 
 @_internal_xmd_call('badge')
-def badge(text, color='var(--accent-color)'):
-    "Creates a badge with given text and color."
-    style = {'--badge-color':color} if color else {}
+def badge(text, color='var(--accent-color)', round=False, scale=0.7):
+    "Creates a badge with given text and color. `round` makes the badge circular and `scale` adjusts its size."
+    style = {'font-size': f'{scale}em'}
+    if round: style.update({'border-radius': '50%', 'aspect-ratio': '1 / 1', 'min-width': '2em'}) # avoid ellipse at single character
+    if color: style['--badge-color'] = color
     return html('span', xmd(text, True,''), css_class='ips-badge', style = style)
 
 @_internal_xmd_call('head')

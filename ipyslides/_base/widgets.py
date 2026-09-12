@@ -93,6 +93,7 @@ class CtxMenu(ListWidget):
 
     def show(self, x, y, units='%'):
         "Open menu at given x,y coordinates in given units."
+        self.ws.mainbox.add_class('mode-ctx-open') # set class first
         self._set_opts() # update options before showing
         self.layout.left = f'{x}{units.strip()}' 
         self.layout.top = f'{y}{units.strip()}'
@@ -100,6 +101,7 @@ class CtxMenu(ListWidget):
     
     def hide(self):
         "Close menu."
+        self.ws.mainbox.remove_class('mode-ctx-open') # remove class first
         self.layout.top = '101%' # below view, keep left as is
         self.layout.visibility = 'hidden'
         
@@ -355,6 +357,10 @@ class Widgets:
         self.sliders = _Sliders()
         self.checks  = _Checks()
         self.htmls   = _Htmls()
+        self.mainbox = VBox(layout= Layout( 
+                width=f'{self.sliders.width.value}vw', height=f'{int(self.sliders.width.value*9/16)}vw',margin='auto'
+            ) # 9/16 is default, will change by setting
+        ).add_class('SlidesWrapper')  #Very Important to add this class
         self.drawer  = DrawWidget(self)
         self.ctxmenu = CtxMenu(self, description='Shift + Right Click for Browser Menu')
         self.iw      = InteractionWidget(self)
@@ -375,7 +381,7 @@ class Widgets:
             # Slides are added here dynamically
         ],layout= Layout(min_width='100%',min_height='100%', overflow='hidden')).add_class('SlideBox') 
         
-        self.mainbox = VBox([ 
+        self.mainbox.children = ( 
             self.htmls.main,
             self.htmls.theme,
             self.htmls.usercss,
@@ -394,9 +400,8 @@ class Widgets:
             self.buttons.build, # build button for lazy slides
             self.buttons.cmenu,
             self.ctxmenu, # at top 
-            self._progbar # progressbar should come last
-            ],layout= Layout(width=f'{self.sliders.width.value}vw', height=f'{int(self.sliders.width.value*9/16)}vw',margin='auto') # 9/16 is default, will change by setting
-        ).add_class('SlidesWrapper')  #Very Important to add this class
+            self._progbar, # progressbar should come last
+            )
 
         for child in self.mainbox.children:
             if isinstance(child, HTML):

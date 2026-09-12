@@ -386,11 +386,16 @@ def layout_css(accent_color, aspect):
                 },
                 "^:hover > .list-widget": {"background": "var(--bg2-color) !important",},
             },
+            "^.mode-ctx-open .CtxMenu": {
+                "opacity": "1 !important",
+                "transition": "top 250ms cubic-bezier(0, 1, 0, 0.75), opacity 300ms ease-in",
+            },
             ".CtxMenu": {
                 "position": "absolute",
                 "z-index": "11",  # above all
                 "backdrop-filter": "blur(50px)",
                 "box-shadow": "0 0 5px 0 rgba(255,255,255,0.2), 0 0 10px 0 rgba(0,0,0,0.2)",
+                "opacity": "0",
                 "border-radius": "4px",
                 "padding-top": "1.2em", # for top description
                 "overflow-y": "auto",
@@ -398,7 +403,6 @@ def layout_css(accent_color, aspect):
                 "height": "max-content !important",
                 "max-height": "min(600px, 90%) !important",
                 "transform": "translate(-4px,-4px)", # subtle edge views
-                "transition": "top 200ms ease-in-out, visibility 200ms ease-in-out",
                 "^, .list-item.list-item":  {
                     "border-top": "1px solid var(--bg3-color) !important",
                     "font-size": "14px !important", # fixed size

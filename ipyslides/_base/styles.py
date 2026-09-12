@@ -813,7 +813,7 @@ def style_css(colors, fonts, layout, _root = False):
                 'flex-direction':'row',
                 'column-gap':'0.2em',
                 'align-items':'stretch',
-                '> *': {
+                '> *:not(span)': {
                     'min-width':'0 !important', # avoid overflow due to stubborn elements
                     'height': 'stretch', # fill full height
                     ':only-child:has(.column)': {
@@ -959,6 +959,7 @@ def style_css(colors, fonts, layout, _root = False):
                 'border-radius': '8px',
                 'background': 'hsl(from var(--bg-color) h s l / 0.7)', 
                 'padding': '4px',
+                'flex-grow': '1', # allow block to expand within flex container
                 'margin-block-start': '0.2em', # avoid two blocks touching, same gap as columns
                 '^:is(ul,ol)': {'padding-left':'1.5em'} # align list inside block, same as normal lists
             }),
@@ -1006,9 +1007,13 @@ def style_css(colors, fonts, layout, _root = False):
         '.ips-badge': {
             'display': 'inline-flex',
             'align-items': 'center',
+            'justify-content': 'center',
             'vertical-align': 'middle',
+            'align-self': 'center', # avoid stretch in flex container
+            'justify-self': 'center', # avoid stretch in grid container
+            'max-width': 'max-content', # avoid stretching beyond content
             'font-family': 'var(--jp-code-font-family, inherit)',
-            'font-size': '0.76em',
+            'font-size': '0.7em',
             'font-weight': '600',
             'line-height': '1',
             'padding': '0.1em 0.25em',
