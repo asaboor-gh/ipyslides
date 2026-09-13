@@ -10,7 +10,7 @@ from IPython import get_ipython
 from IPython.display import display, clear_output
 
 from .xmd import xmd, esc, get_main_ns, _matched_vars, _internal_xmd_call
-from .writer import hold, write, group
+from .writer import hold, write
 from .formatters import bokeh2html, plt2html, plt2image, serializer, _delim, slidebound
 from . import formatters
 from . import utils
@@ -159,7 +159,6 @@ class Slides(BaseSlides,metaclass=Singleton):
         self.get_logo   = get_logo
         self.dl         = dashlab # whole dashlab module
         self.write      = write
-        self.group      = group
         self.hold       = hold  # Hold display of a function until it is captured in a column of `Slides.write`
         self.xmd        = xmd  # Extended markdown parser
         self.esc        = esc # lazy escape for variables in markdown

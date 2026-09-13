@@ -112,6 +112,23 @@ const zoom = {
     }
 };
 
+function tryMoveStep(box, event, dir) {
+    // Swipe: target is the element under the pointer. Keydown: target is the box
+    // itself, so fall back to the steps wrapper the mouse is currently hovering.
+    const wrapper = event.target?.closest?.('.ips-steps-wrapper') || box._hoverStepper;
+    if (!wrapper) return false;
+    const dot = wrapper.querySelector(`:scope .step-dot-item.${dir}-dot`);
+    if (!dot) return false;
+    dot.dispatchEvent(new Event('pointerdown',{ // click does not work here
+        bubbles: true,      // Allows the event to bubble up the DOM tree
+        cancelable: true,   // Allows the event to be canceled via preventDefault()
+        view: window,       // Associates the event with the global window context
+        pointerId: 1,       // Unique identifier for the pointer
+        pointerType: "mouse" // Can be "mouse", "pen", or "touch"
+    }));
+    return true;
+}
+
 
 function applyPrintProgressWidth(slide, numFrame, frameOffset = 0) {
     const pview = slide.querySelector(':scope .sprogress-view');
@@ -373,9 +390,9 @@ function keyboardEvents(box,model) {
         } else if (key === 'End') { // Jump to last main slide (before extra slides)
             message = 'LAST';
         } else if (key === 'ArrowLeft' || key === '-') { // -, <
-            message = 'PREV';
+            if(!tryMoveStep(box, e, 'prev')) {message = 'PREV';}
         } else if (key === 'ArrowRight' || key === '+' || key === ' ') { // Space, +,  >
-            message = 'NEXT';
+            if(!tryMoveStep(box, e, 'next')) {message = 'NEXT';}
         } else if (key in keyMessage && !e.ctrlKey){
             message = keyMessage[key];
         } else if (e.ctrlKey && key === 'p') { 
@@ -698,14 +715,22 @@ function handlePointerSwipe(box, model) {
         }
 
         if (Math.abs(diffX) >= THRESHOLD_SWIPE) {
-            model.set("msg_topy", diffX < 0 ? "NEXT" : "PREV");
-            model.save_changes();
+            if (!tryMoveStep(box, e, diffX < 0 ? 'next' : 'prev')) {
+                model.set("msg_topy", diffX < 0 ? "NEXT" : "PREV");
+                model.save_changes();
+            };
             swiped = true; // Only one navigation per gesture
         }
     });
     box.addEventListener('pointerup', (e) => { setState(e, false); });
     // left the area, cancel swipe
     box.addEventListener('pointercancel', (e) => { setState(e, false); });
+
+    // Track the steps wrapper under the mouse so keyboard navigation can drive it.
+    // pointerover bubbles, so moving out of a wrapper retargets and clears it.
+    box.addEventListener('pointerover', (e) => {
+        box._hoverStepper = e.target.closest('.ips-steps-wrapper');
+    });
 }
 
 // Avoid clicks passing through to underlying clickable elements // include vuetify/ipymaterialui sliders too

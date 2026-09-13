@@ -28,6 +28,7 @@ Use any or combination of these styles in markdown blocks or `css_class` argumen
  `focus-self`       | Double-click on element to zoom into popup view. Double-click again or navigate slides to exit. {: .focus-self}
  `focus-child`      | Focus on child objects of node with this class. Same double-click to zoom in/out behavior.
  `column`           | Inside `columns`, if an element with no siblings has `column` class, it will stretch to full height of columns no matter how deeply nested it is.
+ `details-grid`     | A container that uses CSS grid layout for its child `details` elements. Set shared `name` for the group of details to manage their open state exclusively.
 
 Besides these CSS classes, you always have `Slide.css`, `Slides.html('style',...)` functions at your disposal.
 '''
@@ -258,9 +259,9 @@ Inline functions can be nested, thanks to new function call pattern that must en
     [md-src/] 
     --
     Item 1 Header
-    : Item 1 &rarr; details [sup!1/]
-    Item 1 Header
-    : Item 1 &rarr; details [sub!2/]
+    : [tag! 1/] Item 1 &rarr; details [sup!1/]
+    Item 2 Header
+    : [tag! 2/] Item 2 &rarr; details [sub!2/]
 ```
 
 **Extending Syntax**{{.text-big}}

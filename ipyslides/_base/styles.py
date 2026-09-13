@@ -1004,7 +1004,7 @@ def style_css(colors, fonts, layout, _root = False):
         },
         '.hrules > *:not(:last-child)': {'border-bottom': '1px solid #8988 !important'},
         '.vrules > *:not(:last-child)': {'border-right': '1px solid #8988 !important'},
-        '.ips-badge': {
+        '.ips-tag': {
             'display': 'inline-flex',
             'align-items': 'center',
             'justify-content': 'center',
@@ -1018,10 +1018,10 @@ def style_css(colors, fonts, layout, _root = False):
             'line-height': '1',
             'padding': '0.1em 0.25em',
             'border-radius': '0.2em',
-            'color': 'var(--badge-color, #9898)',
+            'color': 'var(--tag-color, #9898)',
             'text-shadow': '0 1px var(--bg2-color)',
-            'background-color': 'color-mix(in srgb, var(--badge-color, #9898) 12%, transparent)',
-            'border': '1px solid color-mix(in srgb, var(--badge-color, #9898) 25%, transparent)',
+            'background-color': 'color-mix(in srgb, var(--tag-color, #9898) 12%, transparent)',
+            'border': '1px solid color-mix(in srgb, var(--tag-color, #9898) 25%, transparent)',
         },
         'details': {
             'padding': '4px',
@@ -1064,6 +1064,14 @@ def style_css(colors, fonts, layout, _root = False):
                     'height': '100%',
                     'cursor': 'pointer', # important hint to click
                 },
+            },
+        },
+        '.details-grid': {
+            'display': 'grid',
+            'grid-template-columns': '1fr 1fr 1fr 1fr',
+            'gap': '0.5em',
+            '> details[open]': {
+                'grid-column': '1 / -1',
             },
         },
         '.pygal-chart':{

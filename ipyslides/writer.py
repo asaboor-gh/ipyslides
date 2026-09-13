@@ -2,7 +2,7 @@
 Main write functions to add content to slides
 """
 
-__all__ = ['write', 'group']
+__all__ = ['write', 'hold']
 
 from collections import UserList
 from collections.abc import Iterable

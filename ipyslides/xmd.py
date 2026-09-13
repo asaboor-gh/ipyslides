@@ -584,7 +584,7 @@ class XMarkdown(Markdown):
                 self._wr.write(data, css_class=_class, **css_props)
             return cap.outputs
         elif typ == "group":
-            return [error("RuntimeError", "'group' markdown block is deprecated. Use 'columns.paused' or 'steps' instead.")]
+            return [error("RuntimeError", "'group' markdown block is deprecated. Use 'steps' instead.")]
         elif typ == "columns" and mode in ("", "paused"): # handle columns with display mode
             return self._parse_columns(data, widths, _class, css_props, mode=mode) # simple columns will be handled inline 
         elif "md-" in typ:
@@ -593,6 +593,8 @@ class XMarkdown(Markdown):
             return self._parse_table(data, widths, _class, css_props, attrs)
         elif typ == "code":
             return self._parse_code(data, mode, widths, _class, css_props, attrs)
+        elif typ == "steps":
+            return self._parse_steps(data, _class, css_props)
         elif header.strip().startswith(":::") or typ == "columns": # simple columns.inline
             return self._parse_colon_block(header, data)
         else:
@@ -794,6 +796,24 @@ class XMarkdown(Markdown):
             kwargs = {"css_class": _class, "paused": mode == "paused", **css_props}
             self._wr.write(*cap_cols, widths=widths, **kwargs)
             
+        return cap.outputs
+    
+    def _parse_steps(self, data, _class, css_props):
+        # pick the parameters from css_props
+        loc = css_props.pop('loc', 'left')
+        try:
+            interval = int(css_props.pop('interval', 1500))
+            static_index = int(css_props.pop('static_index', -1))
+        except ValueError as e:
+            return [error("TypeError", str(e))]
+        
+        objs = list(_stream_chunks(data, '--'))
+        if len(objs) < 2:
+            return [error("RuntimeError", "At least one -- separator is required for steps block!")]
+        
+        from .utils import steps # avoid circular import issues
+        with self.active_parser(), capture_content() as cap:
+            display(steps(objs, loc=loc, interval=interval, static_index=static_index, css_class=_class, **css_props))
         return cap.outputs
     
     def convert(self, text):
@@ -1117,9 +1137,7 @@ class _XMDMeta(type):
                 border_radius="0.25em",
             ).value
             for key, value in sorted(_XMD_FUNCS.items(), key=lambda x: x[0])
-        ]) + html("style", ".funcs-grid > details[open] {grid-column: 1/-1;}").value,
-        style="display:grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 0.5em;", 
-        css_class="funcs-grid")
+        ]), css_class="details-grid")
         
         return XTML(info.value + dtls.value)
     
@@ -1243,7 +1261,7 @@ def _parse_as_steps(markdown):
                 from .writer import write  # circular import
             
             stps = [XTML(xmd(page,True)) for page in pages[1:]] # parse each page and store as XTML
-            write(steps(stps, dots_loc='right'))
+            write(steps(stps, loc='right'))
     return frozen(cap) # return captured content as frozen to be automatically displayed in last line of cell
 
 

@@ -1,4 +1,4 @@
-_attrs = ['AnimationSlider', 'JupyTimer', 'ListWidget', 'alt', 'alert', 'as_html', 'as_widget', 'badge','bullets', 'color', 'error', 'table', 'suppress_output','suppress_stdout','capture_content',
+_attrs = ['AnimationSlider', 'JupyTimer', 'ListWidget', 'alt', 'alert', 'as_html', 'as_widget', 'tag','bullets', 'color', 'error', 'table', 'suppress_output','suppress_stdout','capture_content',
     'details', 'set_dir', 'code', 'fa', 'gap', 'link', 'center', 'icon', 'image', 'svg','iframe','frozen', 'raw', 'warn', 'bg',
     'focus','html', 'sig','stack', 'styled', 'steps', 'doc', 'transition', 'today','get_child_dir','get_notebook_dir','is_jupyter_session','inside_jupyter_notebook','yoffset','css','pin']
 
@@ -297,6 +297,7 @@ def details(obj,summary='Click to show content', name=None, opened=False, **css_
     css_props = {'max-height':'100%','overflow':'auto', **css_props}
     nodeattr = f'name="{name}"' if name else ''
     isopen = 'open' if opened else ''
+    summary = xmd(summary, True, '') if isinstance(summary, str) else summary # handle markdown inside
     return XTML(f"""<details {nodeattr} {_inline_style(css_props)} {isopen}><summary>{summary}</summary>{htmlize(obj)}</details>""")
 
 def _check_pil_image(data):
@@ -852,13 +853,15 @@ def sub(text, **css_props):
     "Returns subscript text with given css properties."
     return XTML(f"<sub {_inline_style(css_props)}>{xmd(text, True,'')}</sub>")
 
-@_internal_xmd_call('badge')
-def badge(text, color='var(--accent-color)', round=False, scale=0.7):
-    "Creates a badge with given text and color. `round` makes the badge circular and `scale` adjusts its size."
+@_internal_xmd_call('tag')
+def tag(text, color='var(--accent-color)', round=False, scale=0.7):
+    """Creates a tagged text with given color. `round` makes the tag circular and `scale` adjusts its size.
+    `tag(number, round=True)` (and it's markdown usage) create rounded numbers for crisp (non-semantic)bullet points.
+    """
     style = {'font-size': f'{scale}em'}
     if round: style.update({'border-radius': '50%', 'aspect-ratio': '1 / 1', 'min-width': '2em'}) # avoid ellipse at single character
-    if color: style['--badge-color'] = color
-    return html('span', xmd(text, True,''), css_class='ips-badge', style = style)
+    if color: style['--tag-color'] = color
+    return html('span', xmd(str(text), True,''), css_class='ips-tag', style = style)
 
 @_internal_xmd_call('head')
 def head(text: str | None = None, mode: str | None = None):
@@ -976,16 +979,22 @@ def table(data, headers = None, widths=None, css_class=None, **css_props):
     
     return html('div', [stack(d, sizes=widths) for d in data],css_class=klass + ' focus-self', style=css_props)
 
-def sig(callable,prepend_str = None):
+def _resolve_name(obj):
+    name = obj.__name__ if hasattr(obj,'__name__') else type(obj).__name__
+    if name == 'property':
+        name = obj.fget.__name__ 
+    return name
+
+def sig(obj,prepend_str = None):
     "Returns signature of a callable. You can prepend a class/module name."
     try:
-        _sig = f'<b>{callable.__name__}</b>'
+        _sig = f'<b>{_resolve_name(obj)}</b>'
         if prepend_str: 
             _sig = f'{prepend_str}.{_sig}' 
-        _sig = f'<span class="sig">{_sig}</span>' + code(str(inspect.signature(callable))).inline.value
+        _sig = f'<span class="sig">{_sig}</span>' + code(str(inspect.signature(obj))).inline.value
         return XTML(_sig)
     except:
-        raise TypeError(f'Object {callable} is not a callable')
+        raise TypeError(f'Object {obj} is not a callable')
 
 
 def doc(obj,prepend_str = None, members = None, itself = True):
@@ -1001,12 +1010,7 @@ def doc(obj,prepend_str = None, members = None, itself = True):
         with suppress(BaseException): # This allows to get docs of module without signature
             _sig = sig(obj,prepend_str)
     
-    # If above fails, try to get name of module/object
-    _name = obj.__name__ if hasattr(obj,'__name__') else type(obj).__name__
-    if _name == 'property':
-        _name = obj.fget.__name__
-        
-    
+    _name = _resolve_name(obj)
     if _name.startswith('_'): # Remove private attributes
         return XTML('') # Must be XTML to work on memebers
         
@@ -1130,25 +1134,28 @@ _css_info = (f"""
 class steps(ipw.GridBox):
     """A stepper widget to step through given objects with a slider. `objs` should be a list/tuple of objects 
     to step through and can be any object that can be converted to a widget using `as_widget`. Multiple objects
-    in a single step can be given as a nested list/tuple of objects. `dots_loc` controls 
+    in a single step can be given as a nested list/tuple of objects. `loc` controls 
     the location of step dots, which can be 'left', 'top', 'right' or 'bottom'. `interval` controls the time interval 
     in milliseconds for automatic stepping. `css_class` and `css_props` can be used to style the widget.
     `static_index` can be used to set a specific index to be displayed statically in PDF and HTML export, while the stepper will still function normally in the notebook.
+    
+    ::: note.tip
+        Slides navigation's keys/gestures step through the frames in the stepper if the mouse/pointer is over it.
     """
-    def __init__(self, objs, dots_loc="left", interval=1500, css_class=None, static_index = -1, **css_props):
+    def __init__(self, objs, loc="left", interval=1500, css_class=None, static_index = -1, **css_props):
         if not isinstance(objs, (list, tuple)) or len(objs) < 2:
             raise ValueError("objs must be a list/tuple with at least two objects to step through!")
-        if not dots_loc in ("left","top","right","bottom"):
-            raise ValueError(f"dots_loc must be one of left, right, top, bottom, got {dots_loc!r}")
+        if not loc in ("left","top","right","bottom"):
+            raise ValueError(f"loc must be one of left, right, top, bottom, got {loc!r}")
         
         self._uclass = f'output-{id(self)}' # unique class for this instance's output area
-        klasses = ['ips-steps-wrapper', 'vertical'] if dots_loc in ("left","right") else ['ips-steps-wrapper']
+        klasses = ['ips-steps-wrapper', 'vertical'] if loc in ("left","right") else ['ips-steps-wrapper']
         
         if isinstance(css_class, str):
             klasses.extend(css_class.split())
             
-        key = 'grid_template_columns' if dots_loc in ("left","right") else 'grid_template_rows'
-        value = '28px 1fr' if dots_loc in ("left","top") else '1fr 28px' # 4px extra space for scrollbar
+        key = 'grid_template_columns' if loc in ("left","right") else 'grid_template_rows'
+        value = '28px 1fr' if loc in ("left","top") else '1fr 28px' # 4px extra space for scrollbar
         cross_template = {f'grid_template_{"rows" if "columns" in key else "columns"}': '100%'} # need to set explicitly to avoid overflow
         super().__init__(layout={'display': 'grid', key: value, **cross_template}, _dom_classes=klasses)
         
@@ -1180,9 +1187,9 @@ class steps(ipw.GridBox):
             '.ips-steps-wrapper .steps-widget': {'opacity': '0.2 !important'}, # dim it
         })).as_widget().add_class('abs-style').add_class('jupyter-only') # will not export this style to avoid conflicts
         
-        self._stepper = StepSlider(vertical=True if dots_loc in ("left","right") else False, nsteps=len(self._sidxs), interval=interval)
+        self._stepper = StepSlider(vertical=True if loc in ("left","right") else False, nsteps=len(self._sidxs), interval=interval)
         
-        children = (self._stepper, self._output) if dots_loc in ("left","top") else (self._output, self._stepper)
+        children = (self._stepper, self._output) if loc in ("left","top") else (self._output, self._stepper)
         self.children = (self._fixstyle, self._viewstyle, self._printstyle, *children)
         self._stepper.observe(self._set_view, names="value")
         self._set_view(0) # set initial view
