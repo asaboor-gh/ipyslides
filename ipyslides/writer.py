@@ -68,10 +68,6 @@ def _is_pause_delim(output):
     meta = getattr(output, 'metadata', {})
     return isinstance(meta, dict) and meta.get('DELIM', '') == 'PAUSE'
 
-class group(UserList):
-    def __init__(self, initlist=(), **kwargs):
-        raise RuntimeError("group is deprecated, use `slides.steps` for step-wise behavior instead")
-
 class Writer(ipw.HBox):
     _in_write = False
     def __init__(self, *objs, widths = None, css_class = None, paused=False, **css_props):

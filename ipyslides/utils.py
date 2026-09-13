@@ -1,8 +1,10 @@
-_attrs = ['AnimationSlider', 'JupyTimer', 'ListWidget', 'alt', 'alert', 'as_html', 'as_widget', 'tag','bullets', 'color', 'error', 'table', 'suppress_output','suppress_stdout','capture_content',
+_attrs = sorted([
+    'AnimationSlider', 'alt', 'alert', 'as_html', 'as_widget', 'tag','bullets', 'color', 'error', 'table', 'suppress_output','suppress_stdout','capture_content',
     'details', 'set_dir', 'code', 'fa', 'gap', 'link', 'center', 'icon', 'image', 'svg','iframe','frozen', 'raw', 'warn', 'bg',
-    'focus','html', 'sig','stack', 'styled', 'steps', 'doc', 'transition', 'today','get_child_dir','get_notebook_dir','is_jupyter_session','inside_jupyter_notebook','yoffset','css','pin']
+    'focus','html', 'sig','stack', 'styled', 'steps', 'doc', 'transition', 'today','yoffset','css','pin'
+], key=str.lower)
 
-__all__ = sorted(_attrs)
+__all__ = sorted([*_attrs, 'JupyTimer', 'ListWidget', 'is_jupyter_session','inside_jupyter_notebook','get_notebook_dir', 'get_child_dir'], key=str.lower)
 
 import os, re, json, textwrap
 import base64
@@ -293,7 +295,9 @@ _internal_xmd_call('code')(code) # Register code class for xmd usage
 
 @_internal_xmd_call('details')
 def details(obj,summary='Click to show content', name=None, opened=False, **css_props):
-    "Show/Hide Content in collapsed html. Multiple details with same name in a container open exclusively to make an accordion."
+    """Show/Hide Content in collapsed html. Multiple details with same name in a container open exclusively to make an accordion.
+    You can wrap a group of details elements (with the same name) in a div with class "details-grid" to layout them in a grid and show them in an accordion style.
+    """
     css_props = {'max-height':'100%','overflow':'auto', **css_props}
     nodeattr = f'name="{name}"' if name else ''
     isopen = 'open' if opened else ''
@@ -1059,7 +1063,7 @@ def today(fmt = '%b %d, %Y',fg = 'inherit'): # Should be inherit color for markd
 
 def bullets(iterable, ordered = False, marker = None, css_class = None, **css_props):
     """A powerful bullet list. `iterable` could be list of anything that you can pass to `write` command. 
-    Use `write(..., paused=True)` for frame-based incremental reveal, or `steps(...)` for slider-based step view.
+    Use `write(..., paused=True)` for frame-based incremental reveal, or `steps(...)` for slider-based step view alongwith `tag` function to mark numbered steps.
     
     - If an item in iterable is a tuple/list of 2 elements and first element is a str, it will be used as per item marker.   
     - `ordered`: bool, to create ordered or unordered list.

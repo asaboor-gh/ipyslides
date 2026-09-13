@@ -614,6 +614,7 @@ def style_css(colors, fonts, layout, _root = False):
             '* .jp-OutputArea:has(.ips-pinned-item), .jp-OutputArea-child:has(.ips-pinned-item)': {
                 'overflow': 'visible !important', # avoid clipping of pinned content, but avoid top Area under slide
             },
+            '.ips-logo > *': {'filter': 'drop-shadow(0px 0px 0.5px #8988) drop-shadow(0px 0px 1px var(--bg2-color))'}, # subtle popout effect for logo
             '.ips-steps-wrapper': {
                 'display': 'grid !important', # for export, otherwise it is block and loses same view as notebook
                 '> .ips-steps-output': {

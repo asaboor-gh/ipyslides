@@ -2,16 +2,15 @@ from .icons import Icon as _Icon
 
 # ONLY INSTRUCTIONS BELOW
 
-def get_logo(height="60px", text = None):
-    width = 250 if text else 50
-    V = text if isinstance(text, str) else ''
-    return f'''<svg height="{height}" viewBox="0 0 {width} 50" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="butt" stroke-linejoin="round" stroke-width="7.071067811865476">
-        <path d="M22.5 7.5L10 20L20 30L30 20L40 30L27.5 42.5" stroke="#43D675"/>
-        <path d="M7.5 27.5L22.5 42.5" stroke="#4F8EF7"/>
-        <path d="M32.5 32.5L20 20L30 10L42.5 22.5" stroke="#4F8EF7"/>
-        <text x="55" y="37.5" stroke-width="0" fill="currentColor" style="font-size:1.5em;font-weight:bold;">{V}</text>
-    </svg>'''
-
+def get_logo(height="1em"):
+    return f'''
+    <svg xmlns="http://www.w3.org/2000/svg" height="{height}" viewBox="0 0 25 25" class="ips-logo" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke-width="3">
+        <path d="M6 19 L18 7 L20 13 L12 21" stroke="#F97316" />
+        <line x1="4" y1="13" x2="9" y2="8" stroke="#2563EB" />
+        <line x1="12" y1="5" x2="12" y2="5" stroke="#2563EB" />
+    </svg>
+    '''
+    
 
 how_to_slide = r"""#### Creating Slides
 ```python
@@ -138,7 +137,7 @@ into Clips GUI in side panel. On Linux, you need [alert! xclip /] or [alert! wl-
       Notes appear at top to grab immediate attetion of the speaker.
     - Use `Merge Parts` option in settings panel to show all parts of a page/slide as one page/slide.
 """
-more_instructions = f"""{get_logo('2em', 'IPySlides')}
+more_instructions = f"""{get_logo('2em')} IPySlides
 ::: note.info head="Jupyter Tips"
     - Right click (or click on top-left button/footer) to open context menu for accessing settings, table of contents etc.  
     - In JupyterLab, right click on the cell containing slides (outside slides) and select `Create New View for Output` for optimized display.

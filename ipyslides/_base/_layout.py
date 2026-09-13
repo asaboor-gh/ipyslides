@@ -275,6 +275,13 @@ def layout_css(accent_color, aspect):
                             "color": "var(--accent-color) !important",
                         },
                     },
+                    '.ips-logo-header .widget-html-content': {
+                        "display": "flex",
+                        "align-items": "center",
+                        "justify-content": "flex-start",
+                        "gap": "8px",
+                        "b" : {"color": "var(--accent-color) !important"}
+                    },
                 },
                 ".SlideBox :is(button, .jupyter-button)": {
                     "border": "1px solid var(--accent-color)",
