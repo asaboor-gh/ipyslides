@@ -676,11 +676,11 @@ def focus(obj):
         return styled(obj, 'focus-child')
 
 @_internal_xmd_call('center')
-def center(obj, vertically=False):
-    "Align a given object at center horizontally or vertically, whether a widget or html/IPYthon object"
-    klass = 'hcenter' if not vertically else 'vcenter'
+def center(obj, h=True, v=False):
+    "Align a given object at center horizontally/vertically, whether a widget or html/IPYthon object"
+    klass = ' '.join(['hcenter' if h else '', 'vcenter' if v else '']).strip()
     if isinstance(obj,ipw.DOMWidget):
-        out = ipw.Box([obj]).add_class(klass) # needs to wrap in another for cenering
+        out = ipw.Box([obj], _dom_classes=klass.split())
         _patch_display(out)
         return out
     else:

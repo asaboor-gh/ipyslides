@@ -46,6 +46,11 @@ const zoom = {
             return;
         }
 
+        // Skip zoom when target already fills most of the available slide area.
+        if ((targetW / wrapW) > 0.85 || (targetH / wrapH) > 0.85) {
+            return;
+        }
+
         // Fitting Multiplier Calculation (5% margin)
         const fitZoom = Math.min(safeWrapW / targetW, safeWrapH / targetH) * 0.95;
         let dynamicZoom = Math.min(10, fitZoom); // cap max zoom to 10x to avoid excessive zooming on tiny elements
@@ -112,6 +117,7 @@ const zoom = {
     }
 };
 
+// DO NOT BE OVERSMART TO HANDLE THIS IN PYTHON, TREAT ALL STEPS EQUALLY FOR CONSISTENCY
 function tryMoveStep(box, event, dir) {
     // Swipe: target is the element under the pointer. Keydown: target is the box
     // itself, so fall back to the steps wrapper the mouse is currently hovering.

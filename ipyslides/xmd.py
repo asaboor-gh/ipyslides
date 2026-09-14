@@ -297,7 +297,7 @@ class cmnt_esc:
         return cls._TOKEN_RE.sub(_unmask, text)
     
 
-PLUS_RE = re.compile(r'^\+\+(?:\[(?P<opt>[^\]\n]+)\])?(?:\s*$|\s)', re.MULTILINE) # This is used to split by ++ on its own line,
+PLUS_RE = re.compile(r'^\+\+(?:\s*$|\s)', re.MULTILINE) # This is used to split by ++ on its own line,
 DOTS_RE = re.compile(r'(?<!\S)\.\.(?!\S)') # Count only standalone ".." tokens (surrounded by whitespace or string boundaries)
 VARS_RE = re.compile(r"%\{([^{]*?)\}", flags=re.DOTALL)
 
@@ -550,6 +550,7 @@ class XMarkdown(Markdown):
         content = re.sub(r"<link:([\w\d-]+):(origin|target)\s*(.*?)>", error('SyntaxError', r'The `&lt;link: ...&gt;` syntax is deprecated. Use `link` function instead.').value, content)
         content = re.sub(r"(?<![\`\\])\<md-([\w]+)/\>", error('SyntaxError', r'The `&lt;md-var/&gt;` syntax is deprecated. Use `[md-var/]` instead.').value, content)
         content = re.sub(r'(?: )?[\^\_]\`([^\`]*?)\`',error('SyntaxError', r'Legacy syntax _\`...\`, ^\`...\` is deprecated. Use `sub/sup` functions instead.').value, content) 
+        content = re.sub(r"\+\+\[isolate\]", error("SyntaxError", "The '[isolate]' option after ++ is deprecated. Use 'columns.paused' directive followed by a '++' instead.").value, content)
         
         # legacy nesting with 2+ slashes
         if re.search(r"\`(?P<slashes>/{2,})(.*?)(?P=slashes)\`", content, flags=re.DOTALL | re.MULTILINE):
@@ -1304,17 +1305,13 @@ def _stream_chunks(text, sep='---'):
 def _split_parts(content, delimited=False):
     "Split content at '++', optionally yielding delimiter objects. '++ ' inline is also supported unlinke strict '++' on a line by itself in _stream_chunks."
     def _part_delim():
-        delim = _delim("PAUSE")
-        if opt == 'isolate':
-            error("SyntaxError", "The '[isolate]' option after ++ is deprecated. Use 'columns.paused' directive followed by a '++' instead.").display()
-        return delim
+        return _delim("PAUSE")
     
     start = 0
     first = True
 
     content = textwrap.dedent(content)  # Dedent content before processing to make sure ++ is at start of line
     for m in PLUS_RE.finditer(content):
-        opt = (m.group('opt') or '').strip().lower().replace('_', '-')
         chunk = content[start:m.start()].rstrip() # preserve leading indentation, clear trailing junk
 
         if chunk:

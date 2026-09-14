@@ -928,22 +928,61 @@ def style_css(colors, fonts, layout, _root = False):
             'margin-block':'0.5px !important', # Two adjacant prints should look closer 
         },
         '.vcenter': {
+            'margin-block': 'auto', # also self center if height is less than container
             (align_sel := '^, :is(.jp-OutputArea-output,.widget-html-content)'): {
-                'display': 'flex !important',
-                'flex-direction': 'row !important',
-                'align-items': 'center !important',
+                'display': 'flex',
+                'align-items': 'center',
             },
         },
         '.hcenter': {
-            align_sel: (center_props := {
-                'display': 'flex !important',
-                'flex-direction': 'column !important',
-                'align-items': 'center !important',
-            }),
+            'margin-inline': 'auto', # also self center if width is less than container
+            align_sel: {
+                'display': 'flex',
+                'flex-direction': 'column',
+                'align-items': 'center',
+            },
         },
-        '.align-center': {align_sel: center_props}, # old way
-        '.align-left': {align_sel: {**center_props, 'align-items': 'flex-start !important'}}, 
-        '.align-right': {align_sel: {**center_props, 'align-items': 'flex-end !important'}},
+        '.align-center, .hcenter.vcenter': {
+            'margin': 'auto', 
+            align_sel: {
+                'display': 'flex',
+                'flex-direction': 'column',
+                'align-items': 'center',
+                'justify-content': 'center',
+            }
+        },
+        '.align-left': {
+            'margin-right': 'auto',
+            align_sel: {
+                'display': 'flex',
+                'flex-direction': 'column',
+                'align-items': 'flex-start',
+            }
+        }, 
+        '.align-right': {
+            'margin-left': 'auto',
+            align_sel: {
+                'display': 'flex',
+                'flex-direction': 'column',
+                'align-items': 'flex-end',
+            }
+        },
+        '.align-top': {
+            'margin-block-start': '0',
+            align_sel: {
+                'display': 'flex',
+                'flex-direction': 'column',
+                'justify-content': 'flex-start',
+            }
+        },
+        '.align-bottom': {
+            'margin-block-start': 'auto',
+            align_sel: {
+                'display': 'flex',
+                'flex-direction': 'column',
+                'justify-content': 'flex-end',
+            }
+        },
         '.rtl, .rtl > *': {
             'text-align':'right !important',
             'padding':'0 12px !important', # to avoid cuts in rtl 
