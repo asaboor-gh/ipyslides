@@ -1,4 +1,4 @@
-# IPySlides
+# ![logo](ips-logo.svg) IPySlides
 
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/asaboor-gh/ipyslides/HEAD?urlpath=%2Fdoc%2Ftree%2Fipyslides%2Fpkg_nbs%2Fips-demo.ipynb)
 [![](https://jupyterlite.rtfd.io/en/latest/_static/badge.svg)](https://asaboor-gh.github.io/litepad/lab/index.html?path=IPySlides.ipynb)
