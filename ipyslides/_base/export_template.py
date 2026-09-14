@@ -33,7 +33,7 @@ def doc_html(code_css, style_css, content, script, css_class, page_css = ''):
             processEscapes: true,
             processEnvironments: true
         }},
-        // align-center justify equations in code and markdown cells. Elsewhere
+        // align center justify equations in code and markdown cells. Elsewhere
         // we use CSS to left justify single line equations in code cells.
         displayAlign: "center",
         "HTML-CSS": {{

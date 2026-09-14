@@ -676,14 +676,15 @@ def focus(obj):
         return styled(obj, 'focus-child')
 
 @_internal_xmd_call('center')
-def center(obj):
-    "Align a given object at center horizontally, whether a widget or html/IPYthon object"
+def center(obj, vertically=False):
+    "Align a given object at center horizontally or vertically, whether a widget or html/IPYthon object"
+    klass = 'hcenter' if not vertically else 'vcenter'
     if isinstance(obj,ipw.DOMWidget):
-        out = ipw.Box([obj]).add_class('align-center') # needs to wrap in another for cenering
+        out = ipw.Box([obj]).add_class(klass) # needs to wrap in another for cenering
         _patch_display(out)
         return out
     else:
-        return XTML(f'<div class="align-center">{htmlize(obj)}</div>')
+        return XTML(f'<div class="{klass}">{htmlize(obj)}</div>')
     
 @_internal_xmd_call('link')
 def link(target_uid:str, text:str="Jump to Linked Slide", icon:str=None, uid:str=None):

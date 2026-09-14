@@ -3,13 +3,12 @@ from .icons import Icon as _Icon
 # ONLY INSTRUCTIONS BELOW
 
 def get_logo(height="1em"):
-    return f'''
-    <svg xmlns="http://www.w3.org/2000/svg" height="{height}" viewBox="0 0 25 25" class="ips-logo" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke-width="3">
-        <path d="M6 19 L18 7 L20 13 L12 21" stroke="#F97316" />
-        <line x1="4" y1="13" x2="9" y2="8" stroke="#2563EB" />
+    return f'''<svg xmlns="http://www.w3.org/2000/svg" height="{height}" viewBox="2 2 21 21" class="ips-logo">
+    <g stroke-linecap="round" stroke-linejoin="round" fill="none" stroke-width="3">
+        <path d="M7 18 L18 7 L20 13 L13 20" stroke="#F97316" />
+        <line x1="5" y1="12" x2="9" y2="8" stroke="#2563EB" />
         <line x1="12" y1="5" x2="12" y2="5" stroke="#2563EB" />
-    </svg>
-    '''
+    </g>\n</svg>'''
     
 
 how_to_slide = r"""#### Creating Slides
@@ -137,7 +136,7 @@ into Clips GUI in side panel. On Linux, you need [alert! xclip /] or [alert! wl-
       Notes appear at top to grab immediate attetion of the speaker.
     - Use `Merge Parts` option in settings panel to show all parts of a page/slide as one page/slide.
 """
-more_instructions = f"""{get_logo('2em')} IPySlides
+more_instructions = f"""<h2 class="vcenter">{get_logo()} IPySlides</h2>
 ::: note.info head="Jupyter Tips"
     - Right click (or click on top-left button/footer) to open context menu for accessing settings, table of contents etc.  
     - In JupyterLab, right click on the cell containing slides (outside slides) and select `Create New View for Output` for optimized display.

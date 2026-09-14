@@ -424,6 +424,8 @@ def style_css(colors, fonts, layout, _root = False):
                     'overflow': 'hidden',
                     'text-overflow': 'ellipsis',
                     'white-space': 'nowrap',
+                    'display': 'flex',
+                    'align-items': 'center', # make footer clean and cohesive than up down text
                 },
                 '.footer-text .slide-number': {
                     'margin-left': 'auto',
@@ -462,6 +464,11 @@ def style_css(colors, fonts, layout, _root = False):
                         },
                     },    
                 },
+            },
+            '.ips-logo': {
+                'border-radius': '50%', # keep circular
+                'margin-inline': '0.25em', # space with text
+                '> *': {'filter': 'drop-shadow(0px 0px 0.5px #8988) drop-shadow(0px 0px 1px var(--bg2-color))'}, # subtle popout effect for logo
             },
             'hr': {
                 'margin':'0 !important',
@@ -614,7 +621,6 @@ def style_css(colors, fonts, layout, _root = False):
             '* .jp-OutputArea:has(.ips-pinned-item), .jp-OutputArea-child:has(.ips-pinned-item)': {
                 'overflow': 'visible !important', # avoid clipping of pinned content, but avoid top Area under slide
             },
-            '.ips-logo > *': {'filter': 'drop-shadow(0px 0px 0.5px #8988) drop-shadow(0px 0px 1px var(--bg2-color))'}, # subtle popout effect for logo
             '.ips-steps-wrapper': {
                 'display': 'grid !important', # for export, otherwise it is block and loses same view as notebook
                 '> .ips-steps-output': {
@@ -921,29 +927,23 @@ def style_css(colors, fonts, layout, _root = False):
         '.InlinePrint': {
             'margin-block':'0.5px !important', # Two adjacant prints should look closer 
         },
-        '.align-center:not(.columns), .align-center > *:not(.columns)': {
-            'width':'auto', # don't make it important
-            'text-align':'center',
-            '^, .jp-OutputArea-output > *': {
-                'margin-left':'auto !important', 
-                'margin-right':'auto !important', 
+        '.vcenter': {
+            (align_sel := '^, :is(.jp-OutputArea-output,.widget-html-content)'): {
+                'display': 'flex !important',
+                'flex-direction': 'row !important',
+                'align-items': 'center !important',
             },
         },
-        '.align-left:not(.columns)': { 
-            'text-align':'left',
-            '^, .jp-OutputArea-output > *': {'margin-right':'auto !important'}, 
+        '.hcenter': {
+            align_sel: (center_props := {
+                'display': 'flex !important',
+                'flex-direction': 'column !important',
+                'align-items': 'center !important',
+            }),
         },
-        '.align-right:not(.columns)': { 
-            'text-align':'right',
-            '^, .jp-OutputArea-output > *': {'margin-left':'auto !important'}, 
-        },
-        '.align-right:not(.columns), .align-left:not(.columns), .align-center:not(.columns)': {
-            '> *:last-child': {'margin-bottom':'0.1em !important',}, 
-        },
-        '..jp-RenderedHTMLCommon p': { # This ovverride from Jupyter is must for alignment
-            'text-align': 'inherit',
-            'margin': 'inherit',
-        },
+        '.align-center': {align_sel: center_props}, # old way
+        '.align-left': {align_sel: {**center_props, 'align-items': 'flex-start !important'}}, 
+        '.align-right': {align_sel: {**center_props, 'align-items': 'flex-end !important'}},
         '.rtl, .rtl > *': {
             'text-align':'right !important',
             'padding':'0 12px !important', # to avoid cuts in rtl 
@@ -953,6 +953,7 @@ def style_css(colors, fonts, layout, _root = False):
         '.alert, .alert *:not(span)': {'color':'hsl(from var(--fg1-color) 8 78% calc(l * 0.68 + 18)) !important',},
         '.info, .info *:not(span)' : {'color':'hsl(from var(--fg1-color) 208 72% calc(l * 0.70 + 20)) !important',},
         '.muted, .muted *': {'color':'color-mix(in srgb, currentColor 80%, transparent) !important',}, # mute in same color
+        '.accent, .accent *': {'color': 'var(--accent-color) !important',}, # apply to children as well
         '.note': {
             **(block_props := {
                 '--bg-color': 'var(--bg2-color)',

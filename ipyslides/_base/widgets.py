@@ -241,7 +241,7 @@ class SidePanel(VBox):
         )
         btn = Button(icon='chevronl', tooltip='Close Side Panel').add_class('panel-close-btn')
         btn.on_click(lambda btn: self.toggle(False))
-        self._head = HBox([HTML(get_logo("28px") + " <b>IPySlides</b>").add_class('ips-logo-header'), btn], layout=Layout(justify_content='space-between', align_items='center', padding='0'))
+        self._head = HBox([HTML(get_logo("28px") + " <b>IPySlides</b>", _dom_classes=('vcenter','accent')), btn], layout=Layout(justify_content='space-between', align_items='center', padding='0'))
         self.children = [self._head, self._tabs]
     
     def is_open(self):
@@ -421,7 +421,7 @@ class Widgets:
     def _push_toast(self,content,timeout=5):
         "Send inside notifications for user to know whats happened on some button click."
         if content and isinstance(content,str):
-            to_send = {"content": "x"} if content == "x" else {'content': get_logo("1em") + " <em>Notification</em><br>" + content}
+            to_send = {"content": "x"} if content == "x" else {'content': f"<div class='vcenter accent'>{get_logo()} <em>Notification</em></div>" + content}
             if isinstance(timeout,(int, float)):
                 to_send['timeout'] = int(timeout*1000) # convert to ms
             elif timeout is not None:

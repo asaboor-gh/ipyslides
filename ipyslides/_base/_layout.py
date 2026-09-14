@@ -137,6 +137,7 @@ def layout_css(accent_color, aspect):
                         "transform-origin": "left bottom !important",
                         "transition": "transform 0.4s ease-in-out",
                     },
+                    '.ips-logo': {'margin-inline': '0 !important'}, # should not have those margins here under logo
                 }, # other properties are set internally
                 "> .Build-Btn": {"visibility": "hidden !important",}, # hide build button by default
                 "^:has(.SlideArea.Stale) > .Build-Btn": {
@@ -274,13 +275,6 @@ def layout_css(accent_color, aspect):
                         "> i": {
                             "color": "var(--accent-color) !important",
                         },
-                    },
-                    '.ips-logo-header .widget-html-content': {
-                        "display": "flex",
-                        "align-items": "center",
-                        "justify-content": "flex-start",
-                        "gap": "8px",
-                        "b" : {"color": "var(--accent-color) !important"}
                     },
                 },
                 ".SlideBox :is(button, .jupyter-button)": {

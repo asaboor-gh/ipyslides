@@ -11,12 +11,13 @@ Use any or combination of these styles in markdown blocks or `css_class` argumen
 | css_class         | Formatting Style                                                                    
 |:------------------|:---------------------------------------------------------
  `text-[value]`     | [value] should be one of tiny, small, big, large, huge.
- `align-[value]`    | [value] should be one of center, left, right.
+ `align-[value]`    | [value] should be one of left, right or center.
  `rtl`              | اردو،  فارسی، عربی، ۔۔۔ {: .rtl}
  `info`             | Blue text. {: .info}
  `warning`          | Orange text. {: .warning}
  `success`          | Green text. {: .success}
  `alert`            | Red text. {: .alert}
+ `accent`           | Accent colored text. {: .accent}
  `muted`            | Muted or less prominent text, preserves the original color but makes it less visible. {: .muted}
  `note`             | Text with note icon, use `::: node.mode` blocks for flexible notes. {: .note}
  `export-only`      | Hidden on main slides, but will appear in exported slides.
@@ -24,6 +25,7 @@ Use any or combination of these styles in markdown blocks or `css_class` argumen
  `block`            | Block of text/objects {: .block}
  `block-[color]`    | Block of text/objects with specific background color from <br> clear, red, green, blue, yellow, cyan, magenta, purple, orange.
  `[h,v]rules`       | Horizontal and vertical rules between children of a node. Combined with `ul` or `ol` for lists gives nice effect and can be used to create tabular grids.
+ `[h,v]center `     | Center content horizontally and/or vertically within a container. {: .hcenter .vcenter}
  `raw-text`         | Text will be shown as printed style. {: .raw-text}
  `focus-self`       | Double-click on element to zoom into popup view. Double-click again or navigate slides to exit. {: .focus-self}
  `focus-child`      | Focus on child objects of node with this class. Same double-click to zoom in/out behavior.
