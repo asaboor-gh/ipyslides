@@ -5,11 +5,11 @@ import ast, re, os
 import sys, linecache
 import textwrap
 import inspect
-import pygments
 
 from pathlib import Path
 from contextlib import contextmanager, suppress
 from IPython.display import display
+from pygments.lexers import get_lexer_by_name
 
 from .formatters import _highlight, XTML
     
@@ -185,7 +185,7 @@ class code:
         if language is None:
             lexer = None
             with suppress(BaseException):
-                lexer = pygments.lexers.get_lexer_by_name(_lang)
+                lexer = get_lexer_by_name(_lang)
                 
             if lexer is None:
                 raise Exception(f'Failed to detect language from file {file!r}. Use language argument!')

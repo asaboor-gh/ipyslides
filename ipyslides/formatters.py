@@ -10,16 +10,23 @@ from pprint import PrettyPrinter
 from io import BytesIO
 from contextlib import contextmanager
 from PIL import Image as PImage
-import pygments
 import ipywidgets as ipw
 import dashlab.widgets as dlw
 
+from pygments import highlight
+from pygments.formatters import HtmlFormatter
+from pygments.lexers import get_lexer_by_name
 from pygments.styles import get_all_styles # its generator, so cache it once
 from IPython.display import display, HTML, Audio, Video, Image as IPyImage
 from IPython.display import __dict__ as _all
 from IPython.utils.capture import RichOutput, CapturedIO, capture_output
 from IPython import get_ipython
 from dashlab.utils import _inline_style
+
+# Capturing publisher does not needed metadata sent to notebook via ipykernel, but need this to work until IPython fixes it.
+from IPython.core.displaypub import CapturingDisplayPublisher
+if not hasattr(CapturingDisplayPublisher, "set_parent"):
+    CapturingDisplayPublisher.set_parent = lambda self, parent: None
 
 # Patch CapturedIO to for a display method
 CapturedIO.display = CapturedIO.show # for completenes with other returns
@@ -271,7 +278,7 @@ def code_css(style='default',color = None, background = None, hover_color = 'var
     
     if style not in _pygments_styles:
         raise KeyError(f"Style {style!r} not found in {_pygments_styles}")
-    _style = pygments.formatters.HtmlFormatter(style = style).get_style_defs(_class)
+    _style = HtmlFormatter(style = style).get_style_defs(_class)
     if style == 'default':
         _bg_fg = {'background': 'var(--bg2-color)', 'color': 'var(--fg1-color)'} # Should match inherit theme
     else: # Override color and background if provided by theme
@@ -319,10 +326,10 @@ def _highlight(code, language='python', name = None, css_class = None, style='de
     if not isinstance(code, str):
         code = _source_code(code)
         
-    formatter = pygments.formatters.HtmlFormatter(style = style)
+    formatter = HtmlFormatter(style = style)
     _style = code_css(style=style, color = color, background = background, hover_color = hover_color,css_class=css_class, lineno = lineno) if css_class else ''
-    _code = pygments.highlight(textwrap.dedent(code).strip('\n'), # dedent make sure code blocks at any level are picked as well
-            pygments.lexers.get_lexer_by_name(language), formatter)
+    _code = highlight(textwrap.dedent(code).strip('\n'), # dedent make sure code blocks at any level are picked as well
+            get_lexer_by_name(language), formatter)
     
     start, mid_end = _code.split('<pre>')
     middle, end = mid_end.split('</pre>')

@@ -123,15 +123,24 @@ function tryMoveStep(box, event, dir) {
     // itself, so fall back to the steps wrapper the mouse is currently hovering.
     const wrapper = event.target?.closest?.('.ips-steps-wrapper') || box._hoverStepper;
     if (!wrapper) return false;
-    const dot = wrapper.querySelector(`:scope .step-dot-item.${dir}-dot`);
-    if (!dot) return false;
-    dot.dispatchEvent(new Event('pointerdown',{ // click does not work here
-        bubbles: true,      // Allows the event to bubble up the DOM tree
-        cancelable: true,   // Allows the event to be canceled via preventDefault()
-        view: window,       // Associates the event with the global window context
-        pointerId: 1,       // Unique identifier for the pointer
-        pointerType: "mouse" // Can be "mouse", "pen", or "touch"
-    }));
+
+    // Use StepSlider hook attached on widget node.
+    const sliderEl = wrapper.querySelector(':scope .steps-widget');
+    return !!(sliderEl && typeof sliderEl._trySetStep === 'function' && sliderEl._trySetStep(dir));
+}
+
+function sendMsgToPy(model, message) {
+    if (!model || typeof model.set !== 'function' || typeof message !== 'string') return false;
+
+    // Setting the same value does not trigger a synced change on Backbone models.
+    // Clear first so repeated actions like NEXT/NEXT are not dropped.
+    if (model.get("msg_topy") === message) {
+        model.set("msg_topy", "");
+        model.save_changes();
+    }
+
+    model.set("msg_topy", message);
+    model.save_changes();
     return true;
 }
 
@@ -207,8 +216,7 @@ function tldrawLinks(node, model) {
     node.querySelectorAll(':scope .link-button > .req-click').forEach(btn => {
         btn.classList.remove('req-click'); // remove class to avoid next time
         btn.onclick = () => { // set proper onclick
-            model.set("msg_topy", "Draw:ON");
-            model.save_changes();
+            sendMsgToPy(model, "Draw:ON");
         }
     })
 }
@@ -367,11 +375,10 @@ const keyMessage = {
 
 function keyboardEvents(box,model) {
     function keyOnSlides(e) {
-        e.preventDefault(); // stop default actions
-        e.stopPropagation(); // stop propagation to jupyterlab events and other views 
-        if (e.target !== box){
-            return true; // inside componets should work properly, avoid going outside
-        }; 
+        const target = e.target instanceof Element ? e.target : null;
+        if (target && target !== box && target.closest(INTERACTIVE_SEL)) {
+            return true; // let interactive descendants keep their own keyboard behavior
+        }
 
         let key = e.key; // True unicode key
         let message = '';
@@ -379,25 +386,28 @@ function keyboardEvents(box,model) {
             message = "SHIFT:" + (key === '/' ? "-5" : "5"); // Shift slide by 5
         } else if (key === 'x' || key === 'd') {
             alert("Pressing X or D,D may cut selected cell! Click outside slides to capture these keys!");
+            e.preventDefault();
             e.stopPropagation(); // stop propagation to jupyterlab events
             return false;
         } else if (key === 'm'){
             alert("Pressing M could change cell to Markdown and vanish away slides!");
+            e.preventDefault();
             e.stopPropagation();   // M key
             return false;
         }  else if (key === 'Enter') { 
-            e.stopPropagation();   // Don't let it pass over slides though, still can't hold Shift + Enter
             return true; // Enter key or Escape key should act properly
-        } else if (key === 'f' || key === 'F11' && !e.ctrlKey) { // F11 for fullscreen toggle
+        } else if ((key === 'f' || key === 'F11') && !e.ctrlKey) { // F11 for fullscreen toggle
+            e.preventDefault();
+            e.stopPropagation();
             toggleFS(box);
             return false;
         } else if (key === 'Home') { // Jump to first slide
             message = 'FIRST';
         } else if (key === 'End') { // Jump to last main slide (before extra slides)
             message = 'LAST';
-        } else if (key === 'ArrowLeft' || key === '-') { // -, <
+        } else if (key === 'ArrowLeft' || key === '-' || key === '<') { // -, <
             if(!tryMoveStep(box, e, 'prev')) {message = 'PREV';}
-        } else if (key === 'ArrowRight' || key === '+' || key === ' ') { // Space, +,  >
+        } else if (key === 'ArrowRight' || key === '+' || key === ' ' || key === 'Spacebar' || key === '>') { // Space, +, >
             if(!tryMoveStep(box, e, 'next')) {message = 'NEXT';}
         } else if (key in keyMessage && !e.ctrlKey){
             message = keyMessage[key];
@@ -407,8 +417,10 @@ function keyboardEvents(box,model) {
             message = 'BUILD'; // Trigger build for first pending slide
         }
 
-        model.set("msg_topy", message);
-        model.save_changes();
+        if (!message) return true;
+        e.preventDefault(); // stop default actions only for handled shortcuts
+        e.stopPropagation(); // stop propagation to jupyterlab events and other views
+        sendMsgToPy(model, message);
     }
     
     box.onkeydown = keyOnSlides;
@@ -436,8 +448,7 @@ function runLinearReveal(model, box, steps, stepMs = 140) {
 
     for (let i = 0; i < steps; i++) {
         const timer = setTimeout(() => {
-            model.set("msg_topy", "NEXT");
-            model.save_changes();
+            sendMsgToPy(model, "NEXT");
         }, (i + 1) * intervalMs);
         box._revealTimers.push(timer);
     }
@@ -585,12 +596,7 @@ function keepThisViewOnly(box){
 }
 
 function handleChangeFS(box,model){
-    if (box === document.fullscreenElement) {
-        model.set("msg_topy", "mode-fullscreen")
-    } else {
-        model.set("msg_topy", "!mode-fullscreen")
-    };
-    model.save_changes();
+    sendMsgToPy(model, box === document.fullscreenElement ? "mode-fullscreen" : "!mode-fullscreen");
 }
 
 function handleContextMenu(box, model, event) {
@@ -611,8 +617,7 @@ function handleContextMenu(box, model, event) {
     if (xPerc < 0) xPerc = 0; // still stays in bounds
     if (yPerc < 0) yPerc = 0; // still stays in bounds
 
-    model.set("msg_topy", `CTX:${xPerc},${yPerc}`); // will parse on python side
-    model.save_changes();
+    sendMsgToPy(model, `CTX:${xPerc},${yPerc}`); // will parse on python side
 }
 
 function showToast(box, msg) {
@@ -722,8 +727,7 @@ function handlePointerSwipe(box, model) {
 
         if (Math.abs(diffX) >= THRESHOLD_SWIPE) {
             if (!tryMoveStep(box, e, diffX < 0 ? 'next' : 'prev')) {
-                model.set("msg_topy", diffX < 0 ? "NEXT" : "PREV");
-                model.save_changes();
+                sendMsgToPy(model, diffX < 0 ? "NEXT" : "PREV");
             };
             swiped = true; // Only one navigation per gesture
         }
@@ -749,11 +753,9 @@ function handleBoxClicks(box, model) {
         const ctxMenu = box.querySelector(':scope .CtxMenu');
         const isCtxOpen = ctxMenu && ctxMenu.style.visibility === 'visible';
         if (isCtxOpen && !event.target.closest('.CtxMenu')) {
-            model.set("msg_topy", "CCTX"); // close context menu
-            model.save_changes(); // after that go on with other checks
+            sendMsgToPy(model, "CCTX"); // close context menu
         } else if (event.target.closest('.SlidesWrapper .slide-footer .section')) {
-            model.set("msg_topy", "menu:toc"); // open TOC panel
-            model.save_changes();
+            sendMsgToPy(model, "menu:toc"); // open TOC panel
         } else if (event.target.closest('.SlidesWrapper .slide-footer')) {
             handleContextMenu(box, model, event); 
             return; // exit after handling footer click
@@ -852,8 +854,7 @@ function showJumpIndictor(model, box, originIndex, offset) {
         let currentIndex = getSlideIndex(box.querySelector(':scope .SlideArea.ShowSlide'));
         if (currentIndex !== null) {
             let backOffset = indicator.originIndex - currentIndex;
-            model.set("msg_topy", `SHIFT:${backOffset}`);
-            model.save_changes();
+            sendMsgToPy(model, `SHIFT:${backOffset}`);
         }
         clearInterval(indicator.countdownInterval); // Clear countdown on click
         clearTimeout(indicator.timerId);
@@ -881,8 +882,7 @@ function linkSwitchesSlide(model, box) {
             
             if (originIndex !== null && targetIndex !== null) {
                 const offset = targetIndex - originIndex;
-                model.set("msg_topy", `SHIFT:${offset}`); // Send message to shift slides
-                model.save_changes();
+                sendMsgToPy(model, `SHIFT:${offset}`); // Send message to shift slides
                 showJumpIndictor(model, box, originIndex, offset); // Show jump indicator to click back
                 } else {
                 alert(`Link '${anchor.textContent}' does not point to a valid slide`);
@@ -933,8 +933,7 @@ function render({ model, el }) {
         
         // Only for jupyter, voila, notebook, do as early as possible
         if (window.hasOwnProperty('_JUPYTERLAB')) {
-            model.set("msg_topy","JUPYTER");
-            model.save_changes();
+            sendMsgToPy(model, "JUPYTER");
         };
 
         box.onmouseenter = function(){
@@ -1027,8 +1026,7 @@ function render({ model, el }) {
         });
     }  
     el.appendChild(style);
-    model.set("msg_topy", "LOADED"); // to run onload functionality
-    model.save_changes();
+    sendMsgToPy(model, "LOADED"); // to run onload functionality
     
     // Clean up old slides if left over from previous session of kernel restart
     let slides = document.querySelectorAll('.SlidesWrapper');
