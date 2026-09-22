@@ -12,6 +12,7 @@ from .navigation import Navigation
 from .settings import Settings
 from .notes import Notes
 from .export_html import _HhtmlExporter
+from .slide import _build_slide
 from ..formatters import XTML, htmlize, slidebound
 from ..xmd import error, _load_files, _parse_as_steps, _stream_chunks
 from ..utils import _css_info
@@ -119,7 +120,7 @@ class BaseSlides:
         last_updated = None
         for chunk, hdl in zip(chunks, handles):
             if chunk != hdl._markdown:
-                with self.slide(hdl.number) as last_updated:
+                with _build_slide(self, hdl.number) as last_updated: # must not dump link here
                     self.src(chunk, **(hdl._md_vars if isinstance(hdl._md_vars, dict) else {})) # preserve variables if they were updated from python code
         
         self._next_number = len(handles) # update next number to avoid overwrites from python on these slides accidentally
@@ -198,14 +199,12 @@ class BaseSlides:
             try: 
                 self._exec_synced_src(value.path.read_text(encoding="utf-8")) 
                 self.notify('x') # need to remove any notification from previous error
-                self._unregister_postrun_cell() # No cells buttons from inside file code run
             except:
                 e, text = traceback.format_exc(limit=0).split(':',1) # only get last error for notification
                 self.notify(f"{error('SyncError','something went wrong')}<br/>{error(e,text)}",20)
         
         self._src_watcher.observe(update_target_slides, "value") # start observing changes to the file
         display(self._src_watcher) # must be displayed to work
-        self._unregister_postrun_cell() # avoid unnessary scroll button after postrun cell here
 
     def unsync(self):
         "Stop syncing markdown file synced with `Slides.sync_with_file` function."

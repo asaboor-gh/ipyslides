@@ -175,10 +175,10 @@
     clip-path: none !important;
 }
 
-/* --- RESET FOR BACKWARD NAV & PRINT (higher specificity and ShowSlide is important to keep things visible) --- */
-.SlideBox.AnimPrev .ShowSlide [class*="anim-"],
-.SlideBox.AnimPrev .ShowSlide .anim-group > *:not(.jp-OutputArea),
-.SlideBox.AnimPrev .ShowSlide .anim-group > .jp-OutputArea > .jp-OutputArea-child {
+/* --- RESET FOR BACKWARD NAV & PRINT (higher specificity and _vsbl-slyd is important to keep things visible) --- */
+.SlideBox.AnimPrev ._vsbl-slyd [class*="anim-"],
+.SlideBox.AnimPrev ._vsbl-slyd .anim-group > *:not(.jp-OutputArea),
+.SlideBox.AnimPrev ._vsbl-slyd .anim-group > .jp-OutputArea > .jp-OutputArea-child {
     --time: 0s !important; /* instant reset */
     --delay: 0s !important;
     opacity: 1 !important; /* keep visible when going backward */

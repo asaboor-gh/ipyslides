@@ -176,6 +176,8 @@ class CtxMenu(ListWidget):
                 self.ws.panelbox.select_tab(1) # select toc tab
             elif key == 'ksc':
                 self.ws._push_toast(htmlize(key_combs), timeout=15)
+            elif key == 'source':
+                self.ws.iw.msg_tojs = 'SSC' # scroll to source cell
             elif key == 'info':
                 self.ws.iw.send({ # don't want to duplicate logo here, so directly send js message
                     "content": html('',[instructions]).value,

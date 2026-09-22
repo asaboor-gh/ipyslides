@@ -144,6 +144,53 @@ function sendMsgToPy(model, message) {
     return true;
 }
 
+function scrollToSrcCell(box) {
+    const linkId = box.querySelector(':scope ._vsbl-slyd [data-ips-src-id]')?.dataset?.ipsSrcId;
+    let srcLink = document.getElementById(linkId); // this gets updated, so let it be
+    if (!srcLink || !linkId) {
+        showToast(box, {
+            'content': `<i class='fa fa-exclamation-triangle' style='color:orange;'></i>
+            <br><p>No source cell found or it is not accessible in current Jupyter's windowing mode!</p>`, 
+            'timeout': 8000}
+        );
+        return false;
+    }
+    if (srcLink) {
+        srcLink = srcLink.parentNode.firstChild; // only first chilc is actual link, others just spans
+        srcLink.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        setTimeout(() => {
+            srcLink.focus();
+            if (document.activeElement !== srcLink) {
+                showToast(box, {
+                    'content': `<i class='fa fa-exclamation-triangle' style='color:orange;'></i>
+                    <br><p>Failed to focus the source cell. Cell may be hidden due to Jupyter's windowing mode!</p>`,
+                    'timeout': 8000
+                });
+            }
+        }, 200);
+    }
+}
+
+function scrollToSlide(box) {
+    function handleScrollLink(e) {
+        const link = e.target.closest('a._ips-scroll-link');
+        if (!link || !link.href) return false;
+        e.preventDefault(); // prevent default anchor behavior
+        box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        // box gets focused always, but may not be visible if Jupyter's windowing mode hides it
+        setTimeout(() => {
+            let cell = box.closest('.jp-Notebook-cell'); //  test cell, it may be inside linked ouput view
+            if (cell && (cell.style.display === 'none' || cell.style.opacity === '0')) { // windowing mode sets cell opacity or display explicitly
+                alert("Failed to focus the slides. Cell may be hidden due to Jupyter's windowing mode!");
+            } else { box.focus(); } // only focus if accessible
+        }, 200);
+    };
+    document.addEventListener('click', handleScrollLink);
+    return function removeHandler() {
+        document.removeEventListener('click', handleScrollLink);
+    };
+}
+
 
 function applyPrintProgressWidth(slide, numFrame, frameOffset = 0) {
     const pview = slide.querySelector(':scope .sprogress-view');
@@ -292,9 +339,9 @@ function printSlides(box, model) {
                 if (i > 0) {
                     clone = slideTemplate.cloneNode(true);
                     clone.classList.remove('HasFrames');
-                    clone.classList.add('HideSlide');
+                    clone.classList.add('_vsbl-slyd'); // ensure not visible on screen
                     clone.classList.add('print-clone');
-                    clone.querySelector(':scope .Slide-UID')?.remove();
+                    clone.querySelector(':scope [data-ips-src-id]')?.remove();
                 }
 
                 const frame = (parts[slideNum] && parts[slideNum][i] !== undefined) ? parts[slideNum][i] : null;
@@ -369,7 +416,6 @@ function printSlides(box, model) {
 const keyMessage = {
     's': 'menu:panel', // toggle side panel
     'k': 'menu:ksc', // keyboard shortcuts
-    'e': 'menu:source', // Edit source cell
     'l': 'menu:laser', // toggle laser pointer
 }
 
@@ -409,6 +455,8 @@ function keyboardEvents(box,model) {
             if(!tryMoveStep(box, e, 'prev')) {message = 'PREV';}
         } else if (key === 'ArrowRight' || key === '+' || key === ' ' || key === 'Spacebar' || key === '>') { // Space, +, >
             if(!tryMoveStep(box, e, 'next')) {message = 'NEXT';}
+        } else if (key === "e") {
+            scrollToSrcCell(box);
         } else if (key in keyMessage && !e.ctrlKey){
             message = keyMessage[key];
         } else if (e.ctrlKey && key === 'p') { 
@@ -459,11 +507,13 @@ function handleMessage(model, msg, box) {
         toggleFS(box);
     } else if (msg === 'RESCALE') {
         setScale(box, model);
+    } else if (msg === "SSC") {
+        scrollToSrcCell(box);
     } else if (msg.startsWith("REVEAL:")) {
         const steps = parseInt(msg.split(":")[1], 10) || 0;
         runLinearReveal(model, box, steps);
     } else if (msg === "SwitchView") {
-        let slideNew = box.querySelector(":scope .SlideArea.ShowSlide");
+        let slideNew = box.querySelector(":scope .SlideArea._vsbl-slyd");
         slideNew.style.visibility = 'visible';
         slideNew.querySelector(':scope .jp-OutputArea').scrollTop = 0; // scroll reset is important
         // Set stagger delays for all anim-group children
@@ -489,7 +539,7 @@ function handleMessage(model, msg, box) {
         setMainBgImage(slideNew, box) // set background image if any on current slide
         tldrawLinks(slideNew, model); // fix draw links for new slide
 
-        let others = box.querySelectorAll(":scope .SlideArea.HideSlide");
+        let others = box.querySelectorAll(":scope .SlideArea:not(._vsbl-slyd)");
         for (let slide of others) {
             if (slide.style.visibility === 'visible') {
                 slide.style.visibility = 'hidden';
@@ -501,7 +551,7 @@ function handleMessage(model, msg, box) {
         }
     } else if (msg.includes("NAV:")) {
         zoom.reset(box); // reset zoom on navigation in parts too, important to not keep zoom on random elements
-        let slide = box.querySelector(":scope .SlideArea.ShowSlide");
+        let slide = box.querySelector(":scope .SlideArea._vsbl-slyd");
         if (!slide) return;
         const inParts = msg.includes("/PARTS");
 
@@ -851,7 +901,7 @@ function showJumpIndictor(model, box, originIndex, offset) {
     indicator.originIndex = originIndex;
     
     indicator.onclick = function() {
-        let currentIndex = getSlideIndex(box.querySelector(':scope .SlideArea.ShowSlide'));
+        let currentIndex = getSlideIndex(box.querySelector(':scope .SlideArea._vsbl-slyd'));
         if (currentIndex !== null) {
             let backOffset = indicator.originIndex - currentIndex;
             sendMsgToPy(model, `SHIFT:${backOffset}`);
@@ -968,6 +1018,9 @@ function render({ model, el }) {
             handleContextMenu(box, model, event);
         });
 
+        // Handle scroll links for slides
+        el._rmLinkListners = scrollToSlide(box);
+
         // If voila, turn on full viewport
         let base_url = box.ownerDocument.body.getAttribute('data-base-url');
         if (base_url && base_url.includes("voila")) {
@@ -1010,7 +1063,7 @@ function render({ model, el }) {
         box.insertBefore(bglayer, box.firstChild); // at back
         bglayer.style.zIndex = 0; // ensure at back further
 
-        setMainBgImage(box.querySelector(':scope .ShowSlide'), box) // set background image if any on current slide
+        setMainBgImage(box.querySelector(':scope .SlideArea._vsbl-slyd'), box) // set background image if any on current slide
         tldrawLinks(box, model); // fix draw links for all slides
 
         // Store cleanup function (it removes itself from map when called)
@@ -1040,6 +1093,7 @@ function render({ model, el }) {
     // Return cleanup function (called by widget framework when view is properly destroyed)
     return () => { 
         console.log("Widget framework cleanup called");
+        if (el._rmLinkListners) el._rmLinkListners(); // Remove scroll link listeners
         const cleanup = _viewCleanups.get(style.parentNode?.parentNode);
         if (cleanup) cleanup();
     };

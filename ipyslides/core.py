@@ -170,19 +170,16 @@ class Slides(BaseSlides,metaclass=Singleton):
 
         self._slides_dict =  {} # Initialize slide dictionary, updated by user or by _setup.
         self._iterable = []  # self._collect_slides() # Collect internally
-        self._running_slide = (
-            None  # For Notes, citations etc in markdown, controlled in Slide class
-        )
+        self._running_slide = None  # For Notes, citations etc in markdown, controlled in Slide class
         self._next_number = 0  # Auto numbering of slides should be only in python scripts
         self._citations = {}  # Initialize citations dictionary
-        self._slides_per_cell = [] # all buidling slides in a cell will be added while capture, and removed with post run cell
+        self._sids_percell = [] # store slide ids to jump to/from source cells, added via post run cell
         self._last_vars = {} # will be handled by a post run cell
 
         self._set_saved_citations() # from previous session
         self.wprogress = self.widgets.sliders.progress
         self.wprogress.observe(self._update_content, names=["value"])
         self.widgets.ctxmenu._callback('refresh',self._force_update) # only single callback is allowed
-        self.widgets.ctxmenu._callback('source',self._jump_to_source_cell) 
         self.widgets.checks.rebuild.observe(self._auto_rebuild, names=['value'])
         self.widgets.buttons.build.on_click(self._click_build_if_pending)
 
@@ -192,6 +189,7 @@ class Slides(BaseSlides,metaclass=Singleton):
         
         # setup toc widget after all attributes are set
         self._toc_widget = TOCWidget(self)
+        self._register_prc(self._dump_links) # unique post-run cell registration
     
     def __setattr__(self, name: str, value): # Don't raise error
         if not name.startswith('_') and hasattr(self, name):
@@ -246,16 +244,15 @@ class Slides(BaseSlides,metaclass=Singleton):
         finally:
             self._running_slide = old
             self._holding_this = False
-
-    def _run_cell(self, cell, **kwargs):
-        """Run cell and return result. Use this instead of IPython's run_cell for extra controls."""
-        spc = list(self._slides_per_cell) # make copy
-        self._unregister_postrun_cell() # important to avoid putting contnet on slides
-        self.shell.run_cell(cell, **kwargs)
-        
-        if self.this: # there was post_run_cell under building slides
-            self._slides_per_cell.extend(spc) # was cleared above in unregister
-            self._register_postrun_cell() # should be back
+    
+    @contextmanager
+    def hold_links(self):
+        """Context manager to temporarily hold cell links and restore them after. 
+        Useful to prevent clearing cell links when ipython's run_cell is called under slide building context."""
+        sids = list(self._sids_percell) # make copy
+        self._sids_percell.clear()
+        try: yield
+        finally: self._sids_percell.extend(sids)
     
     @property
     def _nb_vars(self): # variables from notebook scope, not set by build/rebuild
@@ -266,17 +263,15 @@ class Slides(BaseSlides,metaclass=Singleton):
     
     def _auto_rebuild(self, change):
         # Enable/Disable automatic rebuilding of markdown slides after each cell execution to update variables.
-        with suppress(Exception): # Remove previous on each if exits
-            self.shell.events.unregister("post_run_cell", self._md_post_run_cell)
-            self.notify('x') # to remove previous toast if any
-            
+        self.notify('x') # to remove previous toast if any
+        self._unregister_prc(self._check_vars) # unregister any existing post_run for vars, must
         # None is used to keep previous state but remove handler in slide capture
         if change is not None and self.widgets.checks.rebuild.value: # don't employ change, we need to call it independently
-            self.shell.events.register("post_run_cell", self._md_post_run_cell)
+            self._register_prc(self._check_vars)
             if change != 'ondemand': # only when user checked toggle
                 self.notify("Auto rebuild of markdown slides is enabled for notebook-level variables update!", 10)
     
-    def _md_post_run_cell(self, result):
+    def _check_vars(self, result):
         if result.error_before_exec or result.error_in_exec:
             return  # Do not proceed for side effects
         
@@ -290,46 +285,37 @@ class Slides(BaseSlides,metaclass=Singleton):
                     if diff.keys() & slide._req_vars: # Intersection of keys
                         slide._rebuild(True)
     
-    def _post_run_cell(self, result):
+    def _dump_links(self, result):
         self._auto_rebuild('ondemand') # keep auto_rebuild state, but register if needed
-        with suppress(Exception):
-            self.shell.events.unregister("post_run_cell", self._post_run_cell) # it will be initialized from next building slides
-        if result.error_before_exec or result.error_in_exec:
-            return  # Do not display if there is an error
+        sids = tuple(self._sids_percell) # make copy
+        self._sids_percell.clear() # clear current cell's sids to avoid duplicates
+        if result.error_before_exec or result.error_in_exec: return # take no action
 
-        if self._slides_per_cell:
-            slide = self._slides_per_cell[0]
-            if not slide._pending(): # avoid auto naviagte to pending builds to wait unexpectedly for execution
-                self.navigate_to(slide.index) 
-
-            scroll_btn = ipw.Button(description= 'Go to Slides', icon= 'scroll', layout={'height':'0px'}).add_class('Scroll-Btn') # height later handled by hover
-            scroll_btn.on_click(lambda btn: self._box.focus()) # only need to go there, no slide switching 
+        if sids:
+            # Navigate to the first slide created in this cell
+            slide = next(s for s in self._iterable if s._sid in sids)
+            self.navigate_to(slide.index) 
             
-            for slide in self._slides_per_cell:
-                slide._scroll_btn = scroll_btn
-        
-            self._slides_per_cell.clear() # empty it
-            return display(scroll_btn)
+            # Only first item is actual link to click
+            links = [
+                f"<a class='_ips-scroll-link' id='{sid}-src' href='#{sid}' onclick='return false;'><i class='fa fa-link'></i> Go to Slides</a>" 
+                if i == 0 else f"<span id='{sid}-src' style='display:none;'></span>"
+                for i, sid in enumerate(sids)
+            ]
+            self.html('div', " ".join(links)).display(metadata = {"SRCLINKS": True}) # just inline space
     
-    def _unregister_postrun_cell(self):
-        self._slides_per_cell.clear() # Must to let user jump on first slide run to be in correct place
-        with suppress(Exception): 
-            self.shell.events.unregister("post_run_cell", self._post_run_cell)
+    def _register_prc(self, func):
+        if func is self._dump_links: 
+            self._sids_percell.clear() # clean up any existing source ids
+        
+        self._unregister_prc(func) # unregister any existing post_run for this func
+        with suppress(Exception): # this for non ipython calls
+            self.shell.events.register("post_run_cell", func)
     
-    def _register_postrun_cell(self):
-        with suppress(Exception): 
-            self.shell.events.register("post_run_cell", self._post_run_cell)
+    def _unregister_prc(self, func):
+        with suppress(Exception):
+            self.shell.events.unregister("post_run_cell", func)
         
-    def _jump_to_source_cell(self, ctx=None, value=None):
-        if hasattr(self._current, '_scroll_btn'):
-            toast = ""
-            self._current._scroll_btn.focus()
-        else:
-            toast = 'No source cell found!'
-        
-        vars_info = utils.code(repr(self._current.vars)).inline.value if self._current._has_vars else ""
-        self.notify(toast + (vars_info or ""), 10 if vars_info else 2) #  seconds to show message
-
     def _setup(self):
         if not self._slides_dict:  # prevent overwrite
             self._add_clean_title()
@@ -391,9 +377,8 @@ class Slides(BaseSlides,metaclass=Singleton):
             self.wprogress.value = index
             
         # may be slider can't go there due to single slide, enforce it
-        if index == 0 and self._iterable:
-            self._iterable[0]._update_class('ShowSlide', 'HideSlide ShowSlide')
-            for slide in self._iterable[1:]: slide._update_class(add = 'HideSlide') # safegaurd
+        for i, slide in enumerate(self._iterable):
+            slide._update_class(add = '_vsbl-slyd' if i == index else None, remove = '_vsbl-slyd') # safegaurd for any other being shown
         
         self._current._set_progress()  # update progress bar and footer
         self._current._widget.layout.visibility = 'visible'  # ensure visibility, as JS may not be able to yet get it
@@ -463,7 +448,6 @@ class Slides(BaseSlides,metaclass=Singleton):
                 self.styled(how_to_slide, max_height='98cqh', overflow='auto') # add scroll only on this, not whole
             ], sizes=[40, 60], max_height='99cqh').display()
         
-        self._unregister_postrun_cell() # This also clears slides per cell
         self.settings.footer.text = self.get_logo('1em') + ' IPySlides'
         self.navigate_to(0)  # Go to title slide
 
@@ -480,7 +464,6 @@ class Slides(BaseSlides,metaclass=Singleton):
                 slide._widget.outputs = () # clear output to free visual clutter
                 slide._contents = [] # clear contents to free memory
                 if hasattr(slide, '_src_func'): del slide._src_func
-                if hasattr(slide, '_scroll_btn'): del slide._scroll_btn
         
         self._slides_dict = {k: s for k, s in self._slides_dict.items() if s.index < keep}
         self.refresh() # Reset internal structures
@@ -694,7 +677,7 @@ class Slides(BaseSlides,metaclass=Singleton):
         height = self._box.layout.height
         self._box.layout.height = '0'  # collapse during updates
         try:
-            self._unregister_postrun_cell() # no need to scroll button where showing itself
+            self._sids_percell.clear() # avoid scroll links where showing itself
             self._auto_rebuild('ondemand') # keep auto_rebuild state, but register if needed
             self.settings._update_theme() # force it, sometimes Inherit theme don't update
             self._force_update()  # Update to avoid some content like widgets may be lost
@@ -714,10 +697,7 @@ class Slides(BaseSlides,metaclass=Singleton):
         if self._current._section:
             return self._current.index
         else:
-            idxs = [
-                s.index for s in self[:self._current.index] if s._section
-            ]  # Get all section indexes before current slide
-            return idxs[-1] if idxs else 0  # Get last section index
+            return next((s.index for s in reversed(self[:self._current.index]) if s._section), 0)
 
     @property
     def _lms_idx(self):
@@ -756,10 +736,10 @@ class Slides(BaseSlides,metaclass=Singleton):
         self.widgets.slidebox.children[old_index].layout.visibility = 'hidden'
         self.widgets.slidebox.children[new_index].layout.visibility = 'visible'
         # Above code can be enforced if does not work in multiwindows
-        self.widgets.slidebox.children[old_index].remove_class("ShowSlide").add_class("HideSlide")
-        self.widgets.slidebox.children[new_index].add_class("ShowSlide").remove_class("HideSlide")
+        self.widgets.slidebox.children[old_index].remove_class("_vsbl-slyd")
+        self.widgets.slidebox.children[new_index].add_class("_vsbl-slyd")
         self.widgets.iw.msg_tojs = 'SwitchView'
-        # do after ShowSlide available on naviagted slide
+        # do after disp class available on naviagted slide
         self._send_nav_msg(new_index > old_index or new_index == 0) # There is no other way to animate title slide except on returning back to it
         self.settings.footer._update_footer() # keep running-section footer text in sync
     
@@ -793,9 +773,9 @@ class Slides(BaseSlides,metaclass=Singleton):
             if slide._pending(): return slide # get and exit
 
     def _update_content(self, change):
-        utils.update_class(self._box, "InView-Title InView-Last", False)  # remove both classes
-        utils.update_class(self._box, "InView-Title", self.wprogress.value == 0) # first slide
-        utils.update_class(self._box, "InView-Last", self.wprogress.value == self.wprogress.max) # last slide
+        utils.update_class(self._box, "current-s0 current-sN", False)  # remove both classes
+        utils.update_class(self._box, "current-s0", self.wprogress.value == 0) # first slide
+        utils.update_class(self._box, "current-sN", self.wprogress.value == self.wprogress.max) # last slide
 
         if self._iterable and change:
             self.notes.display()  # Display notes first
@@ -842,8 +822,8 @@ class Slides(BaseSlides,metaclass=Singleton):
             self.settings.footer._set_on(s) # update footer
 
         self.widgets.iw._main_end = self._lms_idx # set for frontend
-        if not any(['ShowSlide' in c._dom_classes for c in self.widgets.slidebox.children]):
-            self.widgets.slidebox.children[0].add_class('ShowSlide')
+        if not any(['_vsbl-slyd' in c._dom_classes for c in self.widgets.slidebox.children]):
+            self.widgets.slidebox.children[0].add_class('_vsbl-slyd')
         
         # Update stuff on slides and side effects
         self._update_toc()  # Update table of content if any
@@ -906,12 +886,14 @@ class Slides(BaseSlides,metaclass=Singleton):
 
         slide_number = int(line[0])  # First argument is slide number
         
-        with _build_slide(self, slide_number) as s:
+        with _build_slide(self, slide_number, add_link=True) as s:
             if "-m" in line[1:]:
-                self._run_mdsrc(s, cell)
-            else:
+                return self._run_mdsrc(s, cell)
+            
+            # Otherwise, treat as Python code and run within the hold_links context.
+            with self.hold_links():
                 s._set_source(cell, "python")  # Update cell source beofore running
-                self._run_cell(cell)
+                self.shell.run_cell(cell)    
             
     def _run_mdsrc(self, slide, content, **vars):
         if not isinstance(content, str):
@@ -948,7 +930,7 @@ class Slides(BaseSlides,metaclass=Singleton):
                 raise RuntimeError('slide function must be used as a context manager!')
             
         snumber = self._fix_slide_number(slide_number)
-        with _build_slide(self, snumber) as s:
+        with _build_slide(self, snumber, add_link=True) as s:
             with self.code.context(returns=True, depth=4) as code:
                 s._set_source(code.raw, "python")  # set source before running 
                 yield s

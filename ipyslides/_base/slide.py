@@ -108,7 +108,7 @@ class Slide:
         self._specs = Specs() # instance specs that are persistent accross builds 
         self._number = number
         self._index = number if number == 0 else None # First slide should have index ready
-        self._sec_id = f"s-{id(self)}" # should there alway wether a section or not
+        self._sid = f"s-{id(self)}" # for link jumps 
         self._md_vars = {} # store variables set by build/rebuild on this slide
         self._esc_vars = {} # store escaped variables for rebuilds form build content
         self._source = {'text': '', 'language': ''} # Should be set at init once, since markdown needs to compare with previous
@@ -180,12 +180,7 @@ class Slide:
     def _capture(self):
         "Capture output to this slide."
         self._app._next_number = self.number + 1
-        self._app._slides_per_cell.append(self) # will be flushed at end of cell by post_run_cell event
         self._set_defaults() 
-
-        with suppress(Exception): # register only in slides building, not other cells
-            self._app._register_postrun_cell()
-
         self._app._auto_rebuild(None) # avoid while building slides to trigger other updates, but keep auto_rebuild state by None
         
         with self._app._set_running(self):
@@ -204,7 +199,7 @@ class Slide:
             
             outputs = captured.outputs
             # Clean up delimiters: trailing, empty, adjacent PAUSE delimiters
-            self._contents = self._cleanup_delimiters(outputs)
+            self._contents = self._cleanup_contents(outputs)
             self._contents.extend(self._handle_refs()) # add at end if any
             self._update_class(remove = 'Out-Sync') # Now synced
             self.update_display()    
@@ -212,7 +207,7 @@ class Slide:
             if self._app.widgets.checks.focus.value: # User preference
                 self._app._box.focus()
     
-    def _cleanup_delimiters(self, outputs):
+    def _cleanup_contents(self, outputs):
         """
         Clean up delimiters: remove outputs with only text/plain and no metadata,
         then remove trailing, empty, adjacent PAUSE delimiters.
@@ -223,6 +218,8 @@ class Slide:
             metadata = getattr(out, 'metadata', None)
             if set(out.data.keys()) == {'text/plain'} and not metadata:
                 continue
+            if isinstance(metadata, dict) and "SRCLINKS" in metadata:
+                continue # avoid accidental ipython run_cell postrun links on slide
             filtered.append(out)
 
         # Build [None, "PAUSE", ...] list
@@ -254,7 +251,9 @@ class Slide:
         self._widget.clear_output(wait = True) # Clear, but don't go there
         # Need to know how many contents before user provide content
         with capture_content() as cap:
-            html('span', '', id = self._sec_id, css_class='Slide-UID').display() # to register section id in DOM
+            html('span', '', id = self._sid, data_ips_src_id= f'{self._sid}-src',
+                style = {'position':'absolute','top':'0','left':'0','width':'0','height':'0'}, # otherwise scroll shifts slidebox unexpectedly
+            ).display() # to register section id in DOM
             display(VBox([
                     self._bglayer, # background image layer
                     self._ftrhtml, # dynamic footer layer
@@ -288,8 +287,9 @@ class Slide:
             return error("Exception", "Can only rebuild slides created purely from markdown!").display()
         
         with self._app.navigate_back(self.index if go_there else None):
-            self._app._slide(f'{self.number} -m', self._markdown)
-            self._app._unregister_postrun_cell() # Avoid showing slides in this rebuild
+            with _build_slide(self._app, self.number) as s: # must not dump link here
+                self._app.src(s._markdown, **(s._md_vars if isinstance(s._md_vars, dict) else {})) # _md_vars are set before _rebuild in many places
+                
             self._app._auto_rebuild('ondemand') # set back to previous state as capture removes it
     
     @property
@@ -317,7 +317,7 @@ class Slide:
 
         items = [XTML(textwrap.dedent('''
             <li class="toc-item {c}">
-                <a href="#{s._sec_id}" class="slide-link citelink">{s._section}</a>
+                <a href="#{s._sid}" class="slide-link citelink">{s._section}</a>
             </li>''').format(**sec))
             for sec in items]
         
@@ -399,7 +399,7 @@ class Slide:
         self._update_transition_objs(animation=False) # avoid animations between frames
 
         if self.index == self._app.wprogress.max: # This is last slide
-            update_class(self._app._box, "InView-Last", self.indexf + 1 == self.nf) # only if last frame
+            update_class(self._app._box, "current-sN", self.indexf + 1 == self.nf) # only if last frame
         
         self._app._send_nav_msg(
             which == 'next',
@@ -584,7 +584,7 @@ class Slide:
         suffix = f".n{self.number}" if not shared else ''
         if cvars:
             # Set CSS variables for theme colors at top level to be used when this slide will be shown
-            css += _build_css((f".{self._app.uid}.SlidesWrapper:has(.ShowSlide{suffix})",), cvars) 
+            css += _build_css((f".{self._app.uid}.SlidesWrapper:has(._vsbl-slyd{suffix})",), cvars) 
         
         # Also, allow theme colors to be used directly per slide during print and export
         props = {**(cvars or {}), '.jp-OutputArea-output': props} # wrap below output area to avoid messing layout, but colors need to be at Slide Level
@@ -698,7 +698,7 @@ class Slide:
         self._bg_ikws = {} # reset state first to avoid stale values if src is None or invalid
         self._bglayer.value = '' # reset first to receive new content
         if src is None: return
-        self._bg_ikws = {"src": src,"uclass": f"{self._sec_id}-bg", **kwargs}
+        self._bg_ikws = {"src": src,"uclass": f"{self._sid}-bg", **kwargs}
         self._bglayer.value = self._get_bg_image(get_unique_css_class(), ikws=self._bg_ikws) 
     
     def _get_bg_image(self, selector, ikws=None):
@@ -752,7 +752,7 @@ class Slide:
             del self._src_args  # remove after finalizing to release memory and avoid stale state
 
 @contextmanager
-def _build_slide(app, slide_number):
+def _build_slide(app, slide_number, add_link=False):
     "Use as contextmanager in Slides class to create slide."
     if not isinstance(slide_number, int):
         raise ValueError(f"slide_number should be int >= 0, got {slide_number}")
@@ -783,6 +783,7 @@ def _build_slide(app, slide_number):
     this._update_transition_objs() # any animation/CSS etc set during build should be applied immediately
     this._set_progress() # update progress bar after each build
     app.settings.footer._update_footer() # update footer after each build
+    if add_link: app._sids_percell.append(this._sid) # add link on successful build only on demand
     
 class SlideGroup:
     """Proxy calls/attributes to multiple Slide instances.

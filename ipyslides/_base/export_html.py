@@ -86,13 +86,12 @@ class _HhtmlExporter:
 
                 _html = f'<div class="jp-OutputArea">{_html}</div>'
 
-                sec_uid = item._sec_id if k == 0 else f"{item._sec_id}-{k}"
-                sec_id = f'id="{sec_uid}"'
+                sid = item._sid if k == 0 else f"{item._sid}-{k}"
                 content += textwrap.dedent(f'''
-                    <section {sec_id}>
-                        {self._get_css(item, sec_uid)}
+                    <section id="{sid}">
+                        {self._get_css(item, sid)}
                         <div class="SlideBox">
-                            {item._get_bg_image(f'#{sec_uid}', ikws = item._bg_ikws)}
+                            {item._get_bg_image(f'#{sid}', ikws = item._bg_ikws)}
                             <div class="{item._css_class} export-only">
                                 {_html}
                             </div>
@@ -134,12 +133,12 @@ class _HhtmlExporter:
                 transform: translateZ(0) !important;
             }}''')) if start_css else ''
     
-    def _get_css(self, slide, sec_uid):
-        "uclass.SlidesWrapper → sec_id , .SlidesWrapper → sec_id"
+    def _get_css(self, slide, sid):
+        "uclass.SlidesWrapper → sid , .SlidesWrapper → sid"
         return (f'{slide._yoffset_css(False)}\n{slide._style_css(False)}').replace( # xtml or str, runtime for colors per slide
-            f".{self.main.uid}.SlidesWrapper", f"#{sec_uid}").replace(
-            f".{self.main.uid}", f"#{sec_uid}").replace(
-            "ShowSlide", "SlideArea" # ShowSlide is used for runtime display but here it is SlideArea in export
+            f".{self.main.uid}.SlidesWrapper", f"#{sid}").replace(
+            f".{self.main.uid}", f"#{sid}").replace(
+            "._vsbl-slyd", ".SlideArea" # runtime display class to general
         )
             
     def _get_logo(self):

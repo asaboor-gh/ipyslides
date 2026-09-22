@@ -57,7 +57,7 @@ def layout_css(accent_color, aspect):
                     "color": "var(--accent-color)",
                     "font-size": "0.7em !important",
                 },
-                "^.InView-Title .Arrows.Prev-Btn, ^.InView-Last .Arrows.Next-Btn, ^.InView-Title .Progress-Box": {
+                "^.current-s0 .Arrows.Prev-Btn, ^.current-sN .Arrows.Next-Btn, ^.current-s0 .Progress-Box": {
                     "display": "none !important",
                 },
                 "^.mouse-swipe-enabled": {
@@ -179,10 +179,10 @@ def layout_css(accent_color, aspect):
                         "font-size": "5em",  # strong water mark
                         "font-weight": "bold",
                     }, 
-                    "^.HideSlide *": {"visibility": "hidden !important",},
+                    "^:not(._vsbl-slyd) *": {"visibility": "hidden !important",},
                     "@media print": {
-                        "^.HideSlide": {"visibility": "visible !important",},
-                        "^.HideSlide *": {"visibility": "inherit !important",},
+                        "^:not(._vsbl-slyd)": {"visibility": "visible !important",},
+                        "^:not(._vsbl-slyd) *": {"visibility": "inherit !important",},
                     },
                 },
                 ".jp-OutputArea": {
@@ -512,16 +512,12 @@ def layout_css(accent_color, aspect):
                     "chevronr", color=accent_color, size="36px"
                 ).css,
             },
-            "<.Scroll-Btn": { # top level
-                "color": "var(--jp-brand-color1,skyblue) !important",
-                "background": "transparent !important",
-                "font-size": "0.8em !important",
+            "< a._ips-scroll-link": { # top level
+                "color": "var(--jp-brand-color1,skyblue)",
+                "font-size": "0.8em",
                 "opacity": "0 !important",
-                "height": "auto !important", # for show when slide shown
-                "transition": "all 400ms ease-in-out !important",
-                "^:hover": {"font-weight": "bold !important","font-size": "0.9em !important",},
-                "^:hover, ^:focus, ^:active, ^.mod-active" : {
-                    "box-shadow": "none !important",
+                "transition": "opacity 400ms ease-in-out",
+                "^:hover, ^:focus" : {
                     "opacity": "1 !important",
                     "outline": "none !important",
                 },
