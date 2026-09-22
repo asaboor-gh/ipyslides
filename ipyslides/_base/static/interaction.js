@@ -339,7 +339,7 @@ function printSlides(box, model) {
                 if (i > 0) {
                     clone = slideTemplate.cloneNode(true);
                     clone.classList.remove('HasFrames');
-                    clone.classList.add('_vsbl-slyd'); // ensure not visible on screen
+                    clone.classList.remove('_vsbl-slyd'); // ensure not visible on screen
                     clone.classList.add('print-clone');
                     clone.querySelector(':scope [data-ips-src-id]')?.remove();
                 }
