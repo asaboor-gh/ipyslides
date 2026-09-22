@@ -1,16 +1,11 @@
-# IPySlides
+# ![logo](ips-logo.svg) IPySlides
 
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.15482350.svg)](https://doi.org/10.5281/zenodo.15482350)
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/asaboor-gh/ipyslides/HEAD?urlpath=%2Fdoc%2Ftree%2Fipyslides%2Fpkg_nbs%2Fips-demo.ipynb)
 [![](https://jupyterlite.rtfd.io/en/latest/_static/badge.svg)](https://asaboor-gh.github.io/litepad/lab/index.html?path=IPySlides.ipynb)
 [![PyPI version](https://badge.fury.io/py/ipyslides.svg)](https://badge.fury.io/py/ipyslides)
 [![Downloads](https://pepy.tech/badge/ipyslides)](https://pepy.tech/project/ipyslides)
 
-<svg width="1.25em" viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="butt" stroke-linejoin="round" stroke-width="7.071067811865476">
-   <path d="M22.5 7.5L10 20L20 30L30 20L40 30L27.5 42.5" stroke="teal"/>
-   <path d="M7.5 27.5L22.5 42.5" stroke="crimson"/>
-   <path d="M32.5 32.5L20 20L30 10L42.5 22.5" stroke="red"/>
-</svg>  IPySlides is a Python library for creating interactive presentations in Jupyter notebooks. It combines the power of Markdown, LaTeX, interactive widgets, and live variable updates in a single presentation framework.
+IPySlides is a Python library for creating interactive presentations in Jupyter notebooks. It combines the power of Markdown, LaTeX, interactive widgets, and live variable updates in a single presentation framework. [DOI](https://doi.org/10.5281/zenodo.15482496)
 
 ---
 
