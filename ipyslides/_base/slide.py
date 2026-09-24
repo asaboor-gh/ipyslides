@@ -140,13 +140,8 @@ class Slide:
         self._bg_ikws = {} # rebuild always re-derives background mapping from content
   
     def _set_source(self, text, language):
-        "Set source code for this slide. If"
+        "Set source code for this slide."
         self._source = {'text': text, 'language': language}
-    
-    def _reset_source(self):
-        "Reset old source but leave markdown source for observing chnages"
-        if not self._markdown:
-            self._set_source("","")
         
     def _on_load_private(self, func):
         with self._app._hold_running(): # slides will not be running during switch, so make it safe
@@ -752,24 +747,19 @@ class Slide:
             del self._src_args  # remove after finalizing to release memory and avoid stale state
 
 @contextmanager
-def _build_slide(app, slide_number, add_link=False):
-    "Use as contextmanager in Slides class to create slide."
-    if not isinstance(slide_number, int):
-        raise ValueError(f"slide_number should be int >= 0, got {slide_number}")
-
-    if slide_number < 0:  # zero for title slide
-        raise ValueError(f"slide_number should be int >= 0, got {slide_number}")
-     
-    if slide_number in app._slides_dict:
-        this = app._slides_dict[slide_number] # Use existing slide is better as display is already there
-        this._reset_source() # Reset old source but keep markdown for observing edits
-    else:
-        this = Slide(app, slide_number)
-        app._slides_dict[slide_number] = this
-        app.refresh() # rebuild slides to have index ready
-       
+def _build_slide(app, slide_number, *, pysrc=None, add_link=False):
+    "Use as contextmanager in Slides builders to create slide."
+    this, = app.create([slide_number]) # creates new or retrieves existing slide
     this._waiting_contents(f'Building Slide {this.number} ...') # show loading skeleton
     app.navigate_to(this.index) # go and see the slide being built
+    
+    # set python source before capturing, markdown source will ovverride this if exists
+    # markdown source needs to stay intact for automatic rebuilds comparison
+    if pysrc is not None:
+        if not isinstance(pysrc, str):
+            raise TypeError(f"pysrc should be a string, got {type(pysrc)}")
+        this._set_source(pysrc, "python")  
+    
     with this._capture(): 
         yield this
         this._exec_src()  # if markdown src was set, a complete overwrite of the slide content is performed

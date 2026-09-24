@@ -22,9 +22,9 @@ class SourceCode(XTML):
     Use `.inline` property to get inline code object.
     Use `.collapsed` property to get collapsed code object.
     """
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._raw = ''
+    def __init__(self, raw, hilited, *args, **kwargs):
+        super().__init__(hilited, *args, **kwargs)
+        self._raw = textwrap.dedent(raw).strip("\n").rstrip() # avoid new lines, but also preseve indents
     
     def __repr__(self): # short for view
         return f'<{self.__module__}.SourceCode at {hex(id(self))}>'
@@ -33,11 +33,6 @@ class SourceCode(XTML):
     def raw(self):
         "Return raw source code."
         return self._raw
-    
-    @raw.setter
-    def raw(self, value):
-        "Set raw source code."
-        self._raw = value.strip("\n").rstrip() # avoid new lines, but also preseve indents
     
     def display(self,collapsed = False, summary = "Show Code"):
         "Display source object in IPython notebook, with optionally showing as collpased element."
@@ -73,7 +68,7 @@ class SourceCode(XTML):
         if lines and lines[-1] < max_index:
             new_lines.append(f'<code class="dim"> + {max_index - lines[-1]} more lines ... </code>')
         
-        return self.__class__(''.join([*new_lines, end]))     
+        return type(self)(self.raw, ''.join([*new_lines, end]))     
     
     def focus(self, lines):
         "Return source object with focus on given list/tuple/range of lines. You can use tuple indexes to focus instead of this."
@@ -93,7 +88,7 @@ class SourceCode(XTML):
             else:
                 _lines.append('<code>' + line)
         
-        return self.__class__(''.join(_lines))
+        return type(self)(self.raw, ''.join(_lines))
     
     @property
     def inline(self): 
@@ -127,9 +122,7 @@ def _file2code(filename,language='python',name=None,**kwargs):
 
 def _str2code(text,language='python',name=None,**kwargs):
     "Only reads plain text source code, return source object with `show` and `focus` methods."
-    out = SourceCode(_highlight(text,language = language, name = name, **kwargs))
-    out.raw = text
-    return out
+    return SourceCode(text, _highlight(text,language = language, name = name, **kwargs))
 
 class code:
     """Create highlighted source code object from text, file or callable.
@@ -221,16 +214,10 @@ class code:
         ```
         """ 
         frame = sys._getframe() 
-        depth = 2 # default depth is 2 to catch under itself, others would be given from differnt context managers to get their source.
-        if 'depth' in kwargs:
-            depth = kwargs.pop('depth')
+        depth = kwargs.pop('depth', 0) + 2 # default depth is 2 to catch under itself, given must be relative to this context manager
         
         for _ in range(depth):
             frame = frame.f_back # keep going back until required depth is reached.
-              
-        if kwargs.pop("start", False):
-            yield (''.join(inspect.getframeinfo(frame).code_context)).strip() # other one is full code, this is where function called
-            return # breaking it is must by return
 
         lines, n1 = linecache.getlines(frame.f_code.co_filename), frame.f_lineno
         offset = 0 # going back to zero indent level
@@ -248,11 +235,9 @@ class code:
                 break
 
         n2 = with_node.body[-1].end_lineno if hasattr(with_node, 'body') else with_node.end_lineno #can include multiline expressions in python 3.8+, could be an expression
-        source = textwrap.dedent(''.join(lines[n1:][:n2 - offset])) # n2 is not from source, but current block as if n1 was zero, so sliced after n1 slice
-        source_html = SourceCode(_highlight(source,language = 'python', **kwargs))
-        source_html.raw = source # raw source code
+        src = textwrap.dedent(''.join(lines[n1:][:n2 - offset])) # n2 is not from source, but current block as if n1 was zero, so sliced after n1 slice
+        srchtml = SourceCode(src, _highlight(src, language = 'python', **kwargs))
+        srchtml.ctxline = (''.join(inspect.getframeinfo(frame).code_context)).strip() # for call type check such as decorator/with statement
         
-        if not returns:
-            source_html.display()
-        
-        yield source_html
+        if not returns: srchtml.display()
+        yield srchtml # yield in any case for contextmanager

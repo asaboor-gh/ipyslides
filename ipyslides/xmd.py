@@ -703,13 +703,12 @@ class XMarkdown(Markdown):
         leftover = {k: v for k, v in props.items() if k not in params} # left over css properties
         if leftover:
             out = re.sub(r"^<div([^>]*)>", rf"<div\1 {_inline_style(leftover)} {attrs}>",out, count=1)
-        out = SourceCode(out)
+        out = SourceCode(data, out)
         if focus_lines:
             lines = lines=[int(l) - 1 for l in focus_lines] # convert to 0-based index for python
             if min(lines) < 0:
                 return [error('IndexError',f"Focus lines {focus_lines} in markdown code blocks are 1-based index unlike python!")]
             out = out.focus(lines) 
-        out.raw = textwrap.dedent(data) # attach raw code as well to access
         
         if mode and getattr(out, mode, None):
             out = getattr(out, mode) # get property if available

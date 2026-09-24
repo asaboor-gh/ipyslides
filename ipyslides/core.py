@@ -746,8 +746,7 @@ class Slides(BaseSlides,metaclass=Singleton):
     def _build_if_pending(self, slide):
         if not slide._pending(): return  # if slide is built, return immediately
         
-        with _build_slide(self, slide.number): 
-            slide._set_source(self.code.from_source(slide._src_func).raw,'python') # set source code to be accessible
+        with _build_slide(self, slide.number, pysrc = self.code(slide._src_func).raw): 
             if (doc := getattr(slide._src_func, '__doc__', None)):
                 xmd(doc, returns=False)
             slide._src_func(slide) # call to build slide now
@@ -876,23 +875,19 @@ class Slides(BaseSlides,metaclass=Singleton):
             - Without '-m' flag, the cell content is treated as Python code and can benifit from `Slides.src` function to set the source for the slide.
 
         """
-        line = line.strip().split()  # VSCode bug to inclue \r in line
-        line[0] = str(self._fix_slide_number(line[0])) # fix inplace as string here
+        num, *rest = line.strip().split()  # VSCode bug to inclue \r in line
+        num = str(self._fix_slide_number(num)) # fix inplace as string here
+        mdslide = "-m" in rest # markdown flag
 
-        if line and not line[0].isnumeric():
-            raise TypeError(
-                f"You should use %%slide integer >= 1 -m(optional), got {line}"
-            )
+        if not num.isnumeric():
+            raise TypeError(f"Expect '%%slide (int >= -1) -m[optional]', got {line}")
 
-        slide_number = int(line[0])  # First argument is slide number
-        
-        with _build_slide(self, slide_number, add_link=True) as s:
-            if "-m" in line[1:]:
+        with _build_slide(self, int(num), pysrc=None if mdslide else cell, add_link=True) as s:
+            if mdslide: 
                 return self._run_mdsrc(s, cell)
             
             # Otherwise, treat as Python code and run within the hold_links context.
             with self.hold_links():
-                s._set_source(cell, "python")  # Update cell source beofore running
                 self.shell.run_cell(cell)    
             
     def _run_mdsrc(self, slide, content, **vars):
@@ -901,7 +896,7 @@ class Slides(BaseSlides,metaclass=Singleton):
         
         # Update source beofore parsing content to make it available for variable testing
         slide._set_defaults() # this is must to have single last call of src for markdown slide / cleaned up unnecessary previous state like citations
-        slide._set_source(content, "markdown") # set source before running to have it available for user
+        slide._set_source(content, "markdown") # set markdown source before running to have it available for user
         cvars = _matched_vars(content) # update has_vars before running to have ready for auto rebuild
         stored = {**esc._store, **slide._esc_vars} # keep previous stored variables, first time come only from esc._store
         slide._has_vars = tuple([v for v in cvars if v not in stored]) # esc is encapsulated by design
@@ -910,7 +905,6 @@ class Slides(BaseSlides,metaclass=Singleton):
         # parse and display content after setting source and preparing variables
         xmd(content, returns = False) 
     
-    @contextmanager
     def slide(self, slide_number, /):  # must be passed as positional argument
         r"""Create a slide using contextmanager which complements the `%%slide` magic.
         
@@ -925,15 +919,17 @@ class Slides(BaseSlides,metaclass=Singleton):
         # Only contextmanager approach is useful for adding content to slides.
         # Don't fall for a function decorator, since that restricts %%slide to be lazy,
         # Instead @src makes it possible to make %%slide and with slide both lazy
-        with self.code.context(returns=True, start=True, depth=4) as caller: # string called code
-            if not caller.lstrip().startswith('with'):
+        with self.code.context(returns=True, depth=1) as code: # access slide call's code
+            if not code.ctxline.startswith('with'):
                 raise RuntimeError('slide function must be used as a context manager!')
-            
+        # We need to return a context manager, otherwise above code can't run before the context manager is actually entered
+        return self._slide_ctx(slide_number, code.raw)
+    
+    @contextmanager
+    def _slide_ctx(self, slide_number, pysrc):
         snumber = self._fix_slide_number(slide_number)
-        with _build_slide(self, snumber, add_link=True) as s:
-            with self.code.context(returns=True, depth=4) as code:
-                s._set_source(code.raw, "python")  # set source before running 
-                yield s
+        with _build_slide(self, snumber, pysrc=pysrc, add_link=True) as s:
+            yield s
     
     @slidebound
     def src(self, obj: Union[str, callable], **vars):  # type: ignore
@@ -1024,8 +1020,8 @@ class Slides(BaseSlides,metaclass=Singleton):
             raise TypeError("slide_numbers should be list-like!")
         
         for number in slide_numbers:
-            if not isinstance(number, int):
-                raise TypeError(f"items in slide_numbers should all be integeres! got {type(number)}")
+            if not isinstance(number, int) or number < 0:
+                raise TypeError(f"items in slide_numbers should all be non-negative integers! got {type(number)} with value {number}")
 
         new_slides = False
         for slide_number in slide_numbers:
@@ -1036,7 +1032,7 @@ class Slides(BaseSlides,metaclass=Singleton):
         if new_slides:
             self.refresh()  # Refresh all slides
 
-        return tuple(filter(lambda s: s.number in slide_numbers, self._slides_dict.values())) 
+        return tuple([self._slides_dict[s] for s in slide_numbers]) 
 
     
     class pause:
