@@ -42,10 +42,9 @@ class Notes:
             --fg1-color : {fg};
             --bg2-color: {bg2};
         }}
-        .popup-notes.columns {{columns: 2 auto;font-family: {font};background: {bg};color: {fg};padding:4px;}}
-        .popup-notes.columns > div > * {{background: {bg2};padding:4px;border-left: 2px inset {bg};margin-block:0 !important;}}
-        .popup-notes.columns > div:first-child::before {{content:'This Slide';font-size:80%;font-weight:bold;}}
-        .popup-notes.columns > div:last-child::before {{content:'Next Slide';font-size:80%;font-weight:bold;}}
+        body {{margin: 0;padding: 4px;overflow: hidden;}}
+        .popup-notes.columns {{font-family: {font};background: {bg};color: {fg};height: 100%;}}
+        .popup-notes.columns > div {{background: {bg2};padding:4px;border-radius: 0.25em;margin-block:0 !important;max-height: 100%;overflow: auto;}}
         </style>{content}"""
 
         this_notes = self.main._current.notes 
@@ -54,8 +53,14 @@ class Notes:
             next_notes = self.main[next_slide_index].notes
         else:
             next_notes = ''
-
-        notes = self.main.stack([this_notes,next_notes], css_class='popup-notes')
+        
+        next_notes = self.main.html('div', [
+            '''<div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:0.25em;flex-wrap:wrap;white-space:pre;">
+            <span id="countup" style="font-weight:bold;">⏱️ 00:00</span><span>🕑<b id='timer'>Time</b></span>
+            </div><h2 style="font-size:0.5em;opacity:0.5;border-bottom: 1px solid #8988;">Next Slide Notes</h2>''',
+            next_notes
+        ])
+        notes = self.main.stack([this_notes,next_notes], sizes=[3,2], css_class='popup-notes')
         self.widgets.notes.value = set_value(notes) 
     
     def _popup_display(self):

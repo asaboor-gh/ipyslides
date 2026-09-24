@@ -1,7 +1,7 @@
 // This needs more thoughts to send data properly
 
 function setupNotesWindow(notes_win) {
-    notes_win.resizeTo(screen.width/3,screen.height/3);
+    notes_win.resizeTo(screen.width/2.5,screen.height/2.5);
     notes_win.moveTo(0,0); // top left corner
     notes_win.document.title = 'IPySlides Notes';
     notes_win.document.body.style.background = 'var(--bg1-color)';
@@ -80,13 +80,9 @@ function startCountUp(notes_win) {
 
 
 function setValue(notes_win, value) {
-    let countUp = '<span id="countup" style="position:fixed;left:4px;bottom:2px;font-size:1.5em;font-weight:bold;">⏱️ 00:00</span>';
-    let out = "<span style='position:fixed;right:4px;bottom:2px;'>🕑<b id='timer'>Time</b></span>" + countUp + value;
-    notes_win.document.body.innerHTML = out;
+    notes_win.document.body.innerHTML = value;
     setTime(notes_win); // show time immediately
-    
-    // Start count-up timer
-    startCountUp(notes_win);
+    startCountUp(notes_win); // Start count-up timer
 }
 
 var timerId;
