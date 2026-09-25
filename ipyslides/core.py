@@ -9,7 +9,7 @@ from pathlib import Path
 from IPython import get_ipython
 from IPython.display import display, clear_output
 
-from .xmd import xmd, esc, get_main_ns, _matched_vars, _internal_xmd_call
+from .xmd import xmd, get_main_ns, _matched_vars, _internal_xmd_call
 from .writer import hold, write
 from .formatters import bokeh2html, plt2html, plt2image, serializer, _delim, slidebound
 from . import formatters
@@ -119,7 +119,7 @@ class Slides(BaseSlides,metaclass=Singleton):
         - In JupyterLab, right click on the cell containing slides (outside slides) and select `Create New View for Output` for optimized display.
         - To jump to source cell and back to slides by clicking buttons, set `Windowing mode` in Notebook settings to `defer` or `none`.
         - See [code! Slides.xmd.syntax /] for extended markdown syntax, especially variables formatting.
-        - Inside python scripts or for encapsulation, use `xmd.gather` to pick variables from local scope.
+        - Inside python scripts or for encapsulation, use `xmd.pack` to pick variables from local scope.
     
     ::: note
         - `Slides` can be indexed same way as list for sorted final indices. 
@@ -161,7 +161,6 @@ class Slides(BaseSlides,metaclass=Singleton):
         self.write      = write
         self.hold       = hold  # Hold display of a function until it is captured in a column of `Slides.write`
         self.xmd        = xmd  # Extended markdown parser
-        self.esc        = esc # lazy escape for variables in markdown
         self.serializer = serializer  # Serialize IPython objects to HTML
 
         with suppress(Exception):  # Avoid error when using setuptools to install
@@ -897,11 +896,8 @@ class Slides(BaseSlides,metaclass=Singleton):
         # Update source beofore parsing content to make it available for variable testing
         slide._set_defaults() # this is must to have single last call of src for markdown slide / cleaned up unnecessary previous state like citations
         slide._set_source(content, "markdown") # set markdown source before running to have it available for user
-        cvars = _matched_vars(content) # update has_vars before running to have ready for auto rebuild
-        stored = {**esc._store, **slide._esc_vars} # keep previous stored variables, first time come only from esc._store
-        slide._has_vars = tuple([v for v in cvars if v not in stored]) # esc is encapsulated by design
-        slide._esc_vars = {v: stored[v] for v in cvars if v in stored} # store for rebuilds internally
-        slide._md_vars = {k:v for k,v in vars.items() if k in cvars} # store user given markdown variables
+        slide._has_vars = _matched_vars(content)  # update has_vars before running to have ready for auto rebuild
+        slide._md_vars = {k:v for k,v in vars.items() if k in slide._has_vars} # store user given markdown variables
         # parse and display content after setting source and preparing variables
         xmd(content, returns = False) 
     
@@ -940,7 +936,7 @@ class Slides(BaseSlides,metaclass=Singleton):
             - Markdown `columns.paused` blocks can be displayed incrementally and `++` before these blocks acts as a separator to isolate previous content from incremental columns and rows.
             - See `slides.xmd.syntax` for extended markdown usage.
             - Variables such as \%{var} can be provided in `**vars` (or left during build) and later updated in notebook using `rebuild` method on slide handle or overall slides.
-            - If an f-string is provided, variables in f-string are resolved eagerly and never get updated on rebuild including lazy ones provided by `Slides.esc`.
+            - Avoid using f-strings interpolation here, as it can break indentation and formatting in the markdown content if expression results multi-line content.
         2. If used with a function input, the function is treated as the source for the slide.
             - The function must accept a single argument, which is the slide handle.
             - The function will not be executed immediately but will be deferred until the user clicks the Pending Slides button.
@@ -949,7 +945,7 @@ class Slides(BaseSlides,metaclass=Singleton):
         Only single `src` can exist per slide, so last call will override any previous `src` call. The decorator call takes precedence 
         over string calls unless string calls are made inside the function body itself.
         """
-        # AVOID BOUNDXMD HERE, THAT DOES NOT ALLOW LATER REBUILDS
+        # AVOID XmdPack HERE, THAT DOES NOT ALLOW LATER REBUILDS
         if isinstance(obj, str):
             self.this._src_args = (obj, vars) # this is must to clear other stuff after src as well as to ensure last call
             return None
@@ -1033,6 +1029,13 @@ class Slides(BaseSlides,metaclass=Singleton):
             self.refresh()  # Refresh all slides
 
         return tuple([self._slides_dict[s] for s in slide_numbers]) 
+    
+    def esc(*args, **kwargs): 
+        raise Exception(
+            "The encapsulation in f-strings using `esc` is deprecated.\n"
+            "Use `src` for slide-level variables encapsulation and\n"
+            "`xmd.pack` for providing scoped variables to markdown content in general."
+        )
 
     
     class pause:
@@ -1041,7 +1044,7 @@ class Slides(BaseSlides,metaclass=Singleton):
         
         - Adjacent pause delimiters are ignored, so no empty parts are created in normal flow.
         - A call [code! write(..., paused=True) /] adds incremental parts inside columns and rows. 
-            - Use [code! pause() /] before write to isolate previous content from its first part reveal.
+            - Use [code! pause() /] before `write` to isolate previous content from its first part reveal.
             - In markdown, use `++` before `::: columns.paused` for the same behavior of isolating previous content from columns and rows.
             - `::: columns.inline` and plain `::: columns` are display modes and do not provide paused incremental framing.
         - Use [code! pause.iter(iterable) /] to create multiple parts from iterable automatically.
@@ -1050,22 +1053,18 @@ class Slides(BaseSlides,metaclass=Singleton):
         # DO NOT FALL FOR GLOBAL PAGE STUFF (AS BEFORE), THAT IS TOO COMPLEX TO HANDLE 
         # AND CANNOT HAVE ITS OWN STATE METADATA, SO IT WAS DEPRECATED. KEEP IT SIMPLE.
         
-        def __init__(self, isolate=False):
-            if isolate:
-                raise RuntimeError("The 'isolate' option is removed. Use `write(..., paused=True)` and place `pause()` before it to isolate previous content.")
+        def __init__(self):
             display(_delim("PAUSE"))
 
         @classmethod
-        def iter(cls, iterable, isolate=False, trail=True):
+        def iter(cls, iterable, trail=True):
             """Loop over given iterable by adding a separator before each item.
             If `trail` is True (default), a separator is added at end as well.
-            
-            The `isolate` option is removed and now raises an error if provided.
             """
             if not isinstance(iterable, Iterable) or isinstance(iterable, (str, bytes, dict)):
                 raise TypeError(f"iterable should be a list-like object, got {type(iterable)}")
-            for i, item in enumerate(iterable):
-                cls(isolate=bool(isolate) and i == 0) # isolate should affect only the first delimiter
+            for item in iterable:
+                cls()
                 yield item
             # This will be only one separator at end if no items were yielded, its like itself called once
-            if trail: display(_delim("PAUSE"))
+            if trail: cls()

@@ -110,7 +110,6 @@ class Slide:
         self._index = number if number == 0 else None # First slide should have index ready
         self._sid = f"s-{id(self)}" # for link jumps 
         self._md_vars = {} # store variables set by build/rebuild on this slide
-        self._esc_vars = {} # store escaped variables for rebuilds form build content
         self._source = {'text': '', 'language': ''} # Should be set at init once, since markdown needs to compare with previous
         self._set_defaults()
         self.vars = Vars(self) # to access variables info and update them

@@ -4,16 +4,13 @@ Main write functions to add content to slides
 
 __all__ = ['write', 'hold']
 
-from collections import UserList
-from collections.abc import Iterable
 from itertools import chain
-from contextlib import contextmanager
 from IPython.display import display as display
 from IPython.utils.capture import CapturedIO
 from dashlab.utils import _build_css
 
 from .formatters import ipw, XTML, RichOutput, _Output, serializer, htmlize, _inline_style, toc_from_meta, _delim
-from .xmd import BoundXMD, xmd, capture_content, get_slides_instance, _split_parts
+from .xmd import XmdPack, xmd, capture_content, _split_parts
 
 
 class hold:
@@ -161,7 +158,7 @@ class Writer(ipw.HBox):
                         c.show() # Display captured outputs, all of them
                     elif isinstance(c, str):
                         xmd(c, returns = False)
-                    elif isinstance(c, BoundXMD):
+                    elif isinstance(c, XmdPack):
                         c.parse(returns = False) # parse and display extended markdown bounded object
                     elif isinstance(c, hold):
                         c() # If c is hold, call it and it will dispatch whatever is inside, ignore return value
@@ -242,7 +239,7 @@ def write(*objs,widths = None, css_class=None, paused=False, **css_props):
     
     - Strings will be parsed as as extended markdown that can have citations/python code blocks/Javascript etc. Variables are resolved from notebook scope.
       A whole column as string will be splitted at '++' to create rows. This is equivalent to list of strings.
-    - The output of `xmd.gather` can be passed to parse and display content with user given and scoped variables.
+    - The output of `xmd.pack`, which will be parsed and displayed with user given and local scoped variables.
     - Use `paused=True` with rows in columns to reveal content incrementally during frame navigation.
     - Use `slides.steps([...])` for slider-driven step transitions where content is swapped in place.
     - Display another function to capture its output in order using [code! Slides.hold(func,...) /]. Only body of the function will be displayed/printed. Return value will be ignored.

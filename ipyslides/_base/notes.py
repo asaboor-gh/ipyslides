@@ -1,5 +1,5 @@
 from ..formatters import slidebound
-from ..xmd import _internal_xmd_call
+from ..xmd import xmd, _internal_xmd_call
 
 
 class Notes:
@@ -25,7 +25,8 @@ class Notes:
     @slidebound("notes")
     def __call__(self, content):
         "See class docstring for usage."
-        self.main.this._notes = self.main.as_html(content).value
+        if not isinstance(content, str): raise TypeError("Notes content must be a string.")
+        self.main.this._notes = xmd(content, True, "div") # p tag takes extra space, using div for notes
     
     def display(self):
         def set_value(content):
@@ -43,8 +44,14 @@ class Notes:
             --bg2-color: {bg2};
         }}
         body {{margin: 0;padding: 4px;overflow: hidden;}}
-        .popup-notes.columns {{font-family: {font};background: {bg};color: {fg};height: 100%;}}
-        .popup-notes.columns > div {{background: {bg2};padding:4px;border-radius: 0.25em;margin-block:0 !important;max-height: 100%;overflow: auto;}}
+        .popup-notes {{font-family: {font};background: {bg};color: {fg};height: 100%;}}
+        .popup-notes > div {{background: {bg2};padding:4px;border-radius: 0.25em;margin-block:0 !important;max-height: 100%;overflow: auto;}}
+        .popup-notes > div:last-child {{overflow: hidden; height: calc(100% - 8px);}}
+        .next-notes {{font-size: 0.8em;}}
+        ::-webkit-scrollbar {{width: 3px;height: 3px;}}
+        ::-webkit-scrollbar-corner {{display: none;}}
+        *:hover::-webkit-scrollbar {{background: #8988;}}
+        *:hover::-webkit-scrollbar-thumb {{background: #898f;}}
         </style>{content}"""
 
         this_notes = self.main._current.notes 
@@ -54,12 +61,17 @@ class Notes:
         else:
             next_notes = ''
         
-        next_notes = self.main.html('div', [
-            '''<div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:0.25em;flex-wrap:wrap;white-space:pre;">
-            <span id="countup" style="font-weight:bold;">⏱️ 00:00</span><span>🕑<b id='timer'>Time</b></span>
-            </div><h2 style="font-size:0.5em;opacity:0.5;border-bottom: 1px solid #8988;">Next Slide Notes</h2>''',
-            next_notes
-        ])
+        next_notes = self.main.html('div', f'''
+            <div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:0.25em;flex-wrap:wrap;white-space:pre;">
+                <span id="countup" style="font-weight:bold;">⏱️ 00:00</span>
+                <span>🕑<b id='timer'>Time</b></span>
+            </div>
+            <h2 style="font-size:0.5em;opacity:0.5;border-bottom: 1px solid #8988;">Next Slide Notes</h2>
+            <div class="next-notes" style="max-height: 100%; overflow-y: auto;overflow-x: hidden;">
+            {next_notes}
+            </div>''', style= {'height': '100%', 'display': 'grid', 'grid-template-rows': 'auto auto 1fr'}
+        )
+        
         notes = self.main.stack([this_notes,next_notes], sizes=[3,2], css_class='popup-notes')
         self.widgets.notes.value = set_value(notes) 
     

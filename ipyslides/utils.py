@@ -30,7 +30,7 @@ from ._base.icons import Icon as icon # for export and overrides in fa function
 from .formatters import ipw, XTML, IMG, frozen, get_slides_instance, fix_ipy_image, _inline_style, htmlize, _fig_caption, slidebound, slidesready
 from .xmd import xmd, get_unique_css_class, capture_content, raw, error, warn, _internal_xmd_call, _head_modes
 from .source import code
-from .writer import write, _style_for_widget, _fmt_html
+from .writer import write, _style_for_widget
 from ._base.styles import animations, view_nodes
 
 

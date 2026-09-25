@@ -3,8 +3,6 @@ CSS styles and XMarkdown syntax documentation for ipyslides.
 This file contains descriptive text strings explaining available formatting options.
 """
 
-from ..xmd import xmd, esc, _md_extensions
-
 css_styles = '''
 Use any or combination of these styles in markdown blocks or `css_class` argument of writing functions:
                        
@@ -35,7 +33,7 @@ Use any or combination of these styles in markdown blocks or `css_class` argumen
 Besides these CSS classes, you always have `Slide.css`, `Slides.html('style',...)` functions at your disposal.
 '''
 # as function to let any call use escaped functions, otherwise they are lost on first use
-xmd_syntax = lambda: rf'''
+xmd_syntax = rf'''
 ## Extended Markdown
 --                                     
 Extended syntax on top of [Python-Markdown](https://python-markdown.github.io/) supports almost full presentation from Markdown.
@@ -212,7 +210,7 @@ Variables from Python code can be embedded directly into Markdown.
 **Variable Scope & Updates**
 : - **Live Updates**: Variables are automatically updated in your slides when their values change in the notebook if not held inside `Slide[number,].vars` deepest scope.
 - **Scope Resolution**: Variables are resolved from per-slide variables (set by `build` or `Slide.vars.update`), then from the notebook's global scope if a slide is built purely from markdown.
-    In functions which take markdown string such as `write`, `html`, variables are taken from notebook's global scope only. Use `xmd.gather` to encapsulate variables from local scopes.
+    In functions which take markdown string such as `write`, `html`, variables are taken from notebook's global scope only. Use `xmd.pack` to encapsulate variables from local scopes.
 - **Forcing Updates**: You can force a refresh of variables on a specific slide using [code! Slide[number,].vars.update(**kwargs) /]. This is also useful for setting unique variable values on different slides.
 - **Attribute/Index Access**: When using expressions like `\%{{var.attr}}` or `\%{{var['key']}}`, the output will only update if the base variable `var` itself is reassigned.
 
@@ -226,11 +224,7 @@ Variables from Python code can be embedded directly into Markdown.
     
 --
 
-{esc(xmd.funcs)}
-
-::: note
-    You can also use `Slides.esc`/`isd.esc` class to lazily escape variables/expressions/output of functions from being parsed inside f-strings.
-    This should be rarely used when your markdown contains a lot of $ \LaTeX $ equations to avoid excessively escaping them with curly braces in favor of few escaped variables.
+%{{xmd_funcs}}
 
 Inline functions can be nested, thanks to new function call pattern that must end with `\/]` to avoid ambiguity with nested calls.
 
@@ -244,13 +238,13 @@ Inline functions can be nested, thanks to new function call pattern that must en
 --
 **General Syntax**{{.text-big}}
 
-- To avoid any further markdown parsing, use ` Slides.esc ` while interpolating variables or expressions in f-strings, such as `f"Hello {{esc(var)}}"` or `f"Hello {{esc(func())}}"`.
+- Avoid using f-strings for content that will be parsed as markdown as it can break indentation and formatting. Use `Slides.src` and `xmd.pack` instead for proper variables handling.
 - Use [alert! [load\! markdown_file.md \..  start:optional, end:optional \/] /] to include a file in markdown format. Nested loading is not supported.
 - Use [alert! [fa\! icon_name \/] /] to add FontAwesome icons, e.g. [fa\! arrow-right \/] → [fa! arrow-right /], [fa\! check .. "green" \/] → [fa! check .. "green" /] etc.
 - Drop a link target in any place using `[#target_id/]` and use `target_id` in `link` commnad or html anchor to jump to that target. Use `Slides.link` for more details.
 - Use syntax `[link\!! "target_id", "Jump to slide" \/]` to jump between slides. See `Slides.link` for more details.
 - Cells in markdown table can be spanned to multiple rows/columns by attributes `| cell text \{{: rowspan="2" colspan="1"}}|` inside a cell, should be a space bewteen text and attributes.
-- Escape a backtick with backslash, i.e. [alert! \\` → \` /], other escape characters are [alert! {xmd.escaped_chars} /]. In Python >=3.12, you need to make escape strings raw, including the use of $ \LaTeX $ and re module.
+- Escape a backtick with backslash, i.e. [alert! \\` → \` /], other escape characters are [code! %{{esc_chars}} .. "markdown" /]. In Python >=3.12, you need to make escape strings raw, including the use of $ \LaTeX $ and re module.
 - Use html entities for special characters, e.g. `&rarr;` →, `&larr;` ←, `&uarr;` ↑, `&darr;` ↓, `&harr;` ↔, `&udarr;` ⇅, `&lArr;` ⇐, `&rArr;` ⇒, `&uArr;` ⇑, `&dArr;` ⇓, `&hArr;` ⇔ etc.
 - Use `sub` and `sup` functions for subscript and superscript respectively, e.g. H[sub!2/]O, E = mc[sup!2/].
 - See `Slides.css_styles` for available CSS classes to use in markdown blocks and other places.
@@ -273,7 +267,7 @@ Inline functions can be nested, thanks to new function call pattern that must en
     - You can use `Slides.xmd.extensions` to extend additional syntax using Markdown extensions such as 
         [markdown extensions](https://python-markdown.github.io/extensions/) and 
         [PyMdown-Extensions](https://facelessuser.github.io/pymdown-extensions/).
-    - These markdown extensions are inluded by default [code! {_md_extensions!r} /].
+    - These markdown extensions are inluded by default [code! %{{xmd_extns!r}} /].
     - You can serialize custom python objects to HTML using `Slides.serializer` function. Having a 
         ` __format__ ` method in your class enables to use {{obj}} syntax in python formatting and \%{{obj}} in extended Markdown.
 '''

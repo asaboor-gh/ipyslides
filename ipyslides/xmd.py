@@ -1,8 +1,8 @@
 # This package exports xmd at top level.
 
 import textwrap, sys, string, builtins, inspect, ast, traceback
-import re, secrets # secrets for unique keys
-from itertools import islice
+import re
+from itertools import islice, count
 from functools import partial
 from contextlib import contextmanager
 from html import escape # Builtin library
@@ -17,8 +17,8 @@ from IPython.display import display
 from IPython.utils.capture import capture_output, CapturedIO
 from ipywidgets import DOMWidget
 
-from .formatters import (XTML, altformatter, htmlize, get_slides_instance, 
-    frozen, widget_from_data, _highlight, _inline_style, _delim)
+from .formatters import (XTML, htmlize, get_slides_instance, 
+    frozen, _highlight, _inline_style, _delim)
 from .source import SourceCode
 
 _md_extensions = [
@@ -60,6 +60,9 @@ class Extensions:
             "extensions": list(set([*self._exts, *_md_extensions])), 
             "extension_configs": {**self._configs, **_md_extension_configs}
         }
+
+# Global monotonic counter for unique variable keys
+COUNTER = count()
         
 # NEVER allow random functions, only xmd.register is gateway for security,
 # as well as scope, like a function inside python script is not in notebook user namespace to access here
@@ -232,23 +235,6 @@ class char_esc:
             text = text.replace(f"ESC-{ord(ch):03}-CHR", repl)
         return text
     
-class esc:
-    r"""Lazy escape of variables in markdown using python formatted strings, to be resolved later and safe from markdown parsing.
-    Use as [code! xmd(f"This is an escaped variable: {esc(var or expression)}") /]
-    or [code! xmd("This is an escaped variable: {}".format(esc(var or expression))) /].
-    This is in par with \%{var} syntax, but more flexible as it can take any expression. 
-    You are advised to use formatting strings rarely, instead use `xmd.gather` class to provide variable (also, automatically pick from local scope)
-    and avoid clashes with $ \LaTeX $ syntax.
-    """
-    _store = {} # stores escaped varaibles here from formatting.
-    
-    def __init__(self, obj, display=False):
-        self._key = f'ESC_VAR_{id(self)}{"DISPLAY" if display else ""}' # unique key
-        self.__class__._store[self._key] = obj # store it
-        
-    def __format__(self, format_spec):
-        return f"%{{{self._key}:{format_spec}}}" # return placeholder for later formatting
-    
 @_internal_xmd_call('load')
 def load(filepath : str, start:int=None, end=None):
     "Load markdown file content in place. Use `start` and `end` to specify line numbers range."
@@ -268,19 +254,13 @@ class cmnt_esc:
     "Important to escape HTML comment to avoid parsing syntax inside it"
     _store = {} # stores escaped comments here from formatting.
     _COMMENT_RE = re.compile(r'<!--.*?-->', re.DOTALL | re.MULTILINE)
-    _TOKEN_RE = re.compile(r"<!-- ESC-[0-9a-f]{16}-CMT -->") # 16 hex digits key
-    
-    @classmethod
-    def _ukey(cls):
-        while True: # avoid collision, though very unlikely
-            key = f'<!-- ESC-{secrets.token_hex(8)}-CMT -->' # keep as comment to avoid issues if can't be replaced
-            if key not in cls._store:
-                return key
+    _TOKEN_RE = re.compile(r"<!-- ESC-[0-9]+-CMT -->") # 16 hex digits key
             
     @classmethod
     def escape(cls, text):
         def _mask(m):
-            key = cls._ukey()
+            # keep key as comment to avoid issues if can't be replaced 
+            key = f'<!-- ESC-{next(COUNTER)}-CMT -->'
             cls._store[key] = m.group(0)
             return key
         
@@ -330,6 +310,7 @@ class XMarkdown(Markdown):
     def __init__(self):
         super().__init__(**_extensions.active)
         self._vars = {}
+        self._ivars = {} # internal variable like md-src etc, preferred over external variables
         self._returns = True
         self._nesting_depth = 0 # checks if using _parse in nested manner
     
@@ -349,15 +330,14 @@ class XMarkdown(Markdown):
         return self._slides and self._slides.this and self._slides.this._markdown
     
     def user_ns(self):
-        "Top level namespace or set by user from `xmd.gather`."
-        if hasattr(BoundXMD, '_bound_vars'):
-            return BoundXMD._bound_vars
+        "Top level namespace or set by user from `xmd.pack`."
+        if hasattr(XmdPack, '_bound_vars'):
+            return XmdPack._bound_vars
 
         if self._running_md_slide:
             return { 
                 **self._slides._nb_vars, # Top level notebook scope variables
                 **self._slides.this._md_vars, # by Slide
-                **self._slides.this._esc_vars, # escaped variables stored on slide
             } # slide specific variables based on scope
         return get_main_ns()  # top scope at end
 
@@ -410,6 +390,7 @@ class XMarkdown(Markdown):
 
         if not self._nesting_depth: # we need to keep these if nested parsing
             self._vars = {} # reset at end to release references
+            self._ivars = {} # reset internal variables as well
 
         if returns:
             content = ""
@@ -736,8 +717,10 @@ class XMarkdown(Markdown):
         typ, mode, focus_lines, _class, kwargs, attrs = self._parse_params(header) 
         kwargs["language"] = "markdown" # force markdown language anyhow
         src, = self._parse_code(data, mode, focus_lines, _class, kwargs, attrs) # list of one item
+        
         if typ not in ("md-before", "md-after"):  # normal md block
-            esc._store[typ[3:]] = src # store variable excluding md- prefix to have available in processing below
+            self._ivars[typ[3:]] = src # store variable excluding md- prefix to have available in processing below
+        
         outputs = []
         if "before" in typ: outputs.append(src)
         if self._returns: # display context
@@ -838,7 +821,7 @@ class XMarkdown(Markdown):
         # but reusing snippets expose internal state, AVOID THAT
         all_matches = re.findall(r"(?<![\`\\])\[md-([\w]+)/\](?!\S)", text) # avoid `\ and end must
         for match in all_matches:
-            value = esc._store.pop(match, error('NameError', f'Markdown variable {match!r} is not defined or already used!'))
+            value = self._ivars.get(match, error('NameError', f'Markdown variable {match!r} is not defined!'))
             text = text.replace(f"[md-{match}/]", self._handle_var(value, f'::: md-{match}'), 1)
         return text
     
@@ -885,14 +868,14 @@ class XMarkdown(Markdown):
             return '' # empty string
         
         if isinstance(value, (str, XTML)): 
-            key = f"PrivateXmdVar{len(self._vars)}X" # end X to make sure separate it 
+            key = f"PrivateXmdVar{next(COUNTER)}X" # end X to make sure separate it 
             # Handle nested funcs output before saving next variable
             self._vars[key] = self._resolve_vars(value if isinstance(value, str) else value.value) 
         else: # Handles TOC, DOMWidget and Others rich displays
             values = value.outputs if isinstance(value, CapturedIO) else [value] # if captured, get outputs
             keys = []
             for val in values:
-                key = f"DISPLAYVAR{len(self._vars)}DISPLAYVAR"
+                key = f"DISPLAYVAR{next(COUNTER)}DISPLAYVAR"
                 self._vars[key] = val # Direct value stored
                 keys.append(key) 
             key = '\n'.join(keys) # join all keys for multiple outputs
@@ -906,15 +889,11 @@ class XMarkdown(Markdown):
         # Check for variables first
         if VARS_RE.search(html_output):
             user_ns = self.user_ns() # get once, will be called multiple time
+            if self._ivars: # update user_ns with internal variables
+                user_ns = {**user_ns, **self._ivars} # can't use update, can be mapping proxy, so merge instead
+            
             def handle_match(match):
                 key,*_ = _matched_vars(match.group()) 
-                # First check if it is an escaped variable
-                if key in esc._store: # escaped variable
-                    value = esc._store.pop(key) # remove after using once
-                    if isinstance(value, DOMWidget) or key.endswith('DISPLAY'): # Anything with display or widget
-                        return self._handle_var(value, ctx = match.group())
-                    return self._handle_var(hfmtr.vformat(f"{{{match.group()[2:-1].strip()}}}", (), {key: value})) # clear spaces around variable
-                
                 if key not in user_ns: # top level var without ., indexing not found
                     err = error('NameError', f'name {key!r} is not defined')
                     if self._running_md_slide: # under slide building purely from markdown
@@ -1041,7 +1020,7 @@ def _matched_vars(text):
     return tuple(matches)  
 
 @dataclass(frozen=True)
-class BoundXMD:
+class XmdPack:
     """Class to store markdown content and user variables (and from caller's scope) for later parsing.
     Use `parse` method to parse the content with given variables. This class is useful for picking variables
     without poluting the global namespace as well as inside python scripts where notebook's scope is not available.
@@ -1073,12 +1052,12 @@ class BoundXMD:
         object.__setattr__(self, 'vars', MappingProxyType(scoped_vars)) 
     
     def parse(self, returns:bool=False, tag:str=None) -> Optional[str]:
-        BoundXMD._bound_vars = self.vars # set bound vars for parsing
+        XmdPack._bound_vars = self.vars # set bound vars for parsing
         try:
             return xmd(self.content, returns=returns, tag=tag)
         finally:
-            if hasattr(BoundXMD, '_bound_vars'):
-                del BoundXMD._bound_vars # cleanup after parsing
+            if hasattr(XmdPack, '_bound_vars'):
+                del XmdPack._bound_vars # cleanup after parsing
     
     def __format__(self, spec):
         return f'{self.parse(returns=True):{spec}}'
@@ -1097,10 +1076,14 @@ class _XMDMeta(type):
     def syntax(self) -> XTML:
         "Extended markdown syntax information."
         from ._base._syntax import xmd_syntax # circular import
-        return _parse_as_steps(xmd_syntax())
+        return _parse_as_steps(xmd_syntax, 
+            xmd_funcs = xmd.funcs, 
+            esc_chars = ' '.join(xmd.esc_chars), 
+            xmd_extns = _md_extensions
+        )
     
     @property
-    def escaped_chars(self) -> tuple[str]:
+    def esc_chars(self) -> tuple[str]:
         "List of characters that are escaped in extended markdown."
         return tuple(char_esc._chars)
     
@@ -1142,20 +1125,24 @@ class _XMDMeta(type):
         return XTML(info.value + dtls.value)
     
     def __dir__(cls): # tab completion still sucks with meta programming!
-        return sorted(list(super().__dir__()) + ["escaped_chars", "extensions", "funcs", "gather", "register", "syntax"])
+        return sorted(list(super().__dir__()) + ["esc_chars", "extensions", "funcs", "pack", "register", "syntax"])
     
     @staticmethod
-    def gather(content:str, **vars): # export xmd in docs and demo to show this
-        """Gather markdown content and variables for later parsing. This is useful for picking variables without 
+    def pack(content:str, **vars): # export xmd in docs and demo to show this
+        """Pack markdown content and variables for later parsing. This is useful for picking variables without 
         polluting the global namespace as well as inside python scripts where notebook's scope is not available.
         
-        - content (str): The markdown content to gather.
-        - vars (dict): The variables to be used in the markdown content.
+        - content (str): The markdown content to pack.
+        - vars (dict): The variables to be used in the markdown content. Missing variables will be resolved from local scope.
         
-        Returns a `BoundXMD` object that can be parsed later using the `parse` method or passed to `write` and utility functions.
+        Returns a `XmdPack` object that can be parsed later using the `parse` method or passed to `write` and utility functions.
         """
-        
-        return BoundXMD(content, vars=vars, _rel_depth=1) # +1 for this function call
+        return XmdPack(content, vars=vars, _rel_depth=1) # +1 for this function call
+    
+    @classmethod
+    def gather(cls, content:str, **vars): # export xmd in docs and demo to show this
+        warn("`xmd.gather` will be deprecated, use `xmd.pack` instead.").display()
+        return cls.pack(content, **vars)
     
     @staticmethod
     def register(name: str, func: callable=None):
@@ -1237,7 +1224,7 @@ class xmd(metaclass=_XMDMeta):
     
     If you want to return the stripped paragraph content without outer <p> tags, use `xmd(content, True, tag="")` or any valid html tag to enclose content.
     
-    Use `xmd.gather(content, **vars)` to gather content and variables for later parsing. This is useful for picking variables 
+    Use `xmd.pack(content, **vars)` to store content and variables for later parsing. This is useful for picking variables 
     without polluting the global namespace as well as inside python scripts where notebook's scope is not available.
     
     **Returns**: A string with HTML content if `returns=True` (default), otherwise display rich output objects.
@@ -1247,20 +1234,17 @@ class xmd(metaclass=_XMDMeta):
             return XMarkdown._active_parser(content, returns=returns, tag=tag)
         return XMarkdown()._parse(content, returns=returns, tag=tag)
 
-def _parse_as_steps(markdown):
+def _parse_as_steps(markdown, **vars):
     "Parse markdown chunks splitted by -- and show alternate chunks through a steps widget. First chunk is treated as common header and shown always."
     if not isinstance(markdown, str):
         raise TypeError(f"markdown expects a string, got {markdown!r}")
     
     pages = list(_stream_chunks(markdown, sep='--'))
     with capture_content() as cap:
-            xmd(pages[0], returns=False) # render common header part
-
-            if len(pages) > 1:
-                from .utils import steps  # circular import
-                from .writer import write  # circular import
-            
-            stps = [XTML(xmd(page,True)) for page in pages[1:]] # parse each page and store as XTML
+        if pages: xmd.pack(pages[0], **vars).parse()
+        if len(pages) > 1:
+            from .utils import write, steps  # circular import
+            stps = [XTML(xmd.pack(page, **vars).parse(True)) for page in pages[1:]] # parse each page and store as XTML
             write(steps(stps, loc='right'))
     return frozen(cap) # return captured content as frozen to be automatically displayed in last line of cell
 
