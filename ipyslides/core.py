@@ -731,12 +731,10 @@ class Slides(BaseSlides,metaclass=Singleton):
 
         if (old_index + 1) > len(self.widgets.slidebox.children):
             old_index = new_index  # Just safe
-
-        self.widgets.slidebox.children[old_index].layout.visibility = 'hidden'
-        self.widgets.slidebox.children[new_index].layout.visibility = 'visible'
-        # Above code can be enforced if does not work in multiwindows
-        self.widgets.slidebox.children[old_index].remove_class("_vsbl-slyd")
-        self.widgets.slidebox.children[new_index].add_class("_vsbl-slyd")
+            
+        wold, wnew = [self.widgets.slidebox.children[idx] for idx in (old_index, new_index)] # underlying slide widgets
+        wold.remove_class("_vsbl-slyd").layout.set_trait('visibility', 'hidden') # both class and inline 
+        wnew.add_class("_vsbl-slyd").layout.set_trait('visibility', 'visible')
         self.widgets.iw.msg_tojs = 'SwitchView'
         # do after disp class available on naviagted slide
         self._send_nav_msg(new_index > old_index or new_index == 0) # There is no other way to animate title slide except on returning back to it

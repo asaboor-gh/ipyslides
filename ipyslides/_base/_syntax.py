@@ -119,8 +119,8 @@ The general block syntax is `::: type-or-classes [args] attributes`.
 ::: details
     ::: summary .. Important Notes on `md-` and `code` blocks
     - Variable created with `md-var_name` can be used anywhere in markdown using `[md-var_name/]` to display source code.
-    - `md-[position or variable]` accepts same parameters as `code` block for syntax highlighting and get deleted on first use.
-    - Both `code` and `md-var` blocks support attribute access such as `::: code.collapsed` or `::: md-var.inline` to show selected view. 
+    - `md-[position or variable]` accepts same parameters as `code` block for syntax highlighting and only accessible within current markdown parsing context.
+    - Both `code` and `md-var` blocks support attribute access such as `::: code.[collapsed, inline, raw, ... ]` to show selected view. 
     You can also use `::: code 1 3` to focus on specific lines based on index 1 in markdown unlike Python.
 --
 
@@ -224,7 +224,7 @@ Variables from Python code can be embedded directly into Markdown.
     
 --
 
-%{{xmd_funcs}}
+%{{xfuncs}}
 
 Inline functions can be nested, thanks to new function call pattern that must end with `\/]` to avoid ambiguity with nested calls.
 
@@ -244,7 +244,7 @@ Inline functions can be nested, thanks to new function call pattern that must en
 - Drop a link target in any place using `[#target_id/]` and use `target_id` in `link` commnad or html anchor to jump to that target. Use `Slides.link` for more details.
 - Use syntax `[link\!! "target_id", "Jump to slide" \/]` to jump between slides. See `Slides.link` for more details.
 - Cells in markdown table can be spanned to multiple rows/columns by attributes `| cell text \{{: rowspan="2" colspan="1"}}|` inside a cell, should be a space bewteen text and attributes.
-- Escape a backtick with backslash, i.e. [alert! \\` → \` /], other escape characters are [code! %{{esc_chars}} .. "markdown" /]. In Python >=3.12, you need to make escape strings raw, including the use of $ \LaTeX $ and re module.
+- Escape a backtick with backslash, i.e. [alert! \\` → \` /], other escape characters are [code! %{{xchars}} .. "markdown" /]. In Python >=3.12, you need to make escape strings raw, including the use of $ \LaTeX $ and re module.
 - Use html entities for special characters, e.g. `&rarr;` →, `&larr;` ←, `&uarr;` ↑, `&darr;` ↓, `&harr;` ↔, `&udarr;` ⇅, `&lArr;` ⇐, `&rArr;` ⇒, `&uArr;` ⇑, `&dArr;` ⇓, `&hArr;` ⇔ etc.
 - Use `sub` and `sup` functions for subscript and superscript respectively, e.g. H[sub!2/]O, E = mc[sup!2/].
 - See `Slides.css_styles` for available CSS classes to use in markdown blocks and other places.
@@ -267,7 +267,7 @@ Inline functions can be nested, thanks to new function call pattern that must en
     - You can use `Slides.xmd.extensions` to extend additional syntax using Markdown extensions such as 
         [markdown extensions](https://python-markdown.github.io/extensions/) and 
         [PyMdown-Extensions](https://facelessuser.github.io/pymdown-extensions/).
-    - These markdown extensions are inluded by default [code! %{{xmd_extns!r}} /].
+    - These markdown extensions are inluded by default [code! %{{xextns!r}} /].
     - You can serialize custom python objects to HTML using `Slides.serializer` function. Having a 
         ` __format__ ` method in your class enables to use {{obj}} syntax in python formatting and \%{{obj}} in extended Markdown.
 '''

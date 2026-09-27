@@ -310,7 +310,7 @@ class XMarkdown(Markdown):
     def __init__(self):
         super().__init__(**_extensions.active)
         self._vars = {}
-        self._ivars = {} # internal variable like md-src etc, preferred over external variables
+        self._mvars = {} # internal markdown variables preferred over external variables
         self._returns = True
         self._nesting_depth = 0 # checks if using _parse in nested manner
     
@@ -390,7 +390,7 @@ class XMarkdown(Markdown):
 
         if not self._nesting_depth: # we need to keep these if nested parsing
             self._vars = {} # reset at end to release references
-            self._ivars = {} # reset internal variables as well
+            self._mvars = {} # reset internal variables as well
 
         if returns:
             content = ""
@@ -719,7 +719,7 @@ class XMarkdown(Markdown):
         src, = self._parse_code(data, mode, focus_lines, _class, kwargs, attrs) # list of one item
         
         if typ not in ("md-before", "md-after"):  # normal md block
-            self._ivars[typ[3:]] = src # store variable excluding md- prefix to have available in processing below
+            self._mvars[f'MVAR_{typ[3:]}'] = src # store variable excluding md- prefix to have available in processing below
         
         outputs = []
         if "before" in typ: outputs.append(src)
@@ -821,7 +821,7 @@ class XMarkdown(Markdown):
         # but reusing snippets expose internal state, AVOID THAT
         all_matches = re.findall(r"(?<![\`\\])\[md-([\w]+)/\](?!\S)", text) # avoid `\ and end must
         for match in all_matches:
-            value = self._ivars.get(match, error('NameError', f'Markdown variable {match!r} is not defined!'))
+            value = self._mvars.get(f'MVAR_{match}', error('NameError', f'Markdown variable {match!r} is not defined!'))
             text = text.replace(f"[md-{match}/]", self._handle_var(value, f'::: md-{match}'), 1)
         return text
     
@@ -889,8 +889,8 @@ class XMarkdown(Markdown):
         # Check for variables first
         if VARS_RE.search(html_output):
             user_ns = self.user_ns() # get once, will be called multiple time
-            if self._ivars: # update user_ns with internal variables
-                user_ns = {**user_ns, **self._ivars} # can't use update, can be mapping proxy, so merge instead
+            if self._mvars: # update user_ns with internal variables
+                user_ns = {**user_ns, **self._mvars} # can't use update, can be mapping proxy, so merge instead
             
             def handle_match(match):
                 key,*_ = _matched_vars(match.group()) 
@@ -1077,9 +1077,9 @@ class _XMDMeta(type):
         "Extended markdown syntax information."
         from ._base._syntax import xmd_syntax # circular import
         return _parse_as_steps(xmd_syntax, 
-            xmd_funcs = xmd.funcs, 
-            esc_chars = ' '.join(xmd.esc_chars), 
-            xmd_extns = _md_extensions
+            xfuncs = xmd.funcs, 
+            xchars = ' '.join(xmd.esc_chars), 
+            xextns = _md_extensions
         )
     
     @property

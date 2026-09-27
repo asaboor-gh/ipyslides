@@ -499,12 +499,12 @@ class Slide:
         return self._reset_indexf(self.nf, self.prev_frame) # go right and swicth back
     
     def _reveal_frames(self):
-        "Reveal frames on current slide incrementally if any, during update_display to have a quick snaphot how frames are built."
+        "Reveal frames on current slide incrementally if any, during updating display to have a quick snaphot how frames are built."
         self.first_frame() # go to first frame by default
         step_count = len(self._fidxs[1:]) # Get to all parts on edit incrementally
         
         # Frontend-only staged reveal for current slide; avoids blocking kernel during batch rebuilds.
-        if step_count > 0 and (self is self._app._current): # only for current slide, do not overload unseen slides in the update_display mode
+        if step_count > 0 and (self is self._app._current): # only for current slide, do not overload unseen slides during the display update
             self._app.widgets.iw.msg_tojs = f"REVEAL:{step_count}"
     
     def _set_progress(self):

@@ -158,7 +158,7 @@ class CtxMenu(ListWidget):
             self._update_state(key, lambda old: not old if self._istoggle(key) else old)
             value = self._state.get(key, None)
             if key in self._handlers:
-                self._handlers.get(key, lambda ctx, val: None)(self, value)
+                self._handlers[key](self, value)
             # Now update left over widgets
             elif key == 'laser':
                 self.ws.htmls.pointer.active = value
