@@ -529,7 +529,8 @@ class XMarkdown(Markdown):
 
     def _handle_syntax_error(self, content):
         content = re.sub(r"<link:([\w\d-]+):(origin|target)\s*(.*?)>", error('SyntaxError', r'The `&lt;link: ...&gt;` syntax is deprecated. Use `link` function instead.').value, content)
-        content = re.sub(r"(?<![\`\\])\<md-([\w]+)/\>", error('SyntaxError', r'The `&lt;md-var/&gt;` syntax is deprecated. Use `[md-var/]` instead.').value, content)
+        content = re.sub(r"(?<![\`\\])\<md-([\w]+)/\>", self._handle_var(error('SyntaxError', r'The `&lt;md-var/&gt;` syntax is deprecated. Use `%{md-var}` instead.')), content)
+        content = re.sub(r"(?<![\`\\])\[md-([\w]+)/\](?!\S)", r"%{md-\1}" + self._handle_var(warn('Use variable syntax %{md-name} instead of [md-name/] for `md-name` blocks!')), content) # avoid `\ and end must
         content = re.sub(r'(?: )?[\^\_]\`([^\`]*?)\`',error('SyntaxError', r'Legacy syntax _\`...\`, ^\`...\` is deprecated. Use `sub/sup` functions instead.').value, content) 
         content = re.sub(r"\+\+\[isolate\]", error("SyntaxError", "The '[isolate]' option after ++ is deprecated. Use 'columns.paused' directive followed by a '++' instead.").value, content)
         
@@ -715,11 +716,14 @@ class XMarkdown(Markdown):
         
     def _parse_md_src(self, data, header):
         typ, mode, focus_lines, _class, kwargs, attrs = self._parse_params(header) 
+        if typ == "md-frozen": # pick data from being parsed as frozen content
+            return [XTML(char_esc.restore(cmnt_esc.restore(data)))] # restore comments and character escapes
+        
         kwargs["language"] = "markdown" # force markdown language anyhow
         src, = self._parse_code(data, mode, focus_lines, _class, kwargs, attrs) # list of one item
         
         if typ not in ("md-before", "md-after"):  # normal md block
-            self._mvars[f'MVAR_{typ[3:]}'] = src # store variable excluding md- prefix to have available in processing below
+            self._mvars[f'_mdvar_{typ[3:]}'] = src # store variable excluding md- prefix to have available in processing below
         
         outputs = []
         if "before" in typ: outputs.append(src)
@@ -804,7 +808,6 @@ class XMarkdown(Markdown):
         Returns str or list of outputs based on context. To ensure str, use `parse(..., returns=True)`.
         """
         text = self._handle_syntax_error(text) 
-        text = self._resolve_md_vars(text)  # Resolve [md-var/] variables stored during md-var blocks
         # Reolve link targets as invisible span with id
         text = re.sub(r"(?<![\`\\])\[\#([\w\-]+)/\](?!\S)", r"<span id='\1' class='slide-link-target'></span>", text)
         # Resolve citations before variable substitution to avoid conflicts with citation keys
@@ -815,15 +818,6 @@ class XMarkdown(Markdown):
             super().convert(
                 self._sub_vars(text) # sub vars before conversion
             ))
-    
-    def _resolve_md_vars(self, text):
-        # Replace [md-var/] variables stored during md-var blocks, 
-        # but reusing snippets expose internal state, AVOID THAT
-        all_matches = re.findall(r"(?<![\`\\])\[md-([\w]+)/\](?!\S)", text) # avoid `\ and end must
-        for match in all_matches:
-            value = self._mvars.get(f'MVAR_{match}', error('NameError', f'Markdown variable {match!r} is not defined!'))
-            text = text.replace(f"[md-{match}/]", self._handle_var(value, f'::: md-{match}'), 1)
-        return text
     
     def _var_info(self, match_str):
         try: 
@@ -885,7 +879,8 @@ class XMarkdown(Markdown):
         return key
     
     def _sub_vars(self, html_output):
-        "Substitute variables in html_output given as %{var} and inline functions."   
+        "Substitute variables in html_output given as %{var} and inline functions."  
+        html_output = re.sub(r"%\{\s*?md-", r"%{_mdvar_", html_output) # first change md- to be detectable
         # Check for variables first
         if VARS_RE.search(html_output):
             user_ns = self.user_ns() # get once, will be called multiple time
@@ -893,15 +888,17 @@ class XMarkdown(Markdown):
                 user_ns = {**user_ns, **self._mvars} # can't use update, can be mapping proxy, so merge instead
             
             def handle_match(match):
-                key,*_ = _matched_vars(match.group()) 
+                rcvdstr, origstr = match.group(), match.group().replace("%{_mdvar_","%{md-")
+                is_md_var = rcvdstr.startswith("%{_mdvar_")
+                key,*_ = _matched_vars(rcvdstr) 
                 if key not in user_ns: # top level var without ., indexing not found
-                    err = error('NameError', f'name {key!r} is not defined')
-                    if self._running_md_slide: # under slide building purely from markdown
+                    err = error('NameError', f'name {key!r} is not defined' if not is_md_var else f'Markdown variable {key.replace("_mdvar_","md-")!r} is not defined')
+                    if self._running_md_slide and not is_md_var: # under slide building purely from markdown
                         err = err.value + ("You can update this variable by `Slides[int,|list|slice].vars.update` "
                             "or by defining it in notebook if `Auto Rebuild` is enabled.")
-                    return self._handle_var(error('Exception', f'Could not resolve {match.group()!r}:\n{err}'))
+                    return self._handle_var(error('Exception', f'Could not resolve {origstr!r}:\n{err}'))
 
-                cmatch = match.group()[2:-1].strip().split('!')[0] # conversion split
+                cmatch = rcvdstr[2:-1].strip().split('!')[0] # conversion split
                 key, *fmt_spec = cmatch.rsplit(':',1) # split from right, could be slicing
 
                 if ('[' in key) and (not ']' in key): # There was no spec, just a slicing splitted, but don't need to throw error here based on that
@@ -910,11 +907,11 @@ class XMarkdown(Markdown):
                 try:
                     value, _ = hfmtr.get_field(key, (), user_ns)
                 except Exception as e:
-                    return self._handle_var(error('Exception', f'Could not resolve {match.group()!r}:\n{e}'))
+                    return self._handle_var(error('Exception', f'Could not resolve {origstr!r}:\n{e}'))
 
                 if isinstance(value, DOMWidget) or 'nb' in fmt_spec: # Anything with :nb or widget or from escaped display variable
-                    return self._handle_var(value,ctx = match.group()) 
-                return self._handle_var(hfmtr.vformat(f"{{{match.group()[2:-1].strip()}}}", (), user_ns)) # clear spaces around variable
+                    return self._handle_var(value,ctx = origstr) 
+                return self._handle_var(hfmtr.vformat(f"{{{rcvdstr[2:-1].strip()}}}", (), user_ns)) # clear spaces around variable
 
             html_output = VARS_RE.sub(handle_match, html_output) # replace all variables in html_output
 
@@ -1012,10 +1009,10 @@ class XMarkdown(Markdown):
 
 def _matched_vars(text):
     matches = [var 
-        for slash, var, _ in re.findall(
+        for slash, var, rest in re.findall(
             r"([\\]*?)%\{\s*([a-zA-Z_][\w\d_]*)(.*?)\s*\}", # avoid \%{ escape, [\w\d_]* means zero or more word, to allow single letter
             text, flags = re.DOTALL,
-        ) if not slash
+        ) if not any([slash, var == 'md' and rest.startswith('-')]) # skip md- prefixed variables and slashed escapes
     ]
     return tuple(matches)  
 
@@ -1076,11 +1073,7 @@ class _XMDMeta(type):
     def syntax(self) -> XTML:
         "Extended markdown syntax information."
         from ._base._syntax import xmd_syntax # circular import
-        return _parse_as_steps(xmd_syntax, 
-            xfuncs = xmd.funcs, 
-            xchars = ' '.join(xmd.esc_chars), 
-            xextns = _md_extensions
-        )
+        return _parse_as_steps(xmd_syntax)
     
     @property
     def esc_chars(self) -> tuple[str]:
@@ -1234,17 +1227,17 @@ class xmd(metaclass=_XMDMeta):
             return XMarkdown._active_parser(content, returns=returns, tag=tag)
         return XMarkdown()._parse(content, returns=returns, tag=tag)
 
-def _parse_as_steps(markdown, **vars):
+def _parse_as_steps(markdown):
     "Parse markdown chunks splitted by -- and show alternate chunks through a steps widget. First chunk is treated as common header and shown always."
     if not isinstance(markdown, str):
         raise TypeError(f"markdown expects a string, got {markdown!r}")
     
     pages = list(_stream_chunks(markdown, sep='--'))
     with capture_content() as cap:
-        if pages: xmd.pack(pages[0], **vars).parse()
+        if pages: xmd(pages[0])
         if len(pages) > 1:
             from .utils import write, steps  # circular import
-            stps = [XTML(xmd.pack(page, **vars).parse(True)) for page in pages[1:]] # parse each page and store as XTML
+            stps = [XTML(xmd(page,True)) for page in pages[1:]] # parse each page and store as XTML
             write(steps(stps, loc='right'))
     return frozen(cap) # return captured content as frozen to be automatically displayed in last line of cell
 

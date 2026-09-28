@@ -126,6 +126,11 @@ class XTML(HTML):
         "Returns HTML string."
         return self._repr_html_()
     
+    @property
+    def inline(self):
+        "Returns HTML string for inline display. Useful for embedding within text."
+        return f'<span style="display:inline-block;">{self.value}</span>'
+    
     def as_widget(self):
         "Returns ipywidgets.HTML with same data."
         return ipw.HTML(self.value)

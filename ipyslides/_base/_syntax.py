@@ -3,6 +3,8 @@ CSS styles and XMarkdown syntax documentation for ipyslides.
 This file contains descriptive text strings explaining available formatting options.
 """
 
+from ..xmd import xmd, _md_extensions
+
 css_styles = '''
 Use any or combination of these styles in markdown blocks or `css_class` argument of writing functions:
                        
@@ -111,16 +113,17 @@ The general block syntax is `::: type-or-classes [args] attributes`.
     | `::: columns.paused [widths]` | Create columns with paused incremental reveal. Use `++` inside columns to split row steps; use `++` before the block to isolate previous content from the first reveal step. The columns separator is `--`. |
     | `::: columns.inline [widths]` | Create inline columns with relative widths, e.g. `columns.inline 4 6` for 40% and 60% width. This block does not support incremental reveal and `--` separator is optional (but superceded if used) because distinct text blocks are automatically considered columns. |
     | `::: steps [parameters]` | Create a steps block for inplace incremental reveal of content like animation frames. Use `--` to separate steps within the block. See ` Slides.steps` for more details. |
-    | `::: md-[before,after,var_name] [focused lines]` | Parse markdown in the block, with showing source code at before or after or assign a variable name and use as `[md-var_name/]`. Use `md-[name].inline` and `md-[name].collapsed` for specific view. |
+    | `::: md-[before,after,frozen,var_name] [focused lines]` | Parse markdown in the block, with showing source code at before or after or assign a variable name and use as `\%{{md-var_name}}`. Use `md-[name].inline` and `md-[name].collapsed` for specific view. `md-frozen` is used to freeze the content without further markdown processing. |
     | `::: table [col widths]` | Create a table with optional column widths, e.g. `::: table 1 2` for 33% and 66% width. Use `caption-side=top/bottom` to place caption on top/bottom.|
     | `::: note.mode` | Create a note block with specific mode, e.g. `note.tip`, `note.warn`, `note.info` (with `head="custom header"` to tweek header text) or use `head` function with `mode` parameter in general to use the header text anywhere. |
     | `::: display css_classes` | Create a block with specific CSS classes forcing display mode, it can break dom flow, but usefull to embed widget variables under blocks. |
 
 ::: details
     ::: summary .. Important Notes on `md-` and `code` blocks
-    - Variable created with `md-var_name` can be used anywhere in markdown using `[md-var_name/]` to display source code.
+    - Variable created with `md-var_name` can be used anywhere in markdown using variable syntax `\%{{md-var_name}}` to display source code.
     - `md-[position or variable]` accepts same parameters as `code` block for syntax highlighting and only accessible within current markdown parsing context.
-    - Both `code` and `md-var` blocks support attribute access such as `::: code.[collapsed, inline, raw, ... ]` to show selected view. 
+    - [fa! warning .. "orange" /] `md-frozen` block must be used with triple backticks, i.e. `\`\`\`md-frozen` on top nesting level to avoid multiline parsing issues if python string formatting(resulting in multiline strings) is used within the block.
+    - Both `code` and `md-var` blocks support attribute access such as `::: code.[collapsed, inline, raw, ... ]` to show selected view, but having these attributes on `md-var` later in variable usage is more flexible.
     You can also use `::: code 1 3` to focus on specific lines based on index 1 in markdown unlike Python.
 --
 
@@ -173,7 +176,7 @@ Code Blocks
 ```md-src
 ::: columns
     ::: column block-green
-        [md-src/]
+        %{{md-src}}
     --
     ::: column block-red
         ```python
@@ -184,14 +187,14 @@ Code Blocks
             ls -l | grep ".py" | wc -l
 ``` 
 
-```md-src.collapsed
+```md-src
 ::: details
     ::: summary .. Click to see important notes on code blocks 
     - In ` ::: code ` block, you need to set parameters that are passed to `code` function, such as `language`, `name`, `lineno`, `css_class`, etc.
     - The \`\`\` code block does act like `::: code ` block and supports same parameters.
     - You can focus on specific lines in code blocks using line numbers (1-based) such as `::: code 2 4 5` to focus on lines 2, 4 and 5 visually. 
     - You can also use `::: code.collapsed` or `::: code.inline` to show collapsed or inline view of code block respectively.
-    [md-src/]
+    %{{md-src.collapsed}}
 ```
 
 --
@@ -223,17 +226,18 @@ Variables from Python code can be embedded directly into Markdown.
 - Formatting is done using `str.format` method, so f-string like literal expressions are not supported.
     
 --
-
-%{{xfuncs}}
+```md-frozen
+{xmd.funcs}
+```
 
 Inline functions can be nested, thanks to new function call pattern that must end with `\/]` to avoid ambiguity with nested calls.
 
 ::: columns 1 3
-    ```md-src.inline
+    ```md-src
     [color!! "skyblue" .. [alert! Alert /] &larr; inside colored text! /]
     ```
     --
-    [md-src/]
+    %{{md-src.inline}}
 
 --
 **General Syntax**{{.text-big}}
@@ -244,16 +248,16 @@ Inline functions can be nested, thanks to new function call pattern that must en
 - Drop a link target in any place using `[#target_id/]` and use `target_id` in `link` commnad or html anchor to jump to that target. Use `Slides.link` for more details.
 - Use syntax `[link\!! "target_id", "Jump to slide" \/]` to jump between slides. See `Slides.link` for more details.
 - Cells in markdown table can be spanned to multiple rows/columns by attributes `| cell text \{{: rowspan="2" colspan="1"}}|` inside a cell, should be a space bewteen text and attributes.
-- Escape a backtick with backslash, i.e. [alert! \\` → \` /], other escape characters are [code! %{{xchars}} .. "markdown" /]. In Python >=3.12, you need to make escape strings raw, including the use of $ \LaTeX $ and re module.
+- Escape a backtick with backslash, i.e. [alert! \\` → \` /], other escape characters are [code! {" ".join(xmd.esc_chars)} .. "markdown" /]. In Python >=3.12, you need to make escape strings raw, including the use of $ \LaTeX $ and re module.
 - Use html entities for special characters, e.g. `&rarr;` →, `&larr;` ←, `&uarr;` ↑, `&darr;` ↓, `&harr;` ↔, `&udarr;` ⇅, `&lArr;` ⇐, `&rArr;` ⇒, `&uArr;` ⇑, `&dArr;` ⇓, `&hArr;` ⇔ etc.
 - Use `sub` and `sup` functions for subscript and superscript respectively, e.g. H[sub!2/]O, E = mc[sup!2/].
 - See `Slides.css_styles` for available CSS classes to use in markdown blocks and other places.
 - Slide width/height in container query units can be used in functions/blocks that accept `width`/`height`, e.g. `[image\!..., width='50cqw' \/]` will span half the slide width.
 - See `Slides.css_animations` for available CSS animation classes to use in markdown blocks and other places.
 - Definition list syntax:
-```md-src.inline
+```md-src
 ::: columns
-    [md-src/] 
+    %{{md-src.inline}}
     --
     Item 1 Header
     : [tag! 1/] Item 1 &rarr; details [sup!1/]
@@ -267,7 +271,7 @@ Inline functions can be nested, thanks to new function call pattern that must en
     - You can use `Slides.xmd.extensions` to extend additional syntax using Markdown extensions such as 
         [markdown extensions](https://python-markdown.github.io/extensions/) and 
         [PyMdown-Extensions](https://facelessuser.github.io/pymdown-extensions/).
-    - These markdown extensions are inluded by default [code! %{{xextns!r}} /].
+    - These markdown extensions are inluded by default [code! {_md_extensions} /].
     - You can serialize custom python objects to HTML using `Slides.serializer` function. Having a 
         ` __format__ ` method in your class enables to use {{obj}} syntax in python formatting and \%{{obj}} in extended Markdown.
 '''
