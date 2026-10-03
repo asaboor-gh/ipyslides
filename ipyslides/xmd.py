@@ -18,7 +18,7 @@ from IPython.utils.capture import capture_output, CapturedIO
 from ipywidgets import DOMWidget
 
 from .formatters import (XTML, htmlize, get_slides_instance, 
-    frozen, _highlight, _inline_style, _delim)
+    frozen as Frozen, _highlight, _inline_style, _delim)
 from .source import SourceCode
 
 _md_extensions = [
@@ -94,7 +94,7 @@ def raw(text, css_class=None): # css_class is required here to make compatible w
 def get_unique_css_class():
     "Get slides unique css class if available."
     slides = get_slides_instance()
-    return f".{slides.uid}" if slides else ""
+    return f".{slides._uid}" if slides else ""
 
 def get_main_ns():
     "Top level namespace"
@@ -129,12 +129,6 @@ def _resolve_citations(parser, content):
     if not slides or not slides.this: # under building slide
         return content # no need to resolve anything
 
-    AT_KEYS = re.compile(r'''
-        (?<!\\) # negative lookbehind: don't match if there's a backslash
-        (?<!\w) # Don't match if a word before so example@google.com is safe
-        (?<!\`) # Don't match keys inside backticks
-        @(?:[A-Za-z_]\w*!?)(?:\s*[,;]\s*@(?:[A-Za-z_]\w*!?))*   # @key, @key2!; @key3 (single or comma-separated)
-    ''', re.VERBOSE)
     
     def sub_cite(match):
         keys = [k.strip().lstrip('@') for k in re.split(r'\s*[,;]\s*', match.group())] # split by comma or semicolon and remove leading @
@@ -150,7 +144,7 @@ def _resolve_citations(parser, content):
         return res
     
     # replace @key, @key2! etc with citation output
-    content = AT_KEYS.sub(sub_cite, content)  
+    content = CITE_RE.sub(sub_cite, content)  
     return content
 
 
@@ -218,7 +212,7 @@ del TagFixer
 
 class char_esc:
     r"""Utility class for escaping and restoring special characters using backslash in text."""
-    _chars = r"`@%|/<>:;!.,+-" # Characters to escape
+    _chars = r"`@%#|/<>:;!.,+-" # Characters to escape
 
     @classmethod
     def escape(cls, text):
@@ -244,6 +238,19 @@ def load(filepath : str, start:int=None, end=None):
             return filepath, "".join(lines)
     except Exception as e:
         return filepath, error('Exception', f'Could not load content from file {filepath!r}:\n{e}').value
+
+@_internal_xmd_call('frozen')
+def frozen(content): 
+    r"""Freezes the content to avoid any further modifications or parsing.
+    
+    Useful to encapsulate the f-string interpolation to avoid syntax errors
+    due to multiline output in f-strings, e.g. `f'[frozen\! { var_to_multiline } \/]'` will not break the inner blocks indentation.
+    
+    ::: note.warn
+        This function is different from the Python-side `frozen` and is used specifically for freezing content within the extended Markdown context.
+    """
+    ...
+    # This should do nothing, just to register the frozen function for docs and not being overridden by other implementations.
 
 _extensions = Extensions() # Global instance of Extensions, don't delete class Extensions still
 
@@ -288,6 +295,19 @@ FUNC_RE = re.compile(
     r"\s*/\]",            # closing /] must stay free so sub/sup before text can stay closer
     flags = re.DOTALL | re.MULTILINE
 )
+
+TOKEN_RE = re.compile(
+    r"(?P<atomic>\[[^\[\]\n]+/\])"  # Self-closing inline tags or old syntax like [#id/]
+    r"|(?P<open>\[\w+!)"          # Macro openers
+    r"|(?P<close>/\])"            # Macro closers
+)
+
+CITE_RE = re.compile(r'''
+    (?<!\\) # negative lookbehind: don't match if there's a backslash
+    (?<!\w) # Don't match if a word before so example@google.com is safe
+    (?<!\`) # Don't match keys inside backticks
+    @(?:[A-Za-z_]\w*!?)(?:\s*[,;]\s*@(?:[A-Za-z_]\w*!?))*   # @key, @key2!; @key3 (single or comma-separated)
+''', re.VERBOSE)
 
 _head_modes = {
     "alert":  {"bc":"block-red",    "title": "Alert",    "icon": "fa-bolt",            "color": "hsl(from var(--fg3-color) 0 s calc(l * 0.95))",},
@@ -352,6 +372,7 @@ class XMarkdown(Markdown):
         
         # resolve loading files first, before any processing
         _, xmd = _load_files(xmd)
+        xmd = self._intercept_frozen(xmd) # intercept frozen content after loading files
         
         # Mask HTML comments before any splitting so their content (:::, ++, ```) is not treated as markers.
         # Python-Markdown passes <!--...--> through unchanged, so short placeholders survive convert().
@@ -408,6 +429,28 @@ class XMarkdown(Markdown):
             return content
         else:
             return display(*outputs)
+    
+    def _intercept_frozen(self, source:str) -> str:
+        "Nothing should pass through, even variables and frozen nested call itself."
+        source = source.replace('[frozen!!', '[frozen!') # single arg raw function style even if user sets !!
+        while (start := source.find("[frozen!")) != -1:
+            depth = 0
+            for m in TOKEN_RE.finditer(source, start):
+                if m.lastgroup == "atomic":
+                    continue  # skip atomic self-closing tags
+                depth += 1 if m.lastgroup == "open" else -1
+                if depth == 0:
+                    # Extract pure payload between [frozen! and matching /]
+                    payload = source[start + len("[frozen!") : m.start()]
+                    # Replace the entire block in-place with the result of handling the variable
+                    source = source[:start] + self._handle_var(payload) + source[m.end():]
+                    break
+            else:
+                line_no = source[:start].count("\n") + 1
+                raise SyntaxError(f"Line {line_no}: Unclosed '[frozen!' block.")
+                
+        return source
+
             
     def _parse_params(self, param_string):
         """Parse parameter string with simple regex."""
@@ -531,6 +574,7 @@ class XMarkdown(Markdown):
         content = re.sub(r"<link:([\w\d-]+):(origin|target)\s*(.*?)>", error('SyntaxError', r'The `&lt;link: ...&gt;` syntax is deprecated. Use `link` function instead.').value, content)
         content = re.sub(r"(?<![\`\\])\<md-([\w]+)/\>", self._handle_var(error('SyntaxError', r'The `&lt;md-var/&gt;` syntax is deprecated. Use `%{md-var}` instead.')), content)
         content = re.sub(r"(?<![\`\\])\[md-([\w]+)/\](?!\S)", r"%{md-\1}" + self._handle_var(warn('Use variable syntax %{md-name} instead of [md-name/] for `md-name` blocks!')), content) # avoid `\ and end must
+        content = re.sub(r"(?<![\`\\])\[\#([\w\-]+)/\](?!\S)", r"[uid!\1/]" + self._handle_var(warn('Use `uid` function instead of `[#target/]` for link targets!')), content)
         content = re.sub(r'(?: )?[\^\_]\`([^\`]*?)\`',error('SyntaxError', r'Legacy syntax _\`...\`, ^\`...\` is deprecated. Use `sub/sup` functions instead.').value, content) 
         content = re.sub(r"\+\+\[isolate\]", error("SyntaxError", "The '[isolate]' option after ++ is deprecated. Use 'columns.paused' directive followed by a '++' instead.").value, content)
         
@@ -716,9 +760,6 @@ class XMarkdown(Markdown):
         
     def _parse_md_src(self, data, header):
         typ, mode, focus_lines, _class, kwargs, attrs = self._parse_params(header) 
-        if typ == "md-frozen": # pick data from being parsed as frozen content
-            return [XTML(char_esc.restore(cmnt_esc.restore(data)))] # restore comments and character escapes
-        
         kwargs["language"] = "markdown" # force markdown language anyhow
         src, = self._parse_code(data, mode, focus_lines, _class, kwargs, attrs) # list of one item
         
@@ -808,15 +849,13 @@ class XMarkdown(Markdown):
         Returns str or list of outputs based on context. To ensure str, use `parse(..., returns=True)`.
         """
         text = self._handle_syntax_error(text) 
-        # Reolve link targets as invisible span with id
-        text = re.sub(r"(?<![\`\\])\[\#([\w\-]+)/\](?!\S)", r"<span id='\1' class='slide-link-target'></span>", text)
         # Resolve citations before variable substitution to avoid conflicts with citation keys
         text = _resolve_citations(self, text)  
         
         # _resolve_vars internally replace escaped \` and `%{ back to ` and %{ 
         return self._resolve_vars( # reolve vars after conversion, resets escaped characters too
             super().convert(
-                self._sub_vars(text) # sub vars before conversion
+                self._sub_vars_funcs(text) # sub vars before conversion
             ))
     
     def _var_info(self, match_str):
@@ -878,11 +917,10 @@ class XMarkdown(Markdown):
             self._vars[key + '_ctx'] = ctx
         return key
     
-    def _sub_vars(self, html_output):
-        "Substitute variables in html_output given as %{var} and inline functions."  
-        html_output = re.sub(r"%\{\s*?md-", r"%{_mdvar_", html_output) # first change md- to be detectable
+    def _repl_vars(self, content):
+        content = re.sub(r"%\{\s*?md-", r"%{_mdvar_", content) # first change md- to be detectable
         # Check for variables first
-        if VARS_RE.search(html_output):
+        if VARS_RE.search(content):
             user_ns = self.user_ns() # get once, will be called multiple time
             if self._mvars: # update user_ns with internal variables
                 user_ns = {**user_ns, **self._mvars} # can't use update, can be mapping proxy, so merge instead
@@ -913,8 +951,12 @@ class XMarkdown(Markdown):
                     return self._handle_var(value,ctx = origstr) 
                 return self._handle_var(hfmtr.vformat(f"{{{rcvdstr[2:-1].strip()}}}", (), user_ns)) # clear spaces around variable
 
-            html_output = VARS_RE.sub(handle_match, html_output) # replace all variables in html_output
+            content = VARS_RE.sub(handle_match, content) # replace all variables in html_output
+        return content
 
+    def _sub_vars_funcs(self, html_output):
+        "Substitute variables in html_output given as %{var} and inline functions."  
+        html_output = self._repl_vars(html_output) # first handle variable substitution
         # Replace macros after variable, keep it nested for accessing inner state, but limit depth to avoid infinite recursion
         with self.active_parser(): # set instance parser to pass variables
             depth = 0
@@ -1093,7 +1135,7 @@ class _XMDMeta(type):
         
         | Mode          | Markdown Call                              | Python Call                        |
         |:--------------|:-------------------------------------------|:-----------------------------------|
-        | Empty Call    | `[func\! \/] / [func\!! /]`                | `func()`                           |
+        | Empty Call    | `[func\! \/] / [func\!! \/]`               | `func()`                           |
         | Empty Content | `[func\! \.. \/] / [func\!\! \.. \/]`      | `func("")`                         |
         | Content Only  | `[func\! Content \/]`                      | `func("Content")`                  |
         | Content First | `[func\! Content .. *args, **kwargs \/]`   | `func("Content", *args, **kwargs)` |
@@ -1239,7 +1281,7 @@ def _parse_as_steps(markdown):
             from .utils import write, steps  # circular import
             stps = [XTML(xmd(page,True)) for page in pages[1:]] # parse each page and store as XTML
             write(steps(stps, loc='right'))
-    return frozen(cap) # return captured content as frozen to be automatically displayed in last line of cell
+    return Frozen(cap) # return captured content as frozen to be automatically displayed in last line of cell
 
 
 def _stream_chunks(text, sep='---'):

@@ -47,11 +47,6 @@ class BaseSlides:
             self.widgets._push_toast('x') # clean previous notifications by this signal
     
     @property
-    def uid(self):
-        "Unique CCS class for slides."
-        return self._uid
-    
-    @property
     def css_styles(self):
         """CSS styles for markdown or `styled` command."""
         return XTML(htmlize(_syntax.css_styles))

@@ -183,7 +183,7 @@ class Slides(BaseSlides,metaclass=Singleton):
         self.widgets.buttons.build.on_click(self._click_build_if_pending)
 
         # All Box of Slides
-        self._box = self.widgets.mainbox.add_class(self.uid)
+        self._box = self.widgets.mainbox.add_class(self._uid)
         self._setup()  # Load some initial data and fixing
         
         # setup toc widget after all attributes are set
@@ -934,7 +934,7 @@ class Slides(BaseSlides,metaclass=Singleton):
             - Markdown `columns.paused` blocks can be displayed incrementally and `++` before these blocks acts as a separator to isolate previous content from incremental columns and rows.
             - See `slides.xmd.syntax` for extended markdown usage.
             - Variables such as \%{var} can be provided in `**vars` (or left during build) and later updated in notebook using `rebuild` method on slide handle or overall slides.
-            - Avoid using f-strings interpolation here, as it can break indentation and formatting in the markdown content if expression results multi-line content.
+            - Avoid using f-strings interpolation here, or encapsulate the variable content using `f'[frozen\! {var} \/]'` to prevent breaking indentation and formatting in the markdown content.
         2. If used with a function input, the function is treated as the source for the slide.
             - The function must accept a single argument, which is the slide handle.
             - The function will not be executed immediately but will be deferred until the user clicks the Pending Slides button.
@@ -1031,7 +1031,8 @@ class Slides(BaseSlides,metaclass=Singleton):
     def esc(*args, **kwargs): 
         raise Exception(
             "The encapsulation in f-strings using `esc` is deprecated.\n"
-            "Use `src` for slide-level variables encapsulation and\n"
+            "Use f'[frozen! {var} /]' for freezing content and\n"
+            "`src` for slide-level variables encapsulation and\n"
             "`xmd.pack` for providing scoped variables to markdown content in general."
         )
 

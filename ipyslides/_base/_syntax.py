@@ -113,7 +113,7 @@ The general block syntax is `::: type-or-classes [args] attributes`.
     | `::: columns.paused [widths]` | Create columns with paused incremental reveal. Use `++` inside columns to split row steps; use `++` before the block to isolate previous content from the first reveal step. The columns separator is `--`. |
     | `::: columns.inline [widths]` | Create inline columns with relative widths, e.g. `columns.inline 4 6` for 40% and 60% width. This block does not support incremental reveal and `--` separator is optional (but superceded if used) because distinct text blocks are automatically considered columns. |
     | `::: steps [parameters]` | Create a steps block for inplace incremental reveal of content like animation frames. Use `--` to separate steps within the block. See ` Slides.steps` for more details. |
-    | `::: md-[before,after,frozen,var_name] [focused lines]` | Parse markdown in the block, with showing source code at before or after or assign a variable name and use as `\%{{md-var_name}}`. Use `md-[name].inline` and `md-[name].collapsed` for specific view. `md-frozen` is used to freeze the content without further markdown processing. |
+    | `::: md-[before,after,var_name] [focused lines]` | Parse markdown in the block, with showing source code at before or after or assign a variable name and use as `\%{{md-var_name}}`. Use `md-[name].inline` and `md-[name].collapsed` for specific view. |
     | `::: table [col widths]` | Create a table with optional column widths, e.g. `::: table 1 2` for 33% and 66% width. Use `caption-side=top/bottom` to place caption on top/bottom.|
     | `::: note.mode` | Create a note block with specific mode, e.g. `note.tip`, `note.warn`, `note.info` (with `head="custom header"` to tweek header text) or use `head` function with `mode` parameter in general to use the header text anywhere. |
     | `::: display css_classes` | Create a block with specific CSS classes forcing display mode, it can break dom flow, but usefull to embed widget variables under blocks. |
@@ -122,7 +122,6 @@ The general block syntax is `::: type-or-classes [args] attributes`.
     ::: summary .. Important Notes on `md-` and `code` blocks
     - Variable created with `md-var_name` can be used anywhere in markdown using variable syntax `\%{{md-var_name}}` to display source code.
     - `md-[position or variable]` accepts same parameters as `code` block for syntax highlighting and only accessible within current markdown parsing context.
-    - [fa! warning .. "orange" /] `md-frozen` block must be used with triple backticks, i.e. `\`\`\`md-frozen` on top nesting level to avoid multiline parsing issues if python string formatting(resulting in multiline strings) is used within the block.
     - Both `code` and `md-var` blocks support attribute access such as `::: code.[collapsed, inline, raw, ... ]` to show selected view, but having these attributes on `md-var` later in variable usage is more flexible.
     You can also use `::: code 1 3` to focus on specific lines based on index 1 in markdown unlike Python.
 --
@@ -226,9 +225,7 @@ Variables from Python code can be embedded directly into Markdown.
 - Formatting is done using `str.format` method, so f-string like literal expressions are not supported.
     
 --
-```md-frozen
-{xmd.funcs}
-```
+[frozen! {xmd.funcs} /]
 
 Inline functions can be nested, thanks to new function call pattern that must end with `\/]` to avoid ambiguity with nested calls.
 
@@ -242,10 +239,10 @@ Inline functions can be nested, thanks to new function call pattern that must en
 --
 **General Syntax**{{.text-big}}
 
-- Avoid using f-strings for content that will be parsed as markdown as it can break indentation and formatting. Use `Slides.src` and `xmd.pack` instead for proper variables handling.
+- Avoid using f-strings for content that will be parsed as markdown as it can break indentation and formatting. Use `Slides.src` and `xmd.pack` or `f'[frozen\! {{var}} \/]'` instead for proper variables handling.
 - Use [alert! [load\! markdown_file.md \..  start:optional, end:optional \/] /] to include a file in markdown format. Nested loading is not supported.
 - Use [alert! [fa\! icon_name \/] /] to add FontAwesome icons, e.g. [fa\! arrow-right \/] → [fa! arrow-right /], [fa\! check .. "green" \/] → [fa! check .. "green" /] etc.
-- Drop a link target in any place using `[#target_id/]` and use `target_id` in `link` commnad or html anchor to jump to that target. Use `Slides.link` for more details.
+- Drop a link target in any place using `[uid\! target_id \/]` and use `target_id` in `link` commnad to jump to that target. Use `Slides.link` for more details.
 - Use syntax `[link\!! "target_id", "Jump to slide" \/]` to jump between slides. See `Slides.link` for more details.
 - Cells in markdown table can be spanned to multiple rows/columns by attributes `| cell text \{{: rowspan="2" colspan="1"}}|` inside a cell, should be a space bewteen text and attributes.
 - Escape a backtick with backslash, i.e. [alert! \\` → \` /], other escape characters are [code! {" ".join(xmd.esc_chars)} .. "markdown" /]. In Python >=3.12, you need to make escape strings raw, including the use of $ \LaTeX $ and re module.

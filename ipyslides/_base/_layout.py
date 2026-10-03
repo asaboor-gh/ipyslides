@@ -139,7 +139,7 @@ def layout_css(accent_color, aspect):
                     },
                     '.ips-logo': {'margin-inline': '0 !important'}, # should not have those margins here under logo
                 }, # other properties are set internally
-                "> .Build-Btn": {"visibility": "hidden !important",}, # hide build button by default
+                "> .Build-Btn": {"display": "none !important"}, # hide build button by default and clear space, otherwise it cause scroll on link jump
                 "^:has(.SlideArea.Stale) > .Build-Btn": {
                     "visibility": "visible !important",
                     "position": "absolute",
@@ -388,8 +388,9 @@ def layout_css(accent_color, aspect):
                 "^:hover > .list-widget": {"background": "var(--bg2-color) !important",},
             },
             "^.mode-ctx-open .CtxMenu": {
+                "transform": "translate(-4px,-4px)", # subtle edge views
                 "opacity": "1 !important",
-                "transition": "top 250ms cubic-bezier(0, 1, 0, 0.75), opacity 300ms ease-in",
+                "transition": "top 250ms cubic-bezier(0, 1, 0, 0.75), opacity 300ms ease-in", # do not do left, that feels jumpy
             },
             ".CtxMenu": {
                 "position": "absolute",
@@ -403,7 +404,7 @@ def layout_css(accent_color, aspect):
                 "width": "min(200px, 90%) !important", # very small screens should show a graceful menu
                 "height": "max-content !important",
                 "max-height": "min(600px, 90%) !important",
-                "transform": "translate(-4px,-4px)", # subtle edge views
+                "transform": "translate(-150%,-4px)", # subtle edge views
                 "^, .list-item.list-item":  {
                     "border-top": "1px solid var(--bg3-color) !important",
                     "font-size": "14px !important", # fixed size

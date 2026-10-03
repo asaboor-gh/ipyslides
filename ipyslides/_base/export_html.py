@@ -110,7 +110,7 @@ class _HhtmlExporter:
         dom_classes = [c for c in self.main._box._dom_classes if c.startswith('Slides') or c.startswith('has-')] # only export relevant classes
         overall_css = ''.join(f'{s._yoffset_css(True)}\n{s._style_css(True)}' for s in self.main[:1]) # only one time
         return doc_html(
-            code_css    = self.main.widgets.htmls.hilite.value.replace(f'.{self.main.uid}',''), # remove id from code here
+            code_css    = self.main.widgets.htmls.hilite.value.replace(f'.{self.main._uid}',''), # remove id from code here
             style_css   = self.main.html('style', styles.style_css(**theme_kws, _root=True) + self._stacking_css()).value + overall_css,
             content     = content, 
             script      = _script, 
@@ -136,8 +136,8 @@ class _HhtmlExporter:
     def _get_css(self, slide, sid):
         "uclass.SlidesWrapper → sid , .SlidesWrapper → sid"
         return (f'{slide._yoffset_css(False)}\n{slide._style_css(False)}').replace( # xtml or str, runtime for colors per slide
-            f".{self.main.uid}.SlidesWrapper", f"#{sid}").replace(
-            f".{self.main.uid}", f"#{sid}").replace(
+            f".{self.main._uid}.SlidesWrapper", f"#{sid}").replace(
+            f".{self.main._uid}", f"#{sid}").replace(
             "._vsbl-slyd", ".SlideArea" # runtime display class to general
         )
             

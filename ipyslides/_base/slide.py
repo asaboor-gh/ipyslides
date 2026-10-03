@@ -563,7 +563,7 @@ class Slide:
         
         selector = '.SlideArea' + ('' if shared else f'.n{self.number}.n{self.number}') 
         return self._app.html('style', textwrap.dedent(f'''
-            .{self._app.uid} {selector} {{
+            .{self._app._uid} {selector} {{
                 align-items: start !important;
                 padding-top: calc({yoffset}% + 8px) !important;
             }}''')) # yoffset by padding top, align-content:start is important to take effect
@@ -578,12 +578,12 @@ class Slide:
         suffix = f".n{self.number}" if not shared else ''
         if cvars:
             # Set CSS variables for theme colors at top level to be used when this slide will be shown
-            css += _build_css((f".{self._app.uid}.SlidesWrapper:has(._vsbl-slyd{suffix})",), cvars) 
+            css += _build_css((f".{self._app._uid}.SlidesWrapper:has(._vsbl-slyd{suffix})",), cvars) 
         
         # Also, allow theme colors to be used directly per slide during print and export
         props = {**(cvars or {}), '.jp-OutputArea-output': props} # wrap below output area to avoid messing layout, but colors need to be at Slide Level
         if props:
-            klass = f".{self._app.uid}.SlidesWrapper .SlideArea{suffix}" # strong selector base
+            klass = f".{self._app._uid}.SlidesWrapper .SlideArea{suffix}" # strong selector base
             css += _build_css((klass,), props)
         return self._app.html('style', css)
 
@@ -638,7 +638,7 @@ class Slide:
         overall = type(self._specs).anim
         return html('style', 
             styles.animations.get(self._specs.anim or overall, '').replace(
-                '.SlideBox',f'.{self._app.uid} .SlideBox'
+                '.SlideBox',f'.{self._app._uid} .SlideBox'
             )
         )
     

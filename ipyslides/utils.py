@@ -1,6 +1,6 @@
 _attrs = sorted([
     'AnimationSlider', 'alt', 'alert', 'as_html', 'as_widget', 'tag','bullets', 'color', 'error', 'table', 'suppress_output','suppress_stdout','capture_content',
-    'details', 'set_dir', 'code', 'fa', 'gap', 'link', 'center', 'icon', 'image', 'svg','iframe','frozen', 'raw', 'warn', 'bg',
+    'details', 'set_dir', 'code', 'fa', 'gap', 'link', 'uid', 'center', 'icon', 'image', 'svg','iframe','frozen', 'raw', 'warn', 'bg',
     'focus','html', 'sig','stack', 'styled', 'steps', 'doc', 'transition', 'today','yoffset','css','pin'
 ], key=str.lower)
 
@@ -685,29 +685,40 @@ def center(obj, h=True, v=False):
         return out
     else:
         return XTML(f'<div class="{klass}">{htmlize(obj)}</div>')
+
+def _validate_uid(uid: str, param_name: str = "uid"):
+    if not isinstance(uid, str):
+        raise TypeError(f"{param_name} must be a string, got {type(uid).__name__}")
+    uid = uid.lstrip('#') # remove any leading # if present
+    if not re.fullmatch(r'[a-zA-Z0-9_-]+', uid):
+        raise ValueError(f"{param_name} should be a valid slide uid (alphanumeric, underscore, hyphen), got {uid!r}")
+    return uid
     
 @_internal_xmd_call('link')
 def link(target_uid:str, text:str="Jump to Linked Slide", icon:str=None, uid:str=None):
-    r"""Create a link to jump to another slide with a unique `target_uid` either set by `[#target_uid/]` in markdown.
+    r"""Create a link to jump to another slide with a unique `target_uid` set by `uid` function.
     
     - `uid` parameter allows you to make this link a target for other links. 
     - A pair of links with flipped `target_uid` and `uid` can be used to jump back and forth between two slides.
     - `icon` parameter allows you to add a font-awesome icon to the link.
     - This works in markdown as well. In python, you need to display (or pass to write) the output to make it work.
     """
-    target_uid = target_uid.lstrip('#') # remove any leading # if present
-    if not re.fullmatch(r'[a-zA-Z0-9_-]+', target_uid):
-        raise ValueError(f"target_uid should be a valid slide uid (alphanumeric, underscore, hyphen), got {target_uid!r}")
-    
+    target_uid = _validate_uid(target_uid, "target_uid")
     kwargs = {"href": f"#{target_uid}", "css_class": "slide-link"}
     
     if uid is not None:
-        uid = uid.lstrip('#') # remove any leading # if present
-        if not re.fullmatch(r'[a-zA-Z0-9_-]+', uid):
-            raise ValueError(f"uid should be a valid slide uid (alphanumeric, underscore, hyphen), got {uid!r}")
-        kwargs["id"] = f"{uid}"
+        kwargs["id"] = _validate_uid(uid, "uid")
     text = (f' <i class="fa fa-{icon}"></i>' if icon else '') + f"{text}"   
     return html('a',text,**kwargs)
+
+@_internal_xmd_call('uid')
+def uid(uid:str):
+    r"""Create a unique identifier that can be targeted by `link` function.
+    
+    - `uid` should be a valid slide uid (alphanumeric, underscore, hyphen).
+    - This will generate an invisible span with the given `uid` as id attribute.
+    """
+    return html('span', '', id=_validate_uid(uid, "uid"), style="width:0;height:0;") # should not take space
 
 _VOID_TAGS = ('area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr') # self closing tags
     

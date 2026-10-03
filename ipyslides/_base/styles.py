@@ -379,9 +379,11 @@ def style_css(colors, fonts, layout, _root = False):
             'font-size':'var(--text-size) !important',
             'background':'var(--bg1-color)',
             'max-width':'100vw', # This is very important
+            'contain': 'paint layout !important',
             'max-height': f'{100/layout.aspect:.2f}vw' if not _root else 'unset', # avoid slides giong tall in small screens, maintain aspect, but not in export
             '^, *, *::before, *::after': { # single reset for all inside slides
                 'box-sizing':'border-box !important',
+                'overflow-anchor': 'none !important',
             },
             '> .jupyter-widgets:not(button)': {'padding':'0 !important', 'margin':'0 !important'}, # direct children of slides wrappe to avoid extra spaces, but avoid button/ctx menu issues
             '::-webkit-scrollbar': {
@@ -654,7 +656,6 @@ def style_css(colors, fonts, layout, _root = False):
                 'text-decoration':'none !important',
                 'text-shadow': '0 1px var(--bg1-altcolor)',
             },
-            '.slide-link-target': {"width":"0 !important", "height":"0 !important",}, # avoid taking space, but still need to work
             '.slide-link:not(.citelink), .link-button': {
                 'background': 'var(--bg2-color)',
                 'border-radius': '0.2em',

@@ -101,8 +101,10 @@ class CtxMenu(ListWidget):
     
     def hide(self):
         "Close menu."
+        "It must not have any residual offset when hidden, that causes layout issues in link navigation."
         self.ws.mainbox.remove_class('mode-ctx-open') # remove class first
-        self.layout.top = '101%' # below view, keep left as is
+        self.layout.left = '0' # this works with transform-based positioning
+        self.layout.top = '0' # this works with transform-based positioning
         self.layout.visibility = 'hidden'
         
     def _callback(self, key, handler):

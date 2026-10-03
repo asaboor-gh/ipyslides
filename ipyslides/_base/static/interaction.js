@@ -921,6 +921,7 @@ function linkSwitchesSlide(model, box) {
         const anchor = event.target.closest('.slide-link'); // Find the closest link with class 'slide-link
         if (!anchor || !box.contains(anchor)) return;   
         event.preventDefault(); 
+        event.stopPropagation();
         const href = anchor.getAttribute('href');
         const targetId = href.startsWith('#') ? href.slice(1) : null;
         const targetElement = targetId ? document.getElementById(targetId) : document.querySelector(href);  
