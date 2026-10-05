@@ -128,20 +128,24 @@ def _resolve_citations(parser, content):
     slides = get_slides_instance()
     if not slides or not slides.this: # under building slide
         return content # no need to resolve anything
-
     
     def sub_cite(match):
-        keys = [k.strip().lstrip('@') for k in re.split(r'\s*[,;]\s*', match.group())] # split by comma or semicolon and remove leading @
+        brackets = match.group('lbrk') is not None
+        body = match.group('body')
+        items = re.findall(r'@([A-Za-z][\w\-]*)(!)?', body) # extract citation keys and inline markers
+        
         # group keys types, superscript citations first, then inline
-        sup_keys = ",".join(k for k in keys if not k.endswith('!'))
-        inline_keys = [k for k in keys if k.endswith('!')]
+        sup_keys = ",".join(k for k, bang in items if not bang)
+        inline_keys = [k for k, bang in items if bang]
         
         # First handle superscript citations in a group
         res = parser._handle_var(slides._cite(sup_keys)) if sup_keys else ""
         # Then handle inline citations, can't group them in a div which is not allowed inside p tag
         for key in inline_keys:
-            res += slides._nocite(key[:-1]) # remove ! at end for inline citations
-        return res
+            res += slides._nocite(key)
+        return res if brackets else res + parser._handle_var(
+            warn(f"Citation(s) {match.group()!r} should be enclosed in square brackets even if just one.")
+        )
     
     # replace @key, @key2! etc with citation output
     content = CITE_RE.sub(sub_cite, content)  
@@ -303,10 +307,10 @@ TOKEN_RE = re.compile(
 )
 
 CITE_RE = re.compile(r'''
-    (?<!\\) # negative lookbehind: don't match if there's a backslash
-    (?<!\w) # Don't match if a word before so example@google.com is safe
-    (?<!\`) # Don't match keys inside backticks
-    @(?:[A-Za-z_]\w*!?)(?:\s*[,;]\s*@(?:[A-Za-z_]\w*!?))*   # @key, @key2!; @key3 (single or comma-separated)
+    (?<![\w\\`])                                # Lookbehind: no word char, backslash, or tick, deprecate \w after [] made necessary
+    (?P<lbrk>\[)?\s*                            # Optional opening bracket
+    (?P<body>(?:@[A-Za-z][\w\-]*!?[\s,;]*)+)    # One or more keys; EVERY key must start with '@'    
+    (?(lbrk)\])                                 # Require closing ']' if '[' was present
 ''', re.VERBOSE)
 
 _head_modes = {
@@ -574,7 +578,7 @@ class XMarkdown(Markdown):
         content = re.sub(r"<link:([\w\d-]+):(origin|target)\s*(.*?)>", error('SyntaxError', r'The `&lt;link: ...&gt;` syntax is deprecated. Use `link` function instead.').value, content)
         content = re.sub(r"(?<![\`\\])\<md-([\w]+)/\>", self._handle_var(error('SyntaxError', r'The `&lt;md-var/&gt;` syntax is deprecated. Use `%{md-var}` instead.')), content)
         content = re.sub(r"(?<![\`\\])\[md-([\w]+)/\](?!\S)", r"%{md-\1}" + self._handle_var(warn('Use variable syntax %{md-name} instead of [md-name/] for `md-name` blocks!')), content) # avoid `\ and end must
-        content = re.sub(r"(?<![\`\\])\[\#([\w\-]+)/\](?!\S)", r"[uid!\1/]" + self._handle_var(warn('Use `uid` function instead of `[#target/]` for link targets!')), content)
+        content = re.sub(r"(?<![\`\\])\[\#([\w\-]+)/\](?!\S)", r"[uid!\1/]" + self._handle_var(warn('Use `uid` function instead of `[#target/]` for jump links!')), content)
         content = re.sub(r'(?: )?[\^\_]\`([^\`]*?)\`',error('SyntaxError', r'Legacy syntax _\`...\`, ^\`...\` is deprecated. Use `sub/sup` functions instead.').value, content) 
         content = re.sub(r"\+\+\[isolate\]", error("SyntaxError", "The '[isolate]' option after ++ is deprecated. Use 'columns.paused' directive followed by a '++' instead.").value, content)
         

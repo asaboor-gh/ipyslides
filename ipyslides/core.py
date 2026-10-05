@@ -297,8 +297,8 @@ class Slides(BaseSlides,metaclass=Singleton):
             
             # Only first item is actual link to click
             links = [
-                f"<a class='_ips-scroll-link' id='{sid}-src' href='#{sid}' onclick='return false;'><i class='fa fa-link'></i> Go to Slides</a>" 
-                if i == 0 else f"<span id='{sid}-src' style='display:none;'></span>"
+                f"<a class='_ips-scroll-link' data-ipslink-cell='{sid}' href='#{sid}' onclick='return false;'><i class='fa fa-link'></i> Go to Slides</a>" 
+                if i == 0 else f"<span data-ipslink-cell='{sid}' style='display:none;'></span>"
                 for i, sid in enumerate(sids)
             ]
             self.html('div', " ".join(links)).display(metadata = {"SRCLINKS": True}) # just inline space
@@ -474,7 +474,7 @@ class Slides(BaseSlides,metaclass=Singleton):
         return '<sup>,</sup>'.join(citeds) 
 
     def _cite_key(self, key):
-        """Use markdown syntax `@key` to add citations. 
+        r"""Use markdown syntax `[\@key]` to add citations. 
         Citations corresponding to keys used can be added by ` Slides.set_citations ` method.
         """
         cited = _Citation(slide=self.this, key=key)
@@ -517,7 +517,7 @@ class Slides(BaseSlides,metaclass=Singleton):
         r"""Set citations from dictionary or string in yaml format with content like `key: citation value` on their own lines or json format.
         If yaml format is used and you have special characters inside values like :, = or starting with * etc., you should quote them. 
         For example, `key: *Bold citation*` will raise error, but `key: "*Bold citation*"` will work.
-        key should be cited in markdown as `@key`, optionally comma separated keys. `@key!` will show citation inline.
+        key should be cited in markdown as `[\@key]`, optionally comma separated keys. `[\@key!]` will show citation inline.
         Number of columns in displayed citations are determined by [code! Slides.settings.layout(..., ncol_refs=N) /] or 
         per slide by [code! [refs\! \.. N \/] /] / [code! Slides.refs(ncol=N) /].
 
@@ -545,8 +545,18 @@ class Slides(BaseSlides,metaclass=Singleton):
         ::: note.tip
             You can also add plain inline citations without storing keys using `refs` function both in markdown and python.
         """
+        def _validate_citation_dict(d):
+            if not isinstance(d, dict):
+                raise ValueError(f"Citations data should be a dictionary or multiline strings with key: value format, got {d!r}.")
+            
+            for k, v in d.items():
+                utils._validate_key(k, "citation key")
+                if not isinstance(v, str):
+                    raise ValueError(f"Citations values should be strings, got {type(k)}:{type(v)} for {k}:{v}, you may need to use quotes!")
+            return d
+        
         if isinstance(data, dict):
-            self._set_ctns(data)
+            self._set_ctns(_validate_citation_dict(data))
         elif isinstance(data, str):
             data = textwrap.dedent(data).rstrip()
             if re.search(r'^@.+?:', data, flags=re.MULTILINE):
@@ -554,14 +564,7 @@ class Slides(BaseSlides,metaclass=Singleton):
                 data = re.sub(r'^@(.+?):', r'\1:', data, flags=re.MULTILINE) # remove @ in front of key
             
             d = yaml.safe_load(data) # parse as yaml to get dict
-            if not isinstance(d, dict):
-                raise ValueError(f"Citations data should be a dictionary or string with key: value format, got {data!r}.")
-            for k, v in d.items():
-                if not isinstance(k, str) or not isinstance(v, str):
-                    raise ValueError(f"Citations keys and values should be strings, got {type(k)}:{type(v)} for {k}:{v}, you may need to use quotes!")
-                if not k.isidentifier(): # keys are strict
-                    raise ValueError(f"Citation key {k!r} is not a valid identifier, it should start with a letter or underscore and contain only letters, digits, or underscores.")
-            self._set_ctns(d)
+            self._set_ctns(_validate_citation_dict(d))
         else:
             raise TypeError(f"data should be a dict or string content (including read from file), got {type(data)}")
         

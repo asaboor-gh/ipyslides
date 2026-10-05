@@ -245,9 +245,9 @@ class Slide:
         self._widget.clear_output(wait = True) # Clear, but don't go there
         # Need to know how many contents before user provide content
         with capture_content() as cap:
-            html('span', '', id = self._sid, data_ips_src_id= f'{self._sid}-src',
+            html('span', f'<span class="print-only" id="{self._sid}"></span>', data_ipslink_slide= self._sid, # id only for PDF
                 style = {'position':'absolute','top':'0','left':'0','width':'0','height':'0'}, # otherwise scroll shifts slidebox unexpectedly
-            ).display() # to register section id in DOM
+            ).display(metadata={'skip-export':'export html add id on section'}) # to register section id in DOM
             display(VBox([
                     self._bglayer, # background image layer
                     self._ftrhtml, # dynamic footer layer

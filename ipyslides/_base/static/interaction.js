@@ -145,8 +145,8 @@ function sendMsgToPy(model, message) {
 }
 
 function scrollToSrcCell(box) {
-    const linkId = box.querySelector(':scope ._vsbl-slyd [data-ips-src-id]')?.dataset?.ipsSrcId;
-    let srcLink = document.getElementById(linkId); // this gets updated, so let it be
+    const linkId = box.querySelector(':scope ._vsbl-slyd [data-ipslink-slide]')?.dataset?.ipslinkSlide;
+    let srcLink = document.querySelector(`[data-ipslink-cell='${linkId}']`); // this gets updated, so let it be
     if (!srcLink || !linkId) {
         showToast(box, {
             'content': `<i class='fa fa-exclamation-triangle' style='color:orange;'></i>
@@ -341,7 +341,7 @@ function printSlides(box, model) {
                     clone.classList.remove('HasFrames');
                     clone.classList.remove('_vsbl-slyd'); // ensure not visible on screen
                     clone.classList.add('print-clone');
-                    clone.querySelector(':scope [data-ips-src-id]')?.remove();
+                    clone.querySelector(':scope [data-ipslink-slide]')?.remove();
                 }
 
                 const frame = (parts[slideNum] && parts[slideNum][i] !== undefined) ? parts[slideNum][i] : null;
@@ -924,7 +924,7 @@ function linkSwitchesSlide(model, box) {
         event.stopPropagation();
         const href = anchor.getAttribute('href');
         const targetId = href.startsWith('#') ? href.slice(1) : null;
-        const targetElement = targetId ? document.getElementById(targetId) : document.querySelector(href);  
+        const targetElement = box.querySelector(`[data-ipslink-slide="${targetId}"]`);  
         const originSlide = anchor.closest('.SlideArea');
         const targetSlide = targetElement?.closest('.SlideArea');   
         if (originSlide && targetSlide) {    

@@ -686,39 +686,41 @@ def center(obj, h=True, v=False):
     else:
         return XTML(f'<div class="{klass}">{htmlize(obj)}</div>')
 
-def _validate_uid(uid: str, param_name: str = "uid"):
-    if not isinstance(uid, str):
-        raise TypeError(f"{param_name} must be a string, got {type(uid).__name__}")
-    uid = uid.lstrip('#') # remove any leading # if present
-    if not re.fullmatch(r'[a-zA-Z0-9_-]+', uid):
-        raise ValueError(f"{param_name} should be a valid slide uid (alphanumeric, underscore, hyphen), got {uid!r}")
-    return uid
+def _validate_key(key: str, param_name: str):
+    if not isinstance(key, str):
+        raise TypeError(f"{param_name} must be a string, got {type(key).__name__}")
+    key = key.lstrip('#') # remove any leading # if present
+    if not re.fullmatch(r'[a-zA-Z0-9][\w\-]*', key):
+        raise ValueError(f"{param_name} should be a valid key (starting with letter, followed by alphanumeric, underscore, hyphen), got {key!r}")
+    return key
     
 @_internal_xmd_call('link')
-def link(target_uid:str, text:str="Jump to Linked Slide", icon:str=None, uid:str=None):
-    r"""Create a link to jump to another slide with a unique `target_uid` set by `uid` function.
+def link(target_key:str, text:str="Navigate to Linked Slide", icon:str='link'):
+    r"""Create a link to jump to another slide which has the specified target key.
     
-    - `uid` parameter allows you to make this link a target for other links. 
-    - A pair of links with flipped `target_uid` and `uid` can be used to jump back and forth between two slides.
+    - `target_key` parameter specifies the target key to jump to, can be set using the `uid` function.
     - `icon` parameter allows you to add a font-awesome icon to the link.
     - This works in markdown as well. In python, you need to display (or pass to write) the output to make it work.
     """
-    target_uid = _validate_uid(target_uid, "target_uid")
-    kwargs = {"href": f"#{target_uid}", "css_class": "slide-link"}
-    
-    if uid is not None:
-        kwargs["id"] = _validate_uid(uid, "uid")
+    target_key = _validate_key(target_key, "target_key")
+    kwargs = {"href": f"#{target_key}", "css_class": "slide-link"} # never add onclick here, that will break in exported PDF/HTML
     text = (f' <i class="fa fa-{icon}"></i>' if icon else '') + f"{text}"   
     return html('a',text,**kwargs)
 
-@_internal_xmd_call('uid')
-def uid(uid:str):
-    r"""Create a unique identifier that can be targeted by `link` function.
+@_internal_xmd_call('uid',slidebound=True)
+@slidebound
+def uid(key:str):
+    r"""Assign a unique identifier to the currently building slide that can be referenced by the `link` function.
     
-    - `uid` should be a valid slide uid (alphanumeric, underscore, hyphen).
-    - This will generate an invisible span with the given `uid` as id attribute.
+    - `key` should be a valid key (starting with a letter, followed by alphanumeric, underscore, hyphen).
+    - This assigns the unique identifier to the current slide, so can only be referenced by the `link` function, not by plain html links.
     """
-    return html('span', '', id=_validate_uid(uid, "uid"), style="width:0;height:0;") # should not take space
+    sid = _validate_key(key, "key")
+    slides = get_slides_instance()
+    
+    for slide in (s for s in slides if s is not slides.this):
+        if slide._sid == sid: raise ValueError(f"key {sid!r} already exists on slide {slide.number}!")
+    slides.this._sid = sid # update slide id for this slide
 
 _VOID_TAGS = ('area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr') # self closing tags
     

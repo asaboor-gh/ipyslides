@@ -68,11 +68,11 @@ Including Files
 These files are watched for edits if included in synced markdown file via `Slides.sync_with_file`.
 
 Citations
-: - [alert! \@key1,\@key2 /] to add citation to current slide. citations are automatically added in suitable place and should be set once using `Slides.set_citations` function (or see below).
+: - [alert! [\@key1,\@key2] /] to add citation to current slide. citations are automatically added in suitable place and should be set once using `Slides.set_citations` function (or see below).
 - You can add [alert! [refs\! \.. ncol \/] /] or [code! Slides.refs /] to add citations anywhere on slide. If `ncol` is not given, it will be picked from layout settings.
   Using [alert! [refs\! key1;key2;key3 \.. ncol \/] /] will show only citations for given keys on that place. It is useful on slides with frames to show relevant citations on each frame.
   Unused citations will be added automatically at end of slide. This method also allows plain citations (; or newline separated) without storing them in the citations dictionary.
-- Force citations to be shown inline by appending a !, such as [alert! \@key1! \@key2 /], where `@key2` will be shown in footnote style and `@key1!` will display inline citation in that order.
+- Force citations to be shown inline by appending a !, such as [alert! [\@key1! \@key2] /], where `key2` will be shown in footnote style and `key1!` will display inline citation in that order.
 - At the end of synced markdown file (through `Slides.sync_with_file`), you can add citations under `--- citations ---` which will be parsed and added to slides. This syntax is exclusive to 
   synced file only. Under this block, you can add plain citations or load a file as shown in below example.
 
@@ -242,8 +242,8 @@ Inline functions can be nested, thanks to new function call pattern that must en
 - Avoid using f-strings for content that will be parsed as markdown as it can break indentation and formatting. Use `Slides.src` and `xmd.pack` or `f'[frozen\! {{var}} \/]'` instead for proper variables handling.
 - Use [alert! [load\! markdown_file.md \..  start:optional, end:optional \/] /] to include a file in markdown format. Nested loading is not supported.
 - Use [alert! [fa\! icon_name \/] /] to add FontAwesome icons, e.g. [fa\! arrow-right \/] → [fa! arrow-right /], [fa\! check .. "green" \/] → [fa! check .. "green" /] etc.
-- Drop a link target in any place using `[uid\! target_id \/]` and use `target_id` in `link` commnad to jump to that target. Use `Slides.link` for more details.
-- Use syntax `[link\!! "target_id", "Jump to slide" \/]` to jump between slides. See `Slides.link` for more details.
+- Assign a unique id to slide using `[uid\! key \/]` and use `key` in `link` function to jump to that target. Use `Slides.link` for more details.
+- Use syntax `[link\!! "target_key", "Jump to slide" \/]` to jump between slides. See `Slides.link` for more details.
 - Cells in markdown table can be spanned to multiple rows/columns by attributes `| cell text \{{: rowspan="2" colspan="1"}}|` inside a cell, should be a space bewteen text and attributes.
 - Escape a backtick with backslash, i.e. [alert! \\` → \` /], other escape characters are [code! {" ".join(xmd.esc_chars)} .. "markdown" /]. In Python >=3.12, you need to make escape strings raw, including the use of $ \LaTeX $ and re module.
 - Use html entities for special characters, e.g. `&rarr;` →, `&larr;` ←, `&uarr;` ↑, `&darr;` ↓, `&harr;` ↔, `&udarr;` ⇅, `&lArr;` ⇐, `&rArr;` ⇒, `&uArr;` ⇑, `&dArr;` ⇓, `&hArr;` ⇔ etc.
