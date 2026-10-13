@@ -9,6 +9,7 @@ _flow_sels = (".jp-OutputArea-child", ".columns > div", "li", "tr")
 _exclude = ":not([class*='anim-']):not(.anim-group *)" # exclude user defined animations on content
 _is_flowsel = ':is(' + ','.join(_flow_sels) + ')'
 _nth_flowsel = ','.join(f".SlideBox > .SlideArea {sel}{_exclude}" for sel in _flow_sels)
+_h1_h6 = ':is(h1, h2, h3, h4, h5, h6)'
 
 def anim_dur(n):
     """Return animation duration CSS dictionary based on exponential approach to 1500ms."""
@@ -480,7 +481,7 @@ def style_css(colors, fonts, layout, _root = False):
                 'height':'1px',
                 'background':'linear-gradient(to right, var(--bg2-color),  var(--bg3-color),var(--accent-color), var(--bg3-color),var(--bg2-color))',
             },
-            ':is(h1, h2, h3, h4, h5, h6)': {
+            _h1_h6: {
                 'font-family':f'{fonts.heading}, var(--jp-content-font-family) !important',
                 'font-weight':'normal',
                 'color':'var(--fg3-color)',
@@ -616,9 +617,11 @@ def style_css(colors, fonts, layout, _root = False):
                 "padding": "16px !important", # A little less compact title slide
                 "padding-top": "16px !important", 
                 "padding-bottom": "max(16px, var(--pad-footer, 23px)) !important", # it get's overridden otherwise
-                ":is(h1, h2, h3, h4, h5, h6)": { # even headings need to be centered on title slide
+                _h1_h6: { # even headings need to be centered on title slide
                     "text-align": "center", # not important to allow user override
                 },
+                'h1': {'font-size':'2.8em', 'text-shadow':'0 1px var(--bg1-altcolor)'}, # make little larger on title slide
+                'h2': {'font-size':'2em'},
             }, # no yoffset on title slide, leave it centered globally, unless user applys yoffset there
             '* .jp-OutputArea:has(.ips-pinned-item), .jp-OutputArea-child:has(.ips-pinned-item)': {
                 'overflow': 'visible !important', # avoid clipping of pinned content, but avoid top Area under slide
@@ -937,6 +940,7 @@ def style_css(colors, fonts, layout, _root = False):
         },
         '.hcenter': {
             'margin-inline': 'auto', # also self center if width is less than container
+            _h1_h6: {'text-align':'center'},
             align_sel: {
                 'display': 'flex',
                 'flex-direction': 'column',
@@ -945,6 +949,7 @@ def style_css(colors, fonts, layout, _root = False):
         },
         '.align-center, .hcenter.vcenter': {
             'margin': 'auto', 
+            _h1_h6: {'text-align':'center'},
             align_sel: {
                 'display': 'flex',
                 'flex-direction': 'column',
@@ -954,6 +959,7 @@ def style_css(colors, fonts, layout, _root = False):
         },
         '.align-left': {
             'margin-right': 'auto',
+            _h1_h6: {'text-align':'left'},
             align_sel: {
                 'display': 'flex',
                 'flex-direction': 'column',
@@ -962,6 +968,7 @@ def style_css(colors, fonts, layout, _root = False):
         }, 
         '.align-right': {
             'margin-left': 'auto',
+            _h1_h6: {'text-align':'right'},
             align_sel: {
                 'display': 'flex',
                 'flex-direction': 'column',
@@ -996,10 +1003,10 @@ def style_css(colors, fonts, layout, _root = False):
         '.accent, .accent *': {'color': 'var(--accent-color) !important',}, # apply to children as well
         '.note': {
             **(block_props := {
-                '--bg-color': 'var(--bg2-color)',
-                '--bg1-altcolor': 'hsl(from var(--bg-color) h 80% l)', # make table rows, text show etc align with block color
+                '--blk-color': 'var(--bg2-color)',
+                '--bg1-altcolor': 'hsl(from var(--blk-color) h 80% l)', # make table rows, text show etc align with block color
                 'border-radius': '8px',
-                'background': 'hsl(from var(--bg-color) h s l / 0.7)', 
+                'background': 'hsl(from var(--blk-color) h s l / 0.7)', 
                 'padding': '4px',
                 'flex-grow': '1', # allow block to expand within flex container
                 'margin-block-start': '0.2em', # avoid two blocks touching, same gap as columns
@@ -1009,15 +1016,15 @@ def style_css(colors, fonts, layout, _root = False):
         '.block' : {
             '^, ^-red,^-green,^-blue, ^-yellow, ^-orange, ^-magenta, ^-purple, ^-cyan': block_props,
             **({
-                '^-red':     {'--bg-color': 'hsl(from var(--bg2-color)  10 100% l)', '--head-color': 'hsl(from var(--bg-color) h 90% calc(72 - l * 0.35))'},
-                '^-yellow':  {'--bg-color': 'hsl(from var(--bg2-color)  54  72% l)', '--head-color': 'hsl(from var(--bg-color) h 78% calc(68 - l * 0.26))'}, 
-                '^-orange':  {'--bg-color': 'hsl(from var(--bg2-color)  28  78% l)', '--head-color': 'hsl(from var(--bg-color) h 84% calc(70 - l * 0.30))'},
-                '^-green':   {'--bg-color': 'hsl(from var(--bg2-color) 120  80% l)', '--head-color': 'hsl(from var(--bg-color) h 90% calc(72 - l * 0.35))'},
-                '^-cyan':    {'--bg-color': 'hsl(from var(--bg2-color) 188  62% l)', '--head-color': 'hsl(from var(--bg-color) h 82% calc(69 - l * 0.30))'}, 
-                '^-blue':    {'--bg-color': 'hsl(from var(--bg2-color) 210 100% l)', '--head-color': 'hsl(from var(--bg-color) h 90% calc(72 - l * 0.35))'},
-                '^-magenta': {'--bg-color': 'hsl(from var(--bg2-color) 310 100% l)', '--head-color': 'hsl(from var(--bg-color) h 90% calc(72 - l * 0.35))'},
-                '^-purple':  {'--bg-color': 'hsl(from var(--bg2-color) 268  68% l)', '--head-color': 'hsl(from var(--bg-color) h 82% calc(70 - l * 0.30))'},
-                '^-clear':   {'--bg-color': 'transparent', 'background': 'transparent', '--head-color': 'var(--fg3-color)'}, # explicity set to transparent, but also keep variable name for dependent styles
+                '^-red':     {'--blk-color': 'hsl(from var(--bg2-color)  10 100% l)', '--head-color': 'hsl(from var(--blk-color) h 90% calc(72 - l * 0.35))'},
+                '^-yellow':  {'--blk-color': 'hsl(from var(--bg2-color)  54  72% l)', '--head-color': 'hsl(from var(--blk-color) h 78% calc(68 - l * 0.26))'}, 
+                '^-orange':  {'--blk-color': 'hsl(from var(--bg2-color)  28  78% l)', '--head-color': 'hsl(from var(--blk-color) h 84% calc(70 - l * 0.30))'},
+                '^-green':   {'--blk-color': 'hsl(from var(--bg2-color) 120  80% l)', '--head-color': 'hsl(from var(--blk-color) h 90% calc(72 - l * 0.35))'},
+                '^-cyan':    {'--blk-color': 'hsl(from var(--bg2-color) 188  62% l)', '--head-color': 'hsl(from var(--blk-color) h 82% calc(69 - l * 0.30))'}, 
+                '^-blue':    {'--blk-color': 'hsl(from var(--bg2-color) 210 100% l)', '--head-color': 'hsl(from var(--blk-color) h 90% calc(72 - l * 0.35))'},
+                '^-magenta': {'--blk-color': 'hsl(from var(--bg2-color) 310 100% l)', '--head-color': 'hsl(from var(--blk-color) h 90% calc(72 - l * 0.35))'},
+                '^-purple':  {'--blk-color': 'hsl(from var(--bg2-color) 268  68% l)', '--head-color': 'hsl(from var(--blk-color) h 82% calc(70 - l * 0.30))'},
+                '^-clear':   {'--blk-color': 'transparent', 'background': 'transparent', '--head-color': 'var(--fg3-color)'}, # explicity set to transparent, but also keep variable name for dependent styles
             }),
         },
         '.ips-block-head, .note:not(:has(.ips-block-head))::before': {
@@ -1032,11 +1039,6 @@ def style_css(colors, fonts, layout, _root = False):
             'letter-spacing': '0.015em',
             'text-shadow': '0 0.5px color-mix(in srgb, var(--head-color) 30%, transparent)',
             'color': 'var(--head-color)',
-        },
-        '.ips-block-head .head-text': {
-            'white-space': 'nowrap',
-            'overflow': 'hidden',
-            'text-overflow': 'ellipsis',
         },
         '.note:not(:has(.ips-block-head))::before': {
             'content': r"'\f304   Note'",
@@ -1058,7 +1060,7 @@ def style_css(colors, fonts, layout, _root = False):
             'font-size': '0.7em',
             'font-weight': '600',
             'line-height': '1',
-            'padding': '0.1em 0.25em',
+            'padding': '0.2em 0.4em',
             'border-radius': '0.2em',
             'color': 'var(--tag-color, #9898)',
             'text-shadow': '0 1px var(--bg2-color)',

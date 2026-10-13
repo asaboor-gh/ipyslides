@@ -108,7 +108,6 @@ class Slide:
         self._specs = Specs() # instance specs that are persistent accross builds 
         self._number = number
         self._index = number if number == 0 else None # First slide should have index ready
-        self._sid = f"s-{id(self)}" # for link jumps 
         self._md_vars = {} # store variables set by build/rebuild on this slide
         self._source = {'text': '', 'language': ''} # Should be set at init once, since markdown needs to compare with previous
         self._set_defaults()
@@ -126,6 +125,7 @@ class Slide:
             if hasattr(self, attr):
                 delattr(self, attr) # reset these attributes if any
     
+        self._sid = f"s-{id(self)}" # for link jumps, user can override with uid function
         self._notes = '' # Reset notes
         self._citations = {} # Reset citations
         self._section = None # Reset sec_key

@@ -69,7 +69,7 @@ These files are watched for edits if included in synced markdown file via `Slide
 
 Citations
 : - [alert! [\@key1,\@key2] /] to add citation to current slide. citations are automatically added in suitable place and should be set once using `Slides.set_citations` function (or see below).
-- You can add [alert! [refs\! \.. ncol \/] /] or [code! Slides.refs /] to add citations anywhere on slide. If `ncol` is not given, it will be picked from layout settings.
+- You can add [alert! [refs\! \.. ncol \/] /] or [code! Slides.refs /] to add citations anywhere on slide (it can also cite same way as inline `[\@key\!]`.). If `ncol` is not given, it will be picked from layout settings.
   Using [alert! [refs\! key1;key2;key3 \.. ncol \/] /] will show only citations for given keys on that place. It is useful on slides with frames to show relevant citations on each frame.
   Unused citations will be added automatically at end of slide. This method also allows plain citations (; or newline separated) without storing them in the citations dictionary.
 - Force citations to be shown inline by appending a !, such as [alert! [\@key1! \@key2] /], where `key2` will be shown in footnote style and `key1!` will display inline citation in that order.

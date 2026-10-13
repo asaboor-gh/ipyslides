@@ -694,7 +694,8 @@ def _validate_key(key: str, param_name: str):
         raise ValueError(f"{param_name} should be a valid key (starting with letter, followed by alphanumeric, underscore, hyphen), got {key!r}")
     return key
     
-@_internal_xmd_call('link')
+@_internal_xmd_call('link', slidebound=True)
+@slidebound
 def link(target_key:str, text:str="Navigate to Linked Slide", icon:str='link'):
     r"""Create a link to jump to another slide which has the specified target key.
     

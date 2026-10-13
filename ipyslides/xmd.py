@@ -130,9 +130,13 @@ def _resolve_citations(parser, content):
         return content # no need to resolve anything
     
     def sub_cite(match):
-        brackets = match.group('lbrk') is not None
+        brackets = match.group('lbr') is not None
         body = match.group('body')
         items = re.findall(r'@([A-Za-z][\w\-]*)(!)?', body) # extract citation keys and inline markers
+        
+        # Do not cite bare single citation without brackets, it can pick up CSS/python syntax by mistake
+        if not brackets and len(items) == 1:
+            return match.group()
         
         # group keys types, superscript citations first, then inline
         sup_keys = ",".join(k for k, bang in items if not bang)
@@ -308,9 +312,9 @@ TOKEN_RE = re.compile(
 
 CITE_RE = re.compile(r'''
     (?<![\w\\`])                                # Lookbehind: no word char, backslash, or tick, deprecate \w after [] made necessary
-    (?P<lbrk>\[)?\s*                            # Optional opening bracket
+    (?P<lbr>\[)?\s*                             # Optional opening bracket, will be mandatory in future
     (?P<body>(?:@[A-Za-z][\w\-]*!?[\s,;]*)+)    # One or more keys; EVERY key must start with '@'    
-    (?(lbrk)\])                                 # Require closing ']' if '[' was present
+    (?(lbr)\])                                  # Require closing ']' if '[' was present
 ''', re.VERBOSE)
 
 _head_modes = {

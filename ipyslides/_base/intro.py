@@ -1,15 +1,18 @@
+from base64 import b64encode
 from .icons import Icon as _Icon
 
 # ONLY INSTRUCTIONS BELOW
 
-def get_logo(height="1em"):
-    return f'''<svg xmlns="http://www.w3.org/2000/svg" height="{height}" viewBox="2 2 21 21" class="ips-logo">
+def get_logo(height="1em", as_data_uri=False):
+    svg_logo = f'''<svg xmlns="http://www.w3.org/2000/svg" height="{height}" viewBox="2 2 21 21" class="ips-logo">
     <g stroke-linecap="round" stroke-linejoin="round" fill="none" stroke-width="3">
         <path d="M7 18 L18 7 L20 13 L13 20" stroke="#F97316" />
         <line x1="5" y1="12" x2="9" y2="8" stroke="#2563EB" />
         <line x1="12" y1="5" x2="12" y2="5" stroke="#2563EB" />
     </g>\n</svg>'''
-    
+    if as_data_uri:
+        return f"data:image/svg+xml;base64,{b64encode(svg_logo.encode()).decode()}"
+    return svg_logo
 
 how_to_slide = r"""#### Creating Slides
 ```python
