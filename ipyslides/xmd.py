@@ -68,11 +68,11 @@ COUNTER = count()
 # as well as scope, like a function inside python script is not in notebook user namespace to access here
 _XMD_FUNCS = {} # will be populated by decorated functions
 
-def _internal_xmd_call(fname, slidebound=False):
+def _internal_xmd_call(fname):
     "Decorator to register a function as an internal xmd function."
     def decorator(func):
-        nonlocal fname, slidebound
-        _XMD_FUNCS[fname] = (func, "slide" if slidebound else "module") # store function and whether it is slidebound
+        nonlocal fname
+        _XMD_FUNCS[fname] = (func, "ipyslide") # store function and its context
         return func
     return decorator
 
@@ -1015,9 +1015,6 @@ class XMarkdown(Markdown):
         if 'anyTag' in getattr(func, '__name__', ''): # __name__ is not available on all types of callables
             func = partial(func, fname.strip('_').lower()) # partial function for anyTag with tag name, svg_ goes to svg tag, not svg function
         
-        if ctx == "slide" and not getattr(self._slides, 'this', None): # slide only functions
-            return self._handle_var(error('Exception', f"Slide-only function '{match.group(0)}' cannot be used outside a slide context!"))
-        
         # Give user a cleaned parsed content 
         if ctx == "user" and isinstance(content,str):
             content = self._resolve_vars(
@@ -1037,8 +1034,8 @@ class XMarkdown(Markdown):
             except Exception as e:
                 e, text = traceback.format_exc(limit=0).split(':',1) # only get last error for information
                 res = error('Exception', f"Could not parse '{match.group(0)}': \n{error(e,text)}\n"
-                    f"<div class='block-yellow'>⚠️ Function '{fname}' expects arguments <code>{inspect.signature(func)}</code>, "
-                    f"got <code>{args}, {kwargs}</code></div>")
+                    f"<div class='block-yellow'><b>Info:</b><code>{fname}{inspect.signature(func)}</code>"
+                    f"<br>received <code>args={args}, kwargs={kwargs}</code></div>")
         
         if fname == "load":
             return res # load function needs to flatten the content
@@ -1133,7 +1130,7 @@ class _XMDMeta(type):
     @property
     def funcs(self):
         "List of available inline functions for extended markdown."
-        from .utils import html, doc, details, XTML
+        from .utils import html, doc, details, tag, XTML
         
         info = html("", [r"""
         **Inline Python Functions**{.text-big}
@@ -1156,14 +1153,14 @@ class _XMDMeta(type):
         """])
         
         dtls = html("div", "\n".join([
-            details(doc(value[0]), 
-                summary=f"{key}: <em style='font-size:0.75em;opacity:0.6;'>{value[1]}</em>", 
+            details(doc(fn), 
+                summary=f"{key}" + (tag("external", "blue", pill=True).value if ctx == "user" else ""),
                 name="funcs-accordian", # to open exclusively
                 background="var(--bg2-color)",
                 border_radius="0.25em",
             ).value
-            for key, value in sorted(_XMD_FUNCS.items(), key=lambda x: x[0])
-        ]), css_class="details-grid")
+            for key, (fn, ctx) in sorted(_XMD_FUNCS.items(), key=lambda x: x[0])
+        ]), css_class="details-grid", style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5em;") # style for in notebook
         
         return XTML(info.value + dtls.value)
     
@@ -1246,6 +1243,21 @@ class _XMDMeta(type):
         if func is not None:
             return decorator(func)
         return decorator
+    
+    @staticmethod
+    def unregister(name: str):
+        "Unregister a user-defined function."
+        if not isinstance(name, str):
+            raise TypeError(f"Expected a string for function name, got {type(name)}")
+
+        if name not in _XMD_FUNCS:
+            raise ValueError(f"Function name '{name}' is not registered.")
+
+        _, ctx = _XMD_FUNCS[name]
+        if ctx != "user":
+            raise ValueError(f"Function name '{name}' is registered by ipyslides and cannot be unregistered.")
+
+        del _XMD_FUNCS[name]
         
     
 class xmd(metaclass=_XMDMeta):

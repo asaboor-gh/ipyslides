@@ -389,7 +389,7 @@ def image(data=None,width='95%',caption=None, crop = None, css_props={}, css_cla
         metadata["style"] = _styled_css({f'.fig-{id(data)}': css_props}).value
     return IMG({k:v for k,v in data.items() if k.startswith('image')}, metadata)
 
-@_internal_xmd_call('bg', slidebound=True)
+@_internal_xmd_call('bg')
 @slidebound
 def bg(src=None, opacity=1, filter=None, contain=False):
     """Set background image for the current slide.
@@ -694,7 +694,7 @@ def _validate_key(key: str, param_name: str):
         raise ValueError(f"{param_name} should be a valid key (starting with letter, followed by alphanumeric, underscore, hyphen), got {key!r}")
     return key
     
-@_internal_xmd_call('link', slidebound=True)
+@_internal_xmd_call('link')
 @slidebound
 def link(target_key:str, text:str="Navigate to Linked Slide", icon:str='link'):
     r"""Create a link to jump to another slide which has the specified target key.
@@ -708,7 +708,7 @@ def link(target_key:str, text:str="Navigate to Linked Slide", icon:str='link'):
     text = (f' <i class="fa fa-{icon}"></i>' if icon else '') + f"{text}"   
     return html('a',text,**kwargs)
 
-@_internal_xmd_call('uid',slidebound=True)
+@_internal_xmd_call('uid')
 @slidebound
 def uid(key:str):
     r"""Assign a unique identifier to the currently building slide that can be referenced by the `link` function.
@@ -873,12 +873,13 @@ def sub(text, **css_props):
     return XTML(f"<sub {_inline_style(css_props)}>{xmd(text, True,'')}</sub>")
 
 @_internal_xmd_call('tag')
-def tag(text, color='var(--accent-color)', round=False, scale=0.7):
-    """Creates a tagged text with given color. `round` makes the tag circular and `scale` adjusts its size.
+def tag(text, color='var(--accent-color)', round=False, scale=0.7, pill=False):
+    """Creates a tagged text with given color. `round` makes the tag circular while `pill` makes it pill-shaped, and `scale` adjusts its size.
     `tag(number, round=True)` (and it's markdown usage) create rounded numbers for crisp (non-semantic)bullet points.
     """
-    style = {'font-size': f'{scale}em'}
+    style = {'font-size': f'{scale}em', 'margin-inline': '0.5em'}
     if round: style.update({'border-radius': '50%', 'aspect-ratio': '1 / 1', 'min-width': '2em'}) # avoid ellipse at single character
+    if pill: style.update({'border-radius': '9999px'}) # pill shape rather than ellipse
     if color: style['--tag-color'] = color
     return html('span', xmd(str(text), True,''), css_class='ips-tag', style = style)
 

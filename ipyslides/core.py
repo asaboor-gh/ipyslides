@@ -151,7 +151,7 @@ class Slides(BaseSlides,metaclass=Singleton):
         # Registered for xmd usage, we must decorate them as well to be able to raise error before initialization of slides. 
         # They will be overwritten from instance to reflect proper usage signature
         for fname in ["notes","section","refs","toc"]:
-            _internal_xmd_call(fname, True)(getattr(self, fname))
+            _internal_xmd_call(fname)(getattr(self, fname))
  
         self.plt2html   = plt2html
         self.plt2image  = plt2image
@@ -591,8 +591,8 @@ class Slides(BaseSlides,metaclass=Singleton):
         return SlideGroup([s for s in self._iterable if s._markdown])
 
     
-    @slidebound("Section")
-    @_internal_xmd_call("section",True)
+    @_internal_xmd_call("section")
+    @slidebound
     def section(self, text, supplemental = False):
         """Add section key to presentation that will appear in table of contents.
         Sections can be written as table of contents. First call with supplemental=True will win and following all sections would be in supplemental part.
@@ -609,7 +609,7 @@ class Slides(BaseSlides,metaclass=Singleton):
             if s._toc_args and s != self.this: 
                 s.update_display()
     
-    @_internal_xmd_call("toc", True)
+    @_internal_xmd_call("toc")
     @slidebound
     def toc(self, title='## Contents {.align-left}', highlight = False):
         """Add table of contents to the slide, output must be displayed or passed to `write` command 
@@ -618,7 +618,7 @@ class Slides(BaseSlides,metaclass=Singleton):
         self.this._toc_args = (xmd(str(title).strip(), True, ""), highlight)
         return self.this._reset_toc()
         
-    @_internal_xmd_call("refs", True)
+    @_internal_xmd_call("refs")
     @slidebound
     def refs(self, data=None, ncol=None):
         r"""Return XTML for references or None.

@@ -622,6 +622,7 @@ def slidebound(fname=None):
             if slides is None or getattr(slides, "this", None) is None:
                 raise RuntimeError(f"{name} can only be used inside a slide constructor.")
             return func(*args, **kwargs)
+        wrapper.__doc__ = (inspect.getdoc(func) or "") + "\n\n[tag! Requires Slide Context .. 'red', pill=True /]"
         return wrapper
 
     if callable(fname):  # used as @slidebound

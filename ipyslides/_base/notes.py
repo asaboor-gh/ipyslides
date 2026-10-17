@@ -21,7 +21,7 @@ class Notes:
         self.notes_check = self.widgets.checks.notes
         self.notes_check.observe(self.__open_close_notes, names=['value'])
     
-    @_internal_xmd_call('notes', True) # register notes for xmd usage, will be overwritten by instance later   
+    @_internal_xmd_call('notes') # register notes for xmd usage, will be overwritten by instance later   
     @slidebound("notes")
     def __call__(self, content):
         "See class docstring for usage."
