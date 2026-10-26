@@ -5,7 +5,7 @@ import sys
 import textwrap
 import inspect, re, base64
 
-from functools import wraps
+from functools import wraps, lru_cache
 from pprint import PrettyPrinter
 from io import BytesIO
 from contextlib import contextmanager
@@ -742,38 +742,29 @@ def htmlize(obj):
         return f"<code style='color:var(--fg1-color) !important;'>{obj.__repr__()}</code>"
     
 
+# Handlers for different object types to HTML representation
+_EXPORT_HANDLERS = {
+    "ipyslides:XmdPack":   lambda obj: obj.parse(returns=True),
+    "matplotlib:Figure":   lambda obj: plt2html(obj).value,
+    "matplotlib:Axes":     lambda obj: plt2html(obj.get_figure()).value, # rarely intercepted directly
+    "matplotlib:_AxesBase":lambda obj: plt2html(obj.get_figure()).value, # projections safeguard
+    "ipympl:Canvas":       lambda obj: plt2html(obj.figure).value,
+    "altair:JupyterChart": lambda obj: _altair2htmlstr(obj.chart),
+    "altair:Chart":        lambda obj: _altair2htmlstr(obj),
+    "plotly:FigureWidget": lambda obj: _focus_on(obj.to_html(full_html=False)),
+    "pygal:Graph":         lambda obj: _focus_on(obj.render(is_unicode=True)),
+    "pydeck:Deck":         lambda obj: _focus_on(obj.to_html(as_string=True)),
+    "pandas:DataFrame":    lambda obj: _focus_on(obj.to_html()),
+    "pandas:Series":       lambda obj: f"<code style='color:var(--fg1-color) !important;'>{pprinter.pformat(list(obj))}</code>",
+    "polars:DataFrame":    lambda obj: _focus_on(obj.to_pandas().to_html()),
+    "bokeh:Figure":        lambda obj: bokeh2html(obj, title="").value,
+    "IPython:Image":       lambda obj: _focus_on(fix_ipy_image(obj, width="100%"), False),
+}
+
+@lru_cache(maxsize=64)
 def _exportable_func(obj):
-    module = getattr(obj, '__module__','') or '' # can have None set as __modeule__, fix it
-    mro_str = str(obj.__class__.__mro__)  
-    
-    # Instead of instance check, we can get mro, same effect without importing modules
-    if re.search('ipyslides.*XmdPack', mro_str, flags=re.DOTALL): 
-        return lambda obj: obj.parse(returns=True) # direct parse
-    
-    if re.search('matplotlib.*Figure', mro_str, flags=re.DOTALL):return lambda obj: plt2html(obj).value # intercept figure before axes
-    if module.startswith('matplotlib') and hasattr(obj,'get_figure'): # any axes
-        return lambda obj: plt2html(obj.get_figure()).value
-    
-    if re.search('altair.*JupyterChart', mro_str, flags=re.DOTALL): return lambda obj: _altair2htmlstr(obj.chart)
-    
-    if re.search('altair.*Chart', mro_str, flags=re.DOTALL): return lambda obj: _altair2htmlstr(obj)
-    
-    if re.search('plotly.*FigureWidget', mro_str, flags=re.DOTALL): return lambda obj: _focus_on(obj.to_html(full_html=False))
-    
-    if re.search('ipympl.*Canvas',mro_str, flags=re.DOTALL): return lambda obj: plt2html(obj.figure).value
-    
-    if re.search('pygal.*Graph', mro_str, flags=re.DOTALL): return lambda obj: _focus_on(obj.render(is_unicode=True))
-    
-    if re.search('pydeck.*Deck', mro_str, flags=re.DOTALL): return lambda obj: _focus_on(obj.to_html(as_string=True))
-    
-    if re.search('pandas.*DataFrame', mro_str, flags=re.DOTALL): return lambda obj: _focus_on(obj.to_html())# full instead of repr
-    
-    if re.search('pandas.*Series', mro_str, flags=re.DOTALL):
-        return lambda obj: f"<code style='color:var(--fg1-color) !important;'>{pprinter.pformat(list(obj))}</code>"# full instead of repr
-    
-    if re.search('polars.*DataFrame', mro_str, flags=re.DOTALL):
-        return lambda obj: _focus_on(obj.to_pandas().to_html())# full instead of repr
-    
-    if re.search('bokeh.*Figure', mro_str, flags=re.DOTALL): return lambda obj: bokeh2html(obj,title='').value
-    
-    if re.search('IPython.*Image', mro_str, flags=re.DOTALL): return lambda obj: _focus_on(fix_ipy_image(obj,width='100%'),False) 
+    for c in type(obj).__mro__: # Ensure we are working with the class type, not an instance
+        root_mod = (getattr(c, "__module__", "") or "").partition(".")[0]
+        if handler := _EXPORT_HANDLERS.get(f"{root_mod}:{c.__name__}"):
+            return handler
+    return None
