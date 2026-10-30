@@ -620,7 +620,7 @@ def style_css(colors, fonts, layout, _root = False):
                 _h1_h6: { # even headings need to be centered on title slide
                     "text-align": "center", # not important to allow user override
                 },
-                'h1': {'font-size':'2.8em', 'text-shadow':'0 1px var(--bg1-altcolor)'}, # make little larger on title slide
+                'h1': {'font-size':'2.5em', 'text-shadow':'0 1px var(--bg1-altcolor)'}, # make little larger on title slide
                 'h2': {'font-size':'2em'},
             }, # no yoffset on title slide, leave it centered globally, unless user applys yoffset there
             '* .jp-OutputArea:has(.ips-pinned-item), .jp-OutputArea-child:has(.ips-pinned-item)': {

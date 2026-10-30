@@ -602,7 +602,7 @@ class XMarkdown(Markdown):
         
         # legacy citations
         content = re.sub(r"(?<![\`\.])\bcite\`(.*?)\`;?", 
-            lambda m: self._handle_var(error('SyntaxError',f'Use @key, @key2!, @key3 etc. {m.group()} syntax is deprecated.')), 
+            lambda m: self._handle_var(error('SyntaxError',f'Use [@key], [@key2!, @key3] etc. {m.group()} syntax is deprecated.')), 
             content, flags=re.DOTALL
         )
         return content

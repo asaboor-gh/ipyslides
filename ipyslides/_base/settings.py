@@ -98,7 +98,7 @@ class Code(ConfigTraits):
 @fix_sig
 class Fonts(ConfigTraits):
     "Set fonts of text and code and size."
-    heading = Unicode("Arial", allow_none=True, help="Heading font")
+    heading = Unicode("Segoe UI", allow_none=True, help="Heading font")
     text = Unicode("Roboto", allow_none=True)
     code = Unicode("Cascadia Code", allow_none=True)
     size = Int(16, help="Can use any large/small value that CSS supports!")
