@@ -130,13 +130,8 @@ def _resolve_citations(parser, content):
         return content # no need to resolve anything
     
     def sub_cite(match):
-        brackets = match.group('lbr') is not None
         body = match.group('body')
         items = re.findall(r'@([A-Za-z][\w\-]*)(!)?', body) # extract citation keys and inline markers
-        
-        # Do not cite bare single citation without brackets, it can pick up CSS/python syntax by mistake
-        if not brackets and len(items) == 1:
-            return match.group()
         
         # group keys types, superscript citations first, then inline
         sup_keys = ",".join(k for k, bang in items if not bang)
@@ -147,11 +142,8 @@ def _resolve_citations(parser, content):
         # Then handle inline citations, can't group them in a div which is not allowed inside p tag
         for key in inline_keys:
             res += slides._nocite(key)
-        return res if brackets else res + parser._handle_var(
-            warn(f"Citation(s) {match.group()!r} should be enclosed in square brackets even if just one.")
-        )
+        return res
     
-    # replace @key, @key2! etc with citation output
     content = CITE_RE.sub(sub_cite, content)  
     return content
 
@@ -311,10 +303,8 @@ TOKEN_RE = re.compile(
 )
 
 CITE_RE = re.compile(r'''
-    (?<![\w\\`])                                # Lookbehind: no word char, backslash, or tick, deprecate \w after [] made necessary
-    (?P<lbr>\[)?\s*                             # Optional opening bracket, will be mandatory in future
-    (?P<body>(?:@[A-Za-z][\w\-]*!?[\s,;]*)+)    # One or more keys; EVERY key must start with '@'    
-    (?(lbr)\])                                  # Require closing ']' if '[' was present
+    (?<![\\`])                                            # Lookbehind: no backslash or tick
+    \[\s*(?P<body>(?:@[A-Za-z][\w\-]*!?[\s,;]*)+)\s*/?\]  # One or more keys; EVERY key must start with '@'. Forgive a stray '/' before ']'
 ''', re.VERBOSE)
 
 _head_modes = {

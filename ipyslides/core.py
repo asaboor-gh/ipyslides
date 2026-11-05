@@ -517,7 +517,7 @@ class Slides(BaseSlides,metaclass=Singleton):
         r"""Set citations from dictionary or string in yaml format with content like `key: citation value` on their own lines or json format.
         If yaml format is used and you have special characters inside values like :, = or starting with * etc., you should quote them. 
         For example, `key: *Bold citation*` will raise error, but `key: "*Bold citation*"` will work.
-        key should be cited in markdown as `[\@key]`, optionally comma separated keys. `[\@key!]` will show citation inline.
+        key should be cited in markdown as `[\@key, ... ]` i.e., comma separated keys. `[\@key!]` will show citation inline for that key.
         Number of columns in displayed citations are determined by [code! Slides.settings.layout(..., ncol_refs=N) /] or 
         per slide by [code! [refs\! \.. N \/] /] / [code! Slides.refs(ncol=N) /].
 
@@ -642,12 +642,14 @@ class Slides(BaseSlides,metaclass=Singleton):
         data = re.sub(r'[\s;]*?\n+[\s;]*?', ';<br>;', data.strip()) 
         data = re.sub(r';{2,}', ';<br>;', data) # replace multiple consecutive semicolons with a line break as well
         plain, cited = [], []
-        for k in filter(None, map(str.strip, data.split(';'))):
+        for k in filter(None, map(str.strip, data.split(';'))):    
             if k == '<br>':
                 plain.append(k)
             elif value := self.this._citations.get(k, None):
                 cited.append(value)
             else:
+                # Strip trailing exclamation marks from the key for plain citation mode only, not for cited ones
+                k = k.rstrip('!') 
                 value = self._citations.get(k, xmd(k, True, "")) # fetch from stored citations or use text
                 plain.append(self.html('span', value, css_class='icite').value)
         

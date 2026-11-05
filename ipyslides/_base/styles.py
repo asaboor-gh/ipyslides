@@ -731,7 +731,7 @@ def style_css(colors, fonts, layout, _root = False):
                 'transition': 'background-color 0.25s ease-in, color 0.2s ease-in',
                 '^, *': {'color':'color-mix(in srgb, currentColor 65%, transparent) !important',}, # muted color 
                 'a': {'text-decoration': 'none !important',}, # avoid underline there
-                '^:has(+ .icite)::after': {'content': '";"'}, 
+                '^:has(+ .icite)::after': {'content': '"; "'}, 
                 '^:hover': {
                     'background': 'var(--bg2-color) !important',
                     '^, *': {'color':'var(--accent-color) !important',},
@@ -842,7 +842,7 @@ def style_css(colors, fonts, layout, _root = False):
             },
         },
         'code': {
-            'color': 'var(--fg2-color) !important',
+            'color': 'var(--fg2-color)',
             'font-family': 'var(--jp-code-font-family) !important',
             '^.dim': {'opacity':'0.3 !important'}, # should work outside block too
         }, # external code tags
@@ -1046,6 +1046,7 @@ def style_css(colors, fonts, layout, _root = False):
             'padding': '4px 4px 0 4px', # adopt block padding style
             'font-family': f'{fonts.heading}, var(--jp-content-font-family), "Font Awesome 5 Free"', # keep text in heading font; icon falls back to Font Awesome
         },
+        '.ips-block-head code': {'color': 'var(--head-color) !important'}, # make code inside header follow head color
         '.hrules > *:not(:last-child)': {'border-bottom': '1px solid #8988 !important'},
         '.vrules > *:not(:last-child)': {'border-right': '1px solid #8988 !important'},
         '.ips-tag': {
@@ -1067,6 +1068,7 @@ def style_css(colors, fonts, layout, _root = False):
             'background-color': 'color-mix(in srgb, var(--tag-color, #9898) 12%, transparent)',
             'border': '1px solid color-mix(in srgb, var(--tag-color, #9898) 8%, transparent)',
         },
+        '.ips-tag code': {'color': 'var(--tag-color) !important'},
         'details': {
             'padding': '4px',
             'position': 'relative', # keeps content inside

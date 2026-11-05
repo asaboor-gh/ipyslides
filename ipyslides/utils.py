@@ -1,6 +1,6 @@
 _attrs = sorted([
     'AnimationSlider', 'alt', 'alert', 'as_html', 'as_widget', 'tag','bullets', 'color', 'error', 'table', 'suppress_output','suppress_stdout','capture_content',
-    'details', 'set_dir', 'code', 'fa', 'gap', 'link', 'uid', 'center', 'icon', 'image', 'svg','iframe','frozen', 'raw', 'warn', 'bg',
+    'details', 'set_dir', 'code', 'fa', 'gap', 'link', 'uid', 'center', 'icon', 'image', 'svg','iframe','frozen', 'raw', 'warn', 'bg', 'caption',
     'focus','html', 'sig','stack', 'styled', 'steps', 'doc', 'transition', 'today','yoffset','css','pin'
 ], key=str.lower)
 
@@ -873,7 +873,7 @@ def sub(text, **css_props):
     return XTML(f"<sub {_inline_style(css_props)}>{xmd(text, True,'')}</sub>")
 
 @_internal_xmd_call('tag')
-def tag(text, color='var(--accent-color)', round=False, scale=0.7, pill=False):
+def tag(text, color='var(--head-color)', round=False, scale=0.7, pill=False):
     """Creates a tagged text with given color. `round` makes the tag circular while `pill` makes it pill-shaped, and `scale` adjusts its size.
     `tag(number, round=True)` (and it's markdown usage) create rounded numbers for crisp (non-semantic)bullet points.
     """
@@ -904,6 +904,14 @@ def head(text: str | None = None, mode: str | None = None):
     if title := (text or meta.get('title', text)): # prefer user text
         content += f"<span class='head-text'>{xmd(title, True, '')}</span>"
     return XTML(f"<div class='ips-block-head' {_inline_style(style)}>{content}</div>")
+
+@_internal_xmd_call('caption')
+def caption(text: str, prefix: str | None = None, align: str='center', css_class: str = None, **css_props):
+    "Renders a caption for figures or blocks."
+    style = {'font-size': '0.9em', **css_props, 'text-align': align}
+    klass = f"class='{css_class}'" if css_class and isinstance(css_class, str) else ''
+    prefix = f'<b>{prefix}</b>' if prefix and isinstance(prefix, str) else ''
+    return XTML(f"<div {klass} {_inline_style(style)}>{prefix} {xmd(text, True,'')}</div>")
 
 @_internal_xmd_call('alert')
 def alert(text, css_class=None, bold=False, italic=False, **css_props):
