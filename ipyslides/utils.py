@@ -1,12 +1,8 @@
-_attrs = sorted([
-    'AnimationSlider', 'alt', 'alert', 'as_html', 'as_widget', 'tag','bullets', 'color', 'error', 'table', 'suppress_output','suppress_stdout','capture_content',
-    'details', 'set_dir', 'code', 'fa', 'gap', 'link', 'uid', 'center', 'icon', 'image', 'svg','iframe','frozen', 'raw', 'warn', 'bg', 'caption',
-    'focus','html', 'sig','stack', 'styled', 'steps', 'doc', 'transition', 'today','yoffset','css','pin'
-], key=str.lower)
 
-__all__ = sorted([*_attrs, 'JupyTimer', 'ListWidget', 'is_jupyter_session','inside_jupyter_notebook','get_notebook_dir', 'get_child_dir'], key=str.lower)
-
-import os, re, json, textwrap
+import os
+import re
+import json
+import textwrap
 import base64
 import datetime
 import inspect
@@ -28,10 +24,18 @@ from dashlab.utils import _build_css, _fix_init_sig # This is very light weight 
 
 from ._base.icons import Icon as icon # for export and overrides in fa function
 from .formatters import ipw, XTML, IMG, frozen, get_slides_instance, fix_ipy_image, _inline_style, htmlize, _fig_caption, slidebound, slidesready
-from .xmd import xmd, get_unique_css_class, capture_content, raw, error, warn, _internal_xmd_call, _head_modes
+from .xmd import xmd, _VOID_TAGS, get_unique_css_class, capture_content, raw, error, warn, _internal_xmd_call, _head_modes
 from .source import code
 from .writer import write, _style_for_widget
 from ._base.styles import animations, view_nodes
+
+_attrs = sorted([
+    'AnimationSlider', 'alt', 'alert', 'as_html', 'as_widget', 'tag','bullets', 'color', 'error', 'table', 'suppress_output','suppress_stdout','capture_content',
+    'details', 'set_dir', 'code', 'fa', 'gap', 'link', 'uid', 'center', 'icon', 'image', 'svg','iframe','frozen', 'raw', 'warn', 'bg', 'caption',
+    'focus','html', 'sig','stack', 'styled', 'steps', 'doc', 'transition', 'today','yoffset','css','pin'
+], key=str.lower)
+
+__all__ = sorted([*_attrs, 'JupyTimer', 'ListWidget', 'is_jupyter_session','inside_jupyter_notebook','get_notebook_dir', 'get_child_dir'], key=str.lower)
 
 
 def is_jupyter_session():
@@ -41,7 +45,7 @@ def is_jupyter_session():
          return True # Verifies Jupyter, Pyodide, etc.
      else:
          return False
-     
+
 def inside_jupyter_notebook(func):
     "Returns True only if a func is called inside notebook."
     shell = get_ipython()
@@ -55,7 +59,7 @@ def get_notebook_dir():
         return Path(shell.starting_dir).absolute()
     else:
         raise RuntimeError("Not in a Notebook!")
-    
+
 
 def get_child_dir(name, *names, create = False):
     "Returns a child directory inside notebook directory with given name and names in order, if not exist, create one if create=True"
@@ -98,7 +102,7 @@ _example_props = {
                     'to': {'opacity':1}
                 },
             },
-        },  
+        },
     },
 }
 
@@ -116,7 +120,7 @@ def suppress_output(stdout = True):
     "Suppress output of a block of code. If `stdout` is False, only display data is suppressed."
     with capture_content() as captured:
         yield # Do not yield handle
-    
+
     if not stdout:
         outputs = captured.outputs
         _, new_prints = _filter_prints(outputs)
@@ -131,12 +135,12 @@ def suppress_stdout():
     "Suppress stdout in a block of code, especially unwanted print from functions in other modules."
     with capture_content() as captured:
         yield # do not yield, we want to suppress under and outside slides
-    
+
     outputs = captured.outputs
     new_outputs, _ = _filter_prints(outputs)
     return display(*new_outputs)
 
-    
+
 @contextmanager
 def set_dir(path):
     "Context manager to set working directory to given path and return to previous working directory when done."
@@ -150,14 +154,14 @@ def set_dir(path):
 def _styled_css(props : dict):
     if not isinstance(props, dict):
         raise TypeError("props should be a dictionay of CSS selectors and properties.")
-    
+
     if (root_attrs:={k:v for k,v in props.items() if not isinstance(v,dict)}):
         raise ValueError(f'CSS selectors should be at top level, found properties instead! \n{root_attrs}')
-    
+
     klass = f'{get_unique_css_class()} .SlideArea'
     if (slide := getattr(get_slides_instance(), 'this', None)):
         klass += f'.n{slide.number}' # Under slide, avoids overall CSS
-    
+
     props = {k:v for k,v in props.items() if (isinstance(v,dict) or k.lstrip(' ^<'))} # Remove root attrs and top level access
     return XTML(f"<style>{_build_css((f'{klass}',),props)}</style>")
 
@@ -166,28 +170,28 @@ def _alt_for_widget(func, widget):
         raise TypeError(f'widget should be a widget, got {widget!r}')
     if not callable(func):
         raise TypeError(f'func should be a callable, got {func!r}')
-    
+
     if (slides := get_slides_instance()):
         with slides._hold_running(): # To prevent dynamic content from being added to alt
             with capture_content() as cap:
                 if not isinstance((out := func(widget)), str):
                     raise TypeError(f'Function {func.__name__!r} should return a string, got {type(out)}')
-            
+
             if cap.stderr:
                 raise RuntimeError(f'Function {func.__name__!r} raised an error: {cap.stderr}')
 
             if cap.outputs: # This also makes sure no dynamic content is inside alt, as nested contnet cannot be refreshed
-                raise RuntimeError(f'Function {func.__name__!r} should not display or print anything in its body, it should return a string.') 
-        
+                raise RuntimeError(f'Function {func.__name__!r} should not display or print anything in its body, it should return a string.')
+
         _patch_display(widget)  # for completeness of display method
         setattr(widget, 'fmt_html', MethodType(func, widget)) # for export
-    
-    return widget 
+
+    return widget
 
 
 def alt(exportable_data, obj):
     """Display `obj` for slides and output of `exportable_data` will be and displayed only in exported formats as HTML.
-    
+
     - `exportable_data` should be an html str or a callable to receive `obj` as its only argument.
         - A callable will give the latest representation of widget in exported slides and runtime representation of any other `obj`.
         - An html str, it will export the runtime representation of obj.
@@ -203,10 +207,10 @@ def alt(exportable_data, obj):
     """
     if not any([callable(exportable_data), isinstance(exportable_data, str)]):
         raise TypeError(f"first arguemnt of alt should be a func (func(obj) → html str) or html str, got {type(exportable_data)}")
-    
+
     if isinstance(obj, ipw.DOMWidget) and callable(exportable_data):
         return _alt_for_widget(exportable_data, obj)
-    
+
     text_html = exportable_data # default
     if callable(exportable_data):
         text_html = exportable_data(obj)
@@ -219,7 +223,7 @@ def _test_ext_and_parent(filename):
     p = Path(filename)
     if str(p.parent) != '.':
         raise ValueError('filename should not have parents. It will be stored in `Slides.clips_dir`.')
-    if not p.suffix.lower() in ('.png','.jpeg','.jpg'):
+    if p.suffix.lower() not in ('.png','.jpeg','.jpg'):
         raise ValueError(f'filename should have an image extension .png, .jpg or .jpeg, got {p.suffix!r}')
 
 
@@ -230,7 +234,7 @@ def _clipbox_children():
     owp = ipw.Button(icon="download", description="Overwrite", layout={"width": "max-content"}, button_style='danger')
     upload = ipw.Button(icon="upload", description="Preview Saved Image", layout={"width": "max-content", "margin": "0 0 0 var(--jp-widgets-inline-label-width)"})
 
-    rep = html("span", 
+    rep = html("span",
         "For best fit, ensure that visual width of screenshot is same as width of area/column on slides where image will be displayed."
         "<br>On Linux, you need xclip or wl-paste installed"
     ).as_widget()
@@ -247,7 +251,7 @@ def _clipbox_children():
                 _save_clipboard_image(fname.value, overwrite=True)
             # In all cases, finally update
             rep.value = image(f"clip:{fname.value}", width="100%").value
-        except:
+        except Exception:
             ename = 'FileUploadError' if btn is upload else 'ClipboardPasteError'
             e, text = traceback.format_exc(limit=0).split(':', 1)
             rep.value = f"{error(ename, 'something went wrong')}\n{error(e, text)}"
@@ -277,9 +281,10 @@ def _resolve_img(src, width):
     if src is None: return ''
     if isinstance(src, Path):
         src = str(src)  # important for svg checking below
-    
+
     if isinstance(src, str):
-        if not src.strip(): return '' # empty string
+        if not src.strip():
+            return '' # empty string
         if "<svg" in src and "</svg>" in src:
             return src.replace('<svg', f'<svg style="width:{width};height:auto" ') # extra space at end
         else:
@@ -287,7 +292,7 @@ def _resolve_img(src, width):
                 src = get_clips_dir() / src[5:] # don't strip it
             try:
                 return fix_ipy_image(Image(src, width=width), width=width).value
-            except:
+            except Exception:
                 return _resolve_img(SVG(src)._repr_svg_(), width=width)
     return ''
 
@@ -333,18 +338,18 @@ def _crop_image(image, bbox):
     bbox = [int(round(b*x,0)) for b,x in zip(bbox, [w,h,w,h])] # Convert to pixel values to nearest integer
     return image.crop(bbox)
 
-@_internal_xmd_call('image')    
+@_internal_xmd_call('image')
 def image(data=None,width='95%',caption=None, crop = None, css_props={}, css_class=None, **kwargs):
-    """Displays PNG/JPEG files or image data etc, `kwrags` are passed to IPython.display.Image. 
+    """Displays PNG/JPEG files or image data etc, `kwrags` are passed to IPython.display.Image.
     `crop` is a tuple of (left, top, right, bottom) in percentage of image size to crop the image.
     `css_props` are applied to `figure` element, so you can control top layout and nested img tag.
     You can provide following to `data` parameter:
-        
-    - An opened PIL image. Useful for image operations and then direct writing to slides. 
+
+    - An opened PIL image. Useful for image operations and then direct writing to slides.
     - A file path to image file.
     - A url to image file.
-    - A str/bytes object containing image data.  
-    - A str like "clip:image.png" will load an image saved in clips directory. 
+    - A str/bytes object containing image data.
+    - A str like "clip:image.png" will load an image saved in clips directory.
     - A filename like "image.png" will look for the file in current directory and then in `Slides.clips_dir` if not found.
         Use 'clip:image.png' to pick image from `Slides.clips_dir` directly if another file 'image.png' also exists in current directory.
 
@@ -362,7 +367,7 @@ def image(data=None,width='95%',caption=None, crop = None, css_props={}, css_cla
 
     if isinstance(width,int):
         width = f'{width}px'
-    
+
     if isinstance(data, (str,Path)):
         fname = str(data) # Convert Path to str
         if fname.startswith("clip:"):
@@ -376,7 +381,7 @@ def image(data=None,width='95%',caption=None, crop = None, css_props={}, css_cla
                 cwd_file = get_clips_dir() / cwd_file
                 if cwd_file.exists():
                     data = cwd_file # Use file from clips dir if exists
-    
+
     if css_class is None: css_class = ''
     _data = _check_pil_image(data) #Check if data is a PIL Image or return data
     data, metadata = Image(data = _data,**kwargs)._repr_mimebundle_()
@@ -410,7 +415,7 @@ def _rselove_targets(applyto):
     slides = get_slides_instance()
     if applyto is None and not slides.this:
         raise ValueError("applyto cannot be None when not under a slide builder, as there is no current slide to apply to!")
-    
+
     if applyto is None:
         return slides.this, [slides.this._specs]
     elif isinstance(applyto, str) and applyto.lower() == 'all':
@@ -421,40 +426,40 @@ def _rselove_targets(applyto):
         selected = slides[applyto] # by indexer they created with
         if not selected:
             raise ValueError(f"No slides selected with applyto={applyto!r}")
-        return selected[0], [s._specs for s  in selected] 
+        return selected[0], [s._specs for s  in selected]
 
 @_internal_xmd_call('transition')
 @slidesready
 def transition(name:str, applyto=None):
-    """Set transition animation for the current slide or slides selected by `applyto`. 
-    Under a slide builder (including markdown), if `applyto` is None, it applies to current slide, 
+    """Set transition animation for the current slide or slides selected by `applyto`.
+    Under a slide builder (including markdown), if `applyto` is None, it applies to current slide,
     if 'all', it applies to all slides, otherwise it should be index or list of indices of slides to apply animation to.
     """
-    if name and not name in animations:
+    if name and name not in animations:
         raise ValueError(f"Transition {name!r} is not defined, available transitions are: {list(animations.keys())}")
     slide, spec_targets = _rselove_targets(applyto)
     for spec in spec_targets:
         spec.anim = name
     slide._view_transition()
 
-@_internal_xmd_call('yoffset')    
+@_internal_xmd_call('yoffset')
 @slidesready
 def yoffset(value:int, applyto=None):
-    """Set vertical offset for the current slide or slides selected by `applyto`. 
+    """Set vertical offset for the current slide or slides selected by `applyto`.
     Value should be an integer between 0 and 100, representing percentage of slide height.
-    
-    Under a slide builder (including markdown), if `applyto` is None, it applies to current slide, 
+
+    Under a slide builder (including markdown), if `applyto` is None, it applies to current slide,
     if 'all', it applies to all slides, otherwise it should be index or list of indices of slides.
     """
     if isinstance(value, str): # from markdown
-        if value.strip().isdigit(): 
+        if value.strip().isdigit():
             value = int(value.strip())
         else:
             value = None # gracefully handle non-integers
-    
+
     if value and value not in range(101): # handle None itself
         raise ValueError("yoffset value should be integer in units of percent betweem [0,100]!")
-        
+
     slide, spec_targets = _rselove_targets(applyto)
     for spec in spec_targets:
         spec.yoffset = value
@@ -464,10 +469,10 @@ def yoffset(value:int, applyto=None):
 @slidesready
 def css(props: dict=None, applyto=None, **css_vars):
     """
-    Set CSS on current slide being built or slides selected by `applyto`. 
+    Set CSS on current slide being built or slides selected by `applyto`.
     Reset by empty props and variables on slides slected by `applyto`.
-    
-    Under a slide builder (including markdown), if `applyto` is None, it applies to current slide, 
+
+    Under a slide builder (including markdown), if `applyto` is None, it applies to current slide,
     if 'all', it applies to all slides, otherwise it should be index or list of indices of slides.
 
     ::: note.tip block-clear head="CSS Usage Tips"
@@ -483,10 +488,10 @@ def css(props: dict=None, applyto=None, **css_vars):
     if props is None: props = {} # for resetting css or independent css variables, we want to allow None as well
     if isinstance(props, str) and props.strip(): # allow empty string for no props, but not other types of empty values
         props = {'': props} # from markdown or direct css string
-    
+
     if props and not isinstance(props, dict):
-        raise TypeError(f"style props should be a dict of CSS selectors and properties or css string, got {type(props)}") 
-    
+        raise TypeError(f"style props should be a dict of CSS selectors and properties or css string, got {type(props)}")
+
     for k,v in props.items():
         sels = k.split(',') # can be multiple selectors
         for s in sels:
@@ -494,24 +499,24 @@ def css(props: dict=None, applyto=None, **css_vars):
                 raise KeyError(f"Empty CSS selector found in a compound selector {k!r}, perhaps due to extra comma?")
             if '<' in s: # avoid extreme selector
                 raise KeyError(f"Trying to access top level with selector {s!r} in {k!r} is restricted!")
-    
-    _colors = ['fg1', 'fg2', 'fg3', 'bg1', 'bg2', 'bg3', 'accent', 'pointer'] 
-    _vars = {}      
+
+    _colors = ['fg1', 'fg2', 'fg3', 'bg1', 'bg2', 'bg3', 'accent', 'pointer']
+    _vars = {}
     for k,v in css_vars.items():
         if not isinstance(v, str):
             raise TypeError(f"CSS variable values should be strings, got {type(v)} for variable {k!r}")
         key = (f'--{k}-color' if k in _colors else k).replace('_','-')
         key = f'--{key}' if not key.startswith('--') else key # allow users to pass with or without --
         _vars[key] = v
-    
+
     slide, spec_targets = _rselove_targets(applyto)
     for spec in spec_targets:
         spec.cssprops = props
         spec.cssvars  = _vars
-    
+
     slide._mount_user_css()
-    
-            
+
+
 def _crop_svg(node, bbox):
     _verify_bbox(bbox) # left, top, right, bottom in 0-1 range
 
@@ -522,27 +527,27 @@ def _crop_svg(node, bbox):
         X, Y = bbox[0]*w + x, bbox[1]*h + y # offset by original viewbox
         W, H = (bbox[2] - bbox[0])*w, (bbox[3] - bbox[1])*h
         return m.group().replace(vb, f'{X} {Y} {W} {H}') # Replace viewbox with new values
-    
+
     return re.sub(r'viewBox\=[\"\'](.*?)[\"\']', crop_viewbox, node ,1, flags=re.DOTALL)
-    
+
 @_internal_xmd_call('svg')
 def svg(data=None,width = None,caption=None, crop=None, css_props={}, css_class=None, **kwargs):
-    """Display svg file or svg string/bytes with additional customizations. 
+    """Display svg file or svg string/bytes with additional customizations.
     `crop` is a tuple of (left, top, right, bottom) in percentage of image size to crop the image.
     `css_props` are applied to `figure` element, so you can control top layout and nested svg tag.
     `kwrags` are passed to IPython.display.SVG. You can provide url/string/bytes/filepath for svg.
     """
     svg = SVG(data=data, **kwargs)._repr_svg_()
     node = rnode = re.search(r'\<svg.*?\>', svg, flags=re.DOTALL).group() #  rnode will be overwritten
-    
+
     if width is None: # Infer width from svg or use default width
-        width, *_ = re.findall(r'\s+width\=[\"\'](.*?)[\"\']', node, flags=re.DOTALL) or ['95%'] 
+        width, *_ = re.findall(r'\s+width\=[\"\'](.*?)[\"\']', node, flags=re.DOTALL) or ['95%']
 
     w = f'{width}px' if isinstance(width,(int,float)) else width
-    
+
     if node:
         _height = ' height="auto"' if re.search(r'\s+width\=[\"\'].*?[\"\']', node) else f' height="auto" width="{w}"' # if no width given add that too
-        rnode = re.sub(r'\s+height\=[\"\'](.*?)[\"\']', _height, node,1,flags=re.DOTALL) 
+        rnode = re.sub(r'\s+height\=[\"\'](.*?)[\"\']', _height, node,1,flags=re.DOTALL)
         _width = f' width="{w}"' if re.search(r'\s+height\=[\"\'].*?[\"\']', node) else f' width="{w}" height="auto"' # if no height given add that too
         rnode = re.sub(r'\s+width\=[\"\'](.*?)[\"\']', _width, rnode,1,flags=re.DOTALL) # Replace width with given width
 
@@ -559,15 +564,15 @@ def svg(data=None,width = None,caption=None, crop=None, css_props={}, css_class=
 
     svg = svg.replace(node, rnode)
     if css_class is None: css_class = ''
-    
+
     # We encapsulate svg in img tag to avoid issues with rendering and clipping of texts plus ids conflicts
     svg_b64 = base64.b64encode(svg.encode('utf-8')).decode('ascii')
     svg = f'<img src="data:image/svg+xml;base64,{svg_b64}" alt="SVG Image"/>'
     fig = html('figure', svg + _fig_caption(caption), css_class=f'focus-child fig-{id(svg)} {css_class}', style=_fig_style_inline).value
-    
+
     if css_props:
         fig += _styled_css({f'.fig-{id(svg)}': css_props}).value
-    return XTML(fig) 
+    return XTML(fig)
 
 @_internal_xmd_call('iframe')
 def iframe(src, width='100%',height='auto',**kwargs):
@@ -590,7 +595,7 @@ def styled(obj, css_class=None, **css_props):
     klass = css_class if isinstance(css_class, str) else ''
 
     if isinstance(obj,ipw.DOMWidget):
-        if not any([css_class, css_props]): 
+        if not any([css_class, css_props]):
             _patch_display(obj) # user expects this function might has display
             return obj # nothing to do
         # We need a box to properly handle class and props
@@ -599,14 +604,14 @@ def styled(obj, css_class=None, **css_props):
         out = ipw.Box([obj])
         if klass: [out.add_class(k) for k in klass.split()] # needs each class separately
         _patch_display(out)
-        
+
         # Attach few inline properties, inline-grid is better for most widgets
-        out.layout.padding = str(css_props.get('padding', 0)) 
-        out.layout.margin = str(css_props.get('margin', 0)) 
-        
-        if not css_props: 
+        out.layout.padding = str(css_props.get('padding', 0))
+        out.layout.margin = str(css_props.get('margin', 0))
+
+        if not css_props:
             return out
-        
+
         style = ipw.HTML(_style_for_widget(out, **css_props))
         style.layout.position = 'absolute' # to avoid taking space
         out.children = [style, obj] # style before obj to apply first
@@ -619,11 +624,11 @@ def styled(obj, css_class=None, **css_props):
 @_internal_xmd_call('pin')
 def pin(obj, x=None, y=None, width=None, height=None, center=False, zorder=0, rotate=0, blur=0, css_class=None, **css_props):
     """Pin an object at a specific position on the slide. Position is given in percentage of slide dimensions if int/float, otherwise any valid CSS unit.
-    `center` will align the center of object to given coordinates instead of top left corner. `zorder` controls layering 
-    of pinned objects, higher zorder means on top. `rotate` and `blur` applies CSS transform and filter to object. 
-    
+    `center` will align the center of object to given coordinates instead of top left corner. `zorder` controls layering
+    of pinned objects, higher zorder means on top. `rotate` and `blur` applies CSS transform and filter to object.
+
     `css_class` and `css_props` are applied to pinned object for further customizations.
-    
+
     ::: note.warn head="Be Careful!"
         - Beaware that pinning is contained relative to columns and containers with animation classes, use outside of any of those context to align to whole slide.
         - Use animation classes inside the pinned content, otherwise it will conflict with pin's CSS properties and may not work as expected.
@@ -639,13 +644,13 @@ def pin(obj, x=None, y=None, width=None, height=None, center=False, zorder=0, ro
     for name, prop in [("zorder", zorder), ("blur", blur), ("rotate", rotate)]:
         if prop and not isinstance(prop, (int, float)):
             raise TypeError(f"Parameter '{name}' must be a number, got {type(prop).__name__}")
-            
+
     # Layering & Filter mapping
-    if zorder: 
+    if zorder:
         css_props["z-index"] = int(zorder)
-    if blur: 
+    if blur:
         css_props["filter"] = f"blur({blur}px) {css_props.get('filter', '')}".strip()
-    
+
     # Handle Transform Layering Safely
     transforms = []
     if center:
@@ -658,13 +663,13 @@ def pin(obj, x=None, y=None, width=None, height=None, center=False, zorder=0, ro
     coords = {"left": x, "top": y, "width": width, "height": height}
     for prop, value in coords.items():
         if value is not None:
-            if isinstance(value, (int, float)): 
+            if isinstance(value, (int, float)):
                 value = f"{value}%"
             css_props[prop] = value
 
     css_props["position"] = "absolute" # this is what makes it pinned
     css_class = f'ips-pinned-item {css_class}' if css_class else 'ips-pinned-item' # need some stuff
-    return styled(obj, css_class=css_class, **css_props)    
+    return styled(obj, css_class=css_class, **css_props)
 
 @_internal_xmd_call('focus')
 def focus(obj):
@@ -693,73 +698,71 @@ def _validate_key(key: str, param_name: str):
     if not re.fullmatch(r'[a-zA-Z0-9][\w\-]*', key):
         raise ValueError(f"{param_name} should be a valid key (starting with letter, followed by alphanumeric, underscore, hyphen), got {key!r}")
     return key
-    
+
 @_internal_xmd_call('link')
 @slidebound
 def link(target_key:str, text:str="Navigate to Linked Slide", icon:str='link'):
     r"""Create a link to jump to another slide which has the specified target key.
-    
+
     - `target_key` parameter specifies the target key to jump to, can be set using the `uid` function.
     - `icon` parameter allows you to add a font-awesome icon to the link.
     - This works in markdown as well. In python, you need to display (or pass to write) the output to make it work.
     """
     target_key = _validate_key(target_key, "target_key")
     kwargs = {"href": f"#{target_key}", "css_class": "slide-link"} # never add onclick here, that will break in exported PDF/HTML
-    text = (f' <i class="fa fa-{icon}"></i>' if icon else '') + f"{text}"   
+    text = (f' <i class="fa fa-{icon}"></i>' if icon else '') + f"{text}"
     return html('a',text,**kwargs)
 
 @_internal_xmd_call('uid')
 @slidebound
 def uid(key:str):
     r"""Assign a unique identifier to the currently building slide that can be referenced by the `link` function.
-    
+
     - `key` should be a valid key (starting with a letter, followed by alphanumeric, underscore, hyphen).
     - This assigns the unique identifier to the current slide, so can only be referenced by the `link` function, not by plain html links.
     """
     sid = _validate_key(key, "key")
     slides = get_slides_instance()
-    
+
     for slide in (s for s in slides if s is not slides.this):
         if slide._sid == sid: raise ValueError(f"key {sid!r} already exists on slide {slide.number}!")
     slides.this._sid = sid # update slide id for this slide
 
-_VOID_TAGS = ('area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr') # self closing tags
-    
 def html(tag, children = None,css_class = None, style=None, void_attrs=None,**node_attrs):
-    """Returns html node with given children and node attributes like style, id etc. If an ttribute needs '-' in its name, replace it with '_'.     
+    """Returns html node with given children and node attributes like style, id etc. If an ttribute needs '-' in its name, replace it with '_'.
     `tag` can be any valid html tag name. A self closing tag must not have children e.g. ` hr ` will be `<hr/>`.  Empty tag gives unwrapped children.
-    
+
     `children` expects:
-    
+
     - If None, returns node for self closing tags such as [code! html('image',alt='Image') /] → [code!! 'html' .. <img alt='Image'></img> /].
     - str: A string to be added as node's text content.
     - list/tuple of [objects]: A list of objects that will be parsed and added as child nodes. Widgets are not supported.
     - dict if tag is 'style', this will only be exported to HTML if called under slide builder, use [code! slides.css /] otherwise. See [code! Slides.css_syntax /] to learn about requirements of styles in dict.
-    
+
     `void_attrs` are value-less attributes, such as `disabled`, `checked`, `open` etc. Must be a string of space separated attributes names.
-    
+
     Example:
     ```python
     html('img',src='ir_uv.jpg') #Returns IPython.display.HTML("<img src='ir_uv.jpg'></img>") and displays image if last line in notebook's cell.
     ```
-    
-    ::: note.tip 
+
+    ::: note.tip
         To keep an image persistently embeded, use `ipyslides.utils.imge` function instead of just an html tag.
     """
     if not isinstance(tag, str):
         raise TypeError('tag should be a string of html tags or empty string!')
-    
+
     tag = tag.strip() # clean up
-    
-    if tag in ['hr', 'hr/']: 
+
+    if tag in ['hr', 'hr/']:
         return XTML(f'<hr/>') # Special case for hr
-    
+
     if void_attrs:
         if not isinstance(void_attrs, str):
             raise TypeError(f'void_attrs should be a string of space separated attributes, got {type(void_attrs)}')
     else:
         void_attrs = ''
-    
+
     if tag == 'style':
         if isinstance(children, dict):
             return _styled_css(children)
@@ -767,24 +770,24 @@ def html(tag, children = None,css_class = None, style=None, void_attrs=None,**no
             return XTML(f"<style>\n{children}\n</style>")
         else:
             raise TypeError(f"'style' tag requires dict with CSS, got {type(children)}")
-    
+
     node_attrs = {k.replace('_','-'):v for k,v in node_attrs.items()}
-    attrs = ' '.join(f'{k}="{v}"' for k,v in node_attrs.items()) 
-    
+    attrs = ' '.join(f'{k}="{v}"' for k,v in node_attrs.items())
+
     if style is not None:
         if not isinstance(style, (str, dict)):
             raise TypeError(f"'style' attribute should be a string or dict of inline css properties, got {type(style)}")
         attrs += f' {_inline_style(style)}' if isinstance(style, dict) else f' style="{style}"'
-    
+
     attrs += (f' {void_attrs}' if void_attrs else '') # these usually come at end
     if css_class:
         attrs = f'class="{css_class}" {attrs}'
-    
+
     if tag in _VOID_TAGS: # Self closing tag
         if children:
             raise RuntimeError(f'Parametr `children` should be None for self closing tag {tag!r}')
         return XTML(f'<{tag} {attrs} />' if attrs else f'<{tag}/>')
-    
+
     if children is None:
         content = ''
     elif isinstance(children,str):
@@ -793,10 +796,10 @@ def html(tag, children = None,css_class = None, style=None, void_attrs=None,**no
         content = '\n'.join(htmlize(child) for child in children) # Convert to html nodes in sequence of rows
     else:
         raise TypeError(f'Children should be a list/tuple (or dict for style tag) of objects or str, not {type(children)}')
-    
+
     if not tag: # empty tag.
         return XTML(content) # don't wrap in any node
-        
+
     tag_in =  f'<{tag} {attrs}>' if attrs else f'<{tag}>' # space is must after tag, strip attrs spaces
     return XTML(f'{tag_in}{content}</{tag}>')
 
@@ -813,45 +816,45 @@ def as_widget(obj=''): # should be useable empty
 # This is only intended to use for general tags in markdown, do not use in python
 @_internal_xmd_call('anyTag')
 def anyTag(tag, content = "", css_class = None, void_attrs=None, node_attrs=None, **css_props):
-    r"""Picks up html tag from markdown function calls and returns html node with given text and node attributes 
+    r"""Picks up html tag from markdown function calls and returns html node with given text and node attributes
     like style, id etc. If an attribute needs '-' in its name, replace it with '_'.
-    
+
     `void_attrs` are value-less attributes, such as `disabled`, `checked`, `open` etc. Must be a string of space separated attributes names.
-    
+
     `node_attrs` are other html node attributes like `id`, `data-*` etc. with ('_' → '-' in keys) Must be a dict of attribute name and value pairs excluding `style` which is handled separately by `css_props`. If an attribute needs '-' in its name, replace it with '_'.
-    
+
     The markdown call syntax for registered python functions and html tags is same, see `slides.xmd.funcs` for details.
-    
+
     If `tag` is self closing tag and content is not empty. e.g. `[img\! src="test.png" \.. test content \/]` will throw error.
-    
-    ```markdown   
+
+    ```markdown
     [details!! summary = "Open Me" ..
         This is a test content with multiple lines
         It must maintain its own indentation and line breaks
     /]
     ```
-    
+
     You can override a registered function by pure html tag by appending ` _ ` to the tag. For example,
     ` svg_ ` will be html tag that overrides the `svg` function."""
     if not isinstance(content, str):
         raise TypeError(f"'content' should be a string, got {type(content)}. Use html() for non-string content.")
     if tag in _VOID_TAGS and content:
         raise RuntimeError(f'Parametr `content` should be empty for self closing tag {tag!r}')
-    
+
     if node_attrs is not None:
         if not isinstance(node_attrs, dict):
             raise TypeError(f"'node_attrs' should be a dict of html node attributes or None, got {type(node_attrs)}")
-        
+
         if 'style' in node_attrs:
             node_attrs.pop('style',None) # remove style from node_attrs if present, as it will be handled separately
             raise KeyError("'style' attribute is built from **css_props, must not be in 'node_attrs'.")
-    
+
     # strips outer <p> tags to avoid double wrapping in <p> when used inside other tags
     return html(tag, xmd(content, True, ""), css_class=css_class, style=css_props, void_attrs=void_attrs, **(node_attrs or {}))
 
 @_internal_xmd_call('gap')
 def gap(h=1, v=1, unit = 'em'):
-    r"""Returns html span node with given horizontal and vertical gap in `unit` (px, em, rem, % etc.). 
+    r"""Returns html span node with given horizontal and vertical gap in `unit` (px, em, rem, % etc.).
     Useful for creating space between elements in a layout. `h` is horizontal gap and `v` is vertical gap.
     Markdown usage: `[gap\! v=0.5 \/]`, `[gap\! 2, 0.5, unit="px" \/]` etc.
     """
@@ -887,12 +890,12 @@ def tag(text, color='var(--head-color)', round=False, scale=0.7, pill=False):
 def head(text: str | None = None, mode: str | None = None):
     """Renders a block header with optional semantic mode styling.
     Adopts styling based on the specified mode or based on containing block.
-    
+
     ::: note.tip
         You can use `::: note.mode` to create notes without explicity using the `head` function
         and can also tweek header text, e.g. `::: note.tip head="Custom Tip"` in the block itself.
     """
-    if mode and not mode in _head_modes:
+    if mode and mode not in _head_modes:
         raise ValueError(f"Invalid mode '{mode}'. mode must be None or one of: {', '.join(_head_modes.keys())}")
 
     meta = _head_modes.get(mode, {}) # handle None
@@ -920,7 +923,7 @@ def alert(text, css_class=None, bold=False, italic=False, **css_props):
     klass = f"class='{css_class}'" if css_class and isinstance(css_class, str) else ''
     return XTML(f"<span {klass} {_inline_style(kws)}>{xmd(text, True,'')}</span>")
 
-@_internal_xmd_call('color')    
+@_internal_xmd_call('color')
 def color(text,fg='var(--accent-color, blue)',bg=None, **css_props):
     "Colors text, `fg` and `bg` should be valid CSS colors. `css_props` are applied to span element."
     style_kws = {'color': fg, 'background': bg, 'padding': '0.1em', 'border-radius':'0.1em', **css_props}
@@ -928,13 +931,13 @@ def color(text,fg='var(--accent-color, blue)',bg=None, **css_props):
 
 @_internal_xmd_call('fa')
 def fa(name: str, color:str = 'currentColor', size:str = '1em',rotation:int = 0, **css_props):
-    """Returns FontAwesome icon as html. `name` is the icon name without 'fa-' prefix. 
+    """Returns FontAwesome icon as html. `name` is the icon name without 'fa-' prefix.
     You can control `color`, `size` (like '2em', '24px'), `rotation` (0, 90, 180, 270) and other `css_props` applied to icon.
     If an icon is available through ipyslides, it takes precedence over online fontawesome icons, use `fa-` prefix in that case to avoid conflict.
     """
     if name in icon.available:
         return XTML(icon(name, color=color, size=size, rotation=rotation).value)  # use built-in icon but return same type
-    
+
     if not name.startswith('fa-'):
         name = f'fa-{name}' # use online fontawesome icon
     style_kws = {'color': color, 'font-size': size, 'transform': f'rotate({rotation}deg)' if rotation else '', **css_props}
@@ -943,8 +946,8 @@ def fa(name: str, color:str = 'currentColor', size:str = '1em',rotation:int = 0,
 # Do not add this in markdown which has ::: columns.inline equivalent
 def stack(objs, sizes=None, vertical=False, css_class=None, **css_props):
     """Stacks given objects in a column or row with given sizes. Markdown equivalent to `stack(..., vertical=False)` is `::: columns.inline` block.
-    
-    - objs: list/tuple of objects. Markdown strings in list will be parsed to html in non-display mode. 
+
+    - objs: list/tuple of objects. Markdown strings in list will be parsed to html in non-display mode.
     - sizes: list/tuple of sizes(int, float) for each object, if not given, all objects will have equal size.
     - vertical: bool, to stack objects vertically or horizontally, default is horizontal.
     - css_class: str, to add a class to the container div.
@@ -952,12 +955,12 @@ def stack(objs, sizes=None, vertical=False, css_class=None, **css_props):
     """
     if not isinstance(objs, (list, tuple)):
         raise TypeError(f'objs should be list or tuple of objects, got {type(objs)}')
-    
+
     kwargs = {
-        'gap': '0.25em', 
+        'gap': '0.25em',
         **css_props, # do not allow to override display and flex-direction, so come later
-        'display': 'flex', 'flex-direction': 'column' if vertical else 'row', 
-    } 
+        'display': 'flex', 'flex-direction': 'column' if vertical else 'row',
+    }
     if sizes is not None:
         if not isinstance(sizes, (list, tuple)):
             raise TypeError(f'sizes should be a list or tuple of sizes, got {type(sizes)}')
@@ -969,17 +972,17 @@ def stack(objs, sizes=None, vertical=False, css_class=None, **css_props):
         sizes = [{'flex': f'{size} 1','min-width':0} for size in sizes] # Convert to flex style dicts
     else:
         sizes = [{'flex': '1 1','min-width':0}] * len(objs) # default sizes if not given
-    
+
     return html('div', [
-        html('div', htmlize(obj), style=size) 
+        html('div', htmlize(obj), style=size)
         for obj, size in zip(objs, sizes)
-    ], style = kwargs, css_class=(f'{css_class or ""} {"" if vertical else "columns"}').strip()) 
-    
+    ], style = kwargs, css_class=(f'{css_class or ""} {"" if vertical else "columns"}').strip())
+
 # Don't try this in markdown, standard markdown table is better alongwith ::: table block
 def table(data, headers = None, widths=None, css_class=None, **css_props):
-    """Creates a table of given data like DataFrame, but with rich elements. 
+    """Creates a table of given data like DataFrame, but with rich elements.
     `data` should be a 2D matrix-like. `headers` is a list of column names. `widths` is a list of widths for each column.
-    
+
     Example:
     ```python
     import pandas as pd
@@ -999,26 +1002,26 @@ def table(data, headers = None, widths=None, css_class=None, **css_props):
         if headers is not None:
             if not isinstance(headers, Iterable):
                 raise TypeError(f'headers should be an iterable of colum headers or None, got {type(headers)}')
-            
+
             data = [headers, *data] # Add headers to data
 
     except TypeError:
         raise TypeError("data should be 2D matrix-like")
-    
+
     return html('div', [stack(d, sizes=widths) for d in data],css_class=klass + ' focus-self', style=css_props)
 
 def _resolve_name(obj):
     name = obj.__name__ if hasattr(obj,'__name__') else type(obj).__name__
     if name == 'property':
-        name = obj.fget.__name__ 
+        name = obj.fget.__name__
     return name
 
 def sig(obj,prepend_str = None):
     "Returns signature of a callable. You can prepend a class/module name."
     try:
         _sig = f'<b>{_resolve_name(obj)}</b>'
-        if prepend_str: 
-            _sig = f'{prepend_str}.{_sig}' 
+        if prepend_str:
+            _sig = f'{prepend_str}.{_sig}'
         _sig = f'<span class="sig">{_sig}</span>' + code(str(inspect.signature(obj))).inline.value
         return XTML(_sig)
     except:
@@ -1029,7 +1032,7 @@ def doc(obj,prepend_str = None, members = None, itself = True):
     "Returns documentation of an `obj`. You can prepend a class/module name. members is True/List of attributes to show doc of."
     if obj is None:
         return XTML('') # Must be XTML to work on memebers
-    
+
     _doc, _sig, _full_doc = '', '', ''
     if itself == True:
         with suppress(BaseException): # if not __doc__, go forwards
@@ -1037,17 +1040,17 @@ def doc(obj,prepend_str = None, members = None, itself = True):
 
         with suppress(BaseException): # This allows to get docs of module without signature
             _sig = sig(obj,prepend_str)
-    
+
     _name = _resolve_name(obj)
     if _name.startswith('_'): # Remove private attributes
         return XTML('') # Must be XTML to work on memebers
-        
+
     _pstr = f'{str(prepend_str) + "." if prepend_str else ""}{_name}'
     _name = ".".join([f"<b>{n}</b>" if i == 0 else n for i, n in enumerate(_pstr.split(".")[::-1])][::-1])
     _sig = _sig or f'<span class="sig">{_name}</span>' # Picks previous signature if exists
     _full_doc = f"<div class='docs'>{_sig}<br>{_doc}\n</div>" if itself == True else ''
     _pstr = (prepend_str or _pstr) if itself == False else _pstr # Prefer given string if itself is not to doc
-    
+
     _mems = []
     if members == True:
         if hasattr(obj,'__all__'):
@@ -1056,7 +1059,7 @@ def doc(obj,prepend_str = None, members = None, itself = True):
             for attr in [getattr(obj, d) for d in dir(obj) if not d.startswith('_')]:
                 if inspect.ismodule(obj): # Restrict imported items in docs
                     if hasattr(attr, '__module__')  and attr.__module__ == obj.__name__:
-                        _mems.append(attr) 
+                        _mems.append(attr)
                 elif inspect.isclass(obj):
                     if inspect.ismethod(attr) or inspect.isfunction(attr) or type(attr).__name__ == 'property':
                         _mems.append(attr)
@@ -1064,20 +1067,20 @@ def doc(obj,prepend_str = None, members = None, itself = True):
                     with suppress(BaseException):
                         if attr.__module__ == obj.__module__: # Most useful
                             _mems.append(attr)
-                
+
     elif isinstance(members, (list, tuple, set)):
         for attr in members:
             if not hasattr(obj,attr):
                 raise AttributeError(f'Object {obj} does not have attribute {attr!r}')
             else:
                 _mems.append(getattr(obj,attr))
-    
+
     # Collect docs of members
     for attr in _mems:
         with suppress(BaseException):
             _class_members = inspect.ismodule(obj) and (inspect.isclass(attr) and (attr.__module__ == obj.__name__)) # Restrict imported classes in docs
             _full_doc += doc(attr, prepend_str = _pstr, members = _class_members, itself = True).value
-    
+
     return XTML(_full_doc)
 
 @_internal_xmd_call('today')
@@ -1086,21 +1089,21 @@ def today(fmt = '%b %d, %Y',fg = 'inherit'): # Should be inherit color for markd
     return color(datetime.datetime.now().strftime(fmt),fg=fg, bg = None)
 
 def bullets(iterable, ordered = False, marker = None, css_class = None, **css_props):
-    """A powerful bullet list. `iterable` could be list of anything that you can pass to `write` command. 
+    """A powerful bullet list. `iterable` could be list of anything that you can pass to `write` command.
     Use `write(..., paused=True)` for frame-based incremental reveal, or `steps(...)` for slider-based step view alongwith `tag` function to mark numbered steps.
-    
-    - If an item in iterable is a tuple/list of 2 elements and first element is a str, it will be used as per item marker.   
+
+    - If an item in iterable is a tuple/list of 2 elements and first element is a str, it will be used as per item marker.
     - `ordered`: bool, to create ordered or unordered list.
     - `marker`: str, CSS list-style-marker property for overall list, e.g. '✅' or '🔴' etc.
-    
+
     You can also use CSS `list-style` property in `css_props` for overall list, e.g. disc, circle, square, upper-roman etc. but it will be overridden by `marker` parameter if given.
     See [list-style](https://developer.mozilla.org/en-US/docs/Web/CSS/list-style) for marker types details.
-    
+
     Markdown Equivalent:
     ```md-before
-    ::: ul .hrules list-style="'✅'" 
+    ::: ul .hrules list-style="'✅'"
         ::: li list-style="'❌'" .. First item
-        ::: li data-marker=🔴 .. Second item 
+        ::: li data-marker=🔴 .. Second item
         ::: li
             Third item takes default marker and is large, so made block
     ```
@@ -1115,8 +1118,8 @@ def bullets(iterable, ordered = False, marker = None, css_class = None, **css_pr
     kwargs = dict(style = css_props)
     if marker is not None:
         kwargs['data-marker'] = marker
-    
-    return html('ol' if ordered else 'ul', children = _bullets, css_class = css_class, **kwargs) 
+
+    return html('ol' if ordered else 'ul', children = _bullets, css_class = css_class, **kwargs)
 
 def _save_clipboard_image(filename, quality = 95, overwrite = False):
     # quality is for jpeg only, png is lossless
@@ -1138,7 +1141,7 @@ def update_class(widget, css_class:str, keep:bool):
         raise TypeError(f'widget should be an ipywidgets.DOMWidget, got {type(widget)}')
     if not isinstance(css_class, str):
         raise TypeError(f'css_class should be a string, got {type(css_class)}')
-    
+
     action = widget.add_class if keep else widget.remove_class
     for cls in css_class.split():
         action(cls)
@@ -1148,7 +1151,7 @@ _css_info = (f"""
 {textwrap.dedent(_build_css.__doc__)}
 
 ::: note
-    In the output of [code! Slides.html('style',props) /], [code! Slides.css(props) /] etc. functions, top selector 
+    In the output of [code! Slides.html('style',props) /], [code! Slides.css(props) /] etc. functions, top selector
     would be different if it is called under slide context or not.
 
 ```columns.inline
@@ -1160,68 +1163,68 @@ _css_info = (f"""
 
 @_fix_init_sig
 class steps(ipw.GridBox):
-    """A stepper widget to step through given objects with a slider. `objs` should be a list/tuple of objects 
+    """A stepper widget to step through given objects with a slider. `objs` should be a list/tuple of objects
     to step through and can be any object that can be converted to a widget using `as_widget`. Multiple objects
-    in a single step can be given as a nested list/tuple of objects. `loc` controls 
-    the location of step dots, which can be 'left', 'top', 'right' or 'bottom'. `interval` controls the time interval 
+    in a single step can be given as a nested list/tuple of objects. `loc` controls
+    the location of step dots, which can be 'left', 'top', 'right' or 'bottom'. `interval` controls the time interval
     in milliseconds for automatic stepping. `css_class` and `css_props` can be used to style the widget.
     `static_index` can be used to set a specific index to be displayed statically in PDF and HTML export, while the stepper will still function normally in the notebook.
-    
+
     ::: note.tip
         Slides navigation's keys/gestures step through the frames in the stepper if the mouse/pointer is over it.
     """
     def __init__(self, objs, loc="left", interval=1500, css_class=None, static_index = -1, **css_props):
         if not isinstance(objs, (list, tuple)) or len(objs) < 2:
             raise ValueError("objs must be a list/tuple with at least two objects to step through!")
-        if not loc in ("left","top","right","bottom"):
+        if loc not in ("left","top","right","bottom"):
             raise ValueError(f"loc must be one of left, right, top, bottom, got {loc!r}")
-        
+
         self._uclass = f'output-{id(self)}' # unique class for this instance's output area
         klasses = ['ips-steps-wrapper', 'vertical'] if loc in ("left","right") else ['ips-steps-wrapper']
-        
+
         if isinstance(css_class, str):
             klasses.extend(css_class.split())
-            
+
         key = 'grid_template_columns' if loc in ("left","right") else 'grid_template_rows'
         value = '28px 1fr' if loc in ("left","top") else '1fr 28px' # 4px extra space for scrollbar
         cross_template = {f'grid_template_{"rows" if "columns" in key else "columns"}': '100%'} # need to set explicitly to avoid overflow
         super().__init__(layout={'display': 'grid', key: value, **cross_template}, _dom_classes=klasses)
-        
+
         self._sidxs, outputs = self._process_objs(objs)
-        
+
         if static_index < 0:
-            static_index = len(self._sidxs) - 1 
+            static_index = len(self._sidxs) - 1
         if static_index >= len(self._sidxs):
             raise ValueError(f"static_index must index {len(self._sidxs)} objects, got {static_index}")
-        
+
         self._expidx = static_index
         self._viewstyle =  ipw.HTML().add_class('abs-style').add_class('jupyter-only') # will not export this style
         self._output = ipw.Output(layout={'min_width': '0'} # must have min-width in grid layout to avoid unexpected lengths
             ).add_class(self._uclass).add_class('ips-steps-output')
         self._output._exprng = self._sidxs[self._expidx] if self._sidxs else None # attach range for export
-        
+
         with self._output:
             display(*outputs) # only clean outputs
-            
+
         first, last = self._sidxs[self._expidx] if self._sidxs else [0, None]
         self._fixstyle = html('style', _build_css((), {
                 f'.{self._uclass}': css_props, # apply user css to output
                 '.ips-steps-wrapper > .abs-style': {'position': 'absolute', 'width': '0', 'height': '0', 'padding': '0'}, # take style widgets out of flow
                 ':not(.SlideArea) .ips-steps-output': {'max-height': '400px', 'overflow': 'auto'},
             })).as_widget().add_class('abs-style')
-        
+
         self._printstyle = html('style', _build_css(('@media print',), {
             **view_nodes(f'.{self._uclass} > div > .jp-OutputArea-child',first, last),
             '.ips-steps-wrapper .steps-widget': {'opacity': '0.2 !important'}, # dim it
         })).as_widget().add_class('abs-style').add_class('jupyter-only') # will not export this style to avoid conflicts
-        
+
         self._stepper = StepSlider(vertical=True if loc in ("left","right") else False, nsteps=len(self._sidxs), interval=interval)
-        
+
         children = (self._stepper, self._output) if loc in ("left","top") else (self._output, self._stepper)
         self.children = (self._fixstyle, self._viewstyle, self._printstyle, *children)
         self._stepper.observe(self._set_view, names="value")
         self._set_view(0) # set initial view
-        
+
     def _process_objs(self, objs):
         # This is crucial to capture them here as they do not update directly in output widget in same synchronous call
         with capture_content() as cap:
@@ -1242,7 +1245,7 @@ class steps(ipw.GridBox):
         idxs = list(accumulate([0, *(len(m) for m in main)]))
         sidxs = tuple((i, j - 1) for i, j in zip(idxs[:-1], idxs[1:]))
         return sidxs, tuple(chain(*main))
-    
+
     def _set_view(self, change):
         forward = True # default to forward jump even when value set
         if isinstance(change, int): # given interger index
@@ -1251,13 +1254,12 @@ class steps(ipw.GridBox):
             num = change['new']
             idxs = self._sidxs[num - 1] # stepper is 1-indexed
             forward = change['old'] and num > change['old']
-        
+
         if slides := get_slides_instance(): # must before changing view window to take effect
             # Allow animation on selection any time
             update_class(slides.widgets.slidebox, 'AnimPrev', not forward)
             slides._send_nav_msg(forward, parts=True, selector=f'.{self._uclass}')
-        
+
         selector = f'.{self._uclass} > div > .jp-OutputArea-child'
         css = _build_css(('@media screen',), view_nodes(selector,*idxs)) # only screen mode to avoid print conflicts
         self._viewstyle.value = f"<style>\n{css}\n</style>"
-        

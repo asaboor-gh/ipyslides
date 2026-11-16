@@ -1,6 +1,12 @@
 # This package exports xmd at top level.
 
-import textwrap, sys, string, builtins, inspect, ast, traceback
+import textwrap
+import sys
+import string
+import builtins
+import inspect
+import ast
+import traceback
 import re
 from itertools import islice, count
 from functools import partial
@@ -17,7 +23,7 @@ from IPython.display import display
 from IPython.utils.capture import capture_output, CapturedIO
 from ipywidgets import DOMWidget
 
-from .formatters import (XTML, htmlize, get_slides_instance, 
+from .formatters import (XTML, htmlize, get_slides_instance,
     frozen as Frozen, _highlight, _inline_style, _delim)
 from .source import SourceCode
 
@@ -57,13 +63,12 @@ class Extensions:
     def active(self):
         "List of active extensions."
         return {
-            "extensions": list(set([*self._exts, *_md_extensions])), 
+            "extensions": list(set([*self._exts, *_md_extensions])),
             "extension_configs": {**self._configs, **_md_extension_configs}
         }
 
 # Global monotonic counter for unique variable keys
 COUNTER = count()
-        
 # NEVER allow random functions, only xmd.register is gateway for security,
 # as well as scope, like a function inside python script is not in notebook user namespace to access here
 _XMD_FUNCS = {} # will be populated by decorated functions
@@ -76,11 +81,11 @@ def _internal_xmd_call(fname):
         return func
     return decorator
 
-def error(name, msg):
+def error(name, msg) -> XTML:
     "Add error without breaking execution."
     return XTML(f"<pre class='Error'><b style='color:crimson;'>{name}</b><span>: {msg}</span></pre>")
 
-def warn(msg, name="UserWarning"):
+def warn(msg, name="UserWarning") -> XTML:
     "Show warning message in slides but not in fullscreen mode."
     return XTML(f"<pre class='Error Warn jupyter-only'><b style='color:orange;'>{name}</b><span>: {msg}</span></pre>")
 
@@ -107,44 +112,44 @@ def capture_content(stdout: bool = True, stderr: bool = True, display: bool = Tr
     def rprint(*args, **kwargs):
         if "file" in kwargs and kwargs["file"] != sys.stdout:  # User should be able to redirect print to file
             return bprint(*args, **kwargs)
-        
-        if stdout: 
+
+        if stdout:
             kwargs['file'] = StringIO()
             bprint(*args, **kwargs)
             return raw(kwargs['file'].getvalue(), css_class="InlinePrint").display() # InlinePrint  is important for filterning in utils
         else:
             return bprint(*args, **kwargs)
-    
+
+    bprint = builtins.print # should be here, not on global level
     try:
-        bprint = builtins.print # should be here, not on global level
         builtins.print = rprint # replace temporarily
         with capture_output(stdout=stdout, stderr=stderr,display=display) as cap:
             yield cap # pass capturedIO at top
     finally: # only need finally, errors are automatically thrown
         builtins.print = bprint
-        
+
 def _resolve_citations(parser, content):
     "Resolve citations and other minimal stuff that can't nest other functions."
     slides = get_slides_instance()
     if not slides or not slides.this: # under building slide
         return content # no need to resolve anything
-    
+
     def sub_cite(match):
         body = match.group('body')
         items = re.findall(r'@([A-Za-z][\w\-]*)(!)?', body) # extract citation keys and inline markers
-        
+
         # group keys types, superscript citations first, then inline
         sup_keys = ",".join(k for k, bang in items if not bang)
         inline_keys = [k for k, bang in items if bang]
-        
+
         # First handle superscript citations in a group
         res = parser._handle_var(slides._cite(sup_keys)) if sup_keys else ""
         # Then handle inline citations, can't group them in a div which is not allowed inside p tag
         for key in inline_keys:
             res += slides._nocite(key)
         return res
-    
-    content = CITE_RE.sub(sub_cite, content)  
+
+    content = CITE_RE.sub(sub_cite, content)
     return content
 
 
@@ -157,7 +162,7 @@ class HtmlFormatter(string.Formatter):
                 return value # Just return string
 
         return super().format_field(value, format_spec)
-        
+
     def get_value(self, key, args, kwargs):
         if isinstance(key, int):
             return error('RuntimeError','Positional arguments are not supported in custom formatting!').value
@@ -166,14 +171,14 @@ class HtmlFormatter(string.Formatter):
                 return error('NameError', f'name {key!r} is not a valid variable name').value
             return error('NameError', f'name {key!r} is not defined').value
         return super().get_value(key, args, kwargs)
-    
+
 
 hfmtr = HtmlFormatter() # custom format
 del HtmlFormatter
 
 class TagFixer(HTMLParser):
     "Use self.fix_html function."
-    def handle_starttag(self, tag, attrs): 
+    def handle_starttag(self, tag, attrs):
         self._objs.append(f'{tag}')
 
     def handle_endtag(self, tag):
@@ -187,12 +192,12 @@ class TagFixer(HTMLParser):
         end_tags = [f"</{tag}>" for tag in tags if not tag.startswith('/')]
         start_tags = [f"<{tag.lstrip('/')}>" for tag in tags if tag.startswith('/')]
         return ''.join(start_tags) + content + ''.join(end_tags)
-    
+
     def _remove_empty_tags(self, content, depth=5):
         empty_tags = re.compile(r'\<\s*(.*?)\s*\>\s*\<\s*\/\s*(\1)\s*\>') # keeps tags with attributes
         i = 0
-        while empty_tags.findall(content) and i <= depth: 
-            content = empty_tags.sub('', content).strip() 
+        while empty_tags.findall(content) and i <= depth:
+            content = empty_tags.sub('', content).strip()
             i += 1
         return content
 
@@ -204,8 +209,8 @@ class TagFixer(HTMLParser):
 
         if self._objs: # Otherwise its already correct
             content = self._fix_tags(content)
-        return self._remove_empty_tags(content, clean_depth) 
-        
+        return self._remove_empty_tags(content, clean_depth)
+
 
 tagfixer = TagFixer()
 del TagFixer
@@ -228,9 +233,9 @@ class char_esc:
             repl = r"&#96;" if ch == '`' and not ascii_backtick else ch
             text = text.replace(f"ESC-{ord(ch):03}-CHR", repl)
         return text
-    
+
 @_internal_xmd_call('load')
-def load(filepath : str, start:int=None, end=None):
+def load(filepath : str, start:int|None=None, end=None):
     "Load markdown file content in place. Use `start` and `end` to specify line numbers range."
     try:
         with open(filepath, "r", encoding="utf-8") as f:
@@ -240,12 +245,12 @@ def load(filepath : str, start:int=None, end=None):
         return filepath, error('Exception', f'Could not load content from file {filepath!r}:\n{e}').value
 
 @_internal_xmd_call('frozen')
-def frozen(content): 
+def frozen(content):
     r"""Freezes the content to avoid any further modifications or parsing.
-    
+
     Useful to encapsulate the f-string interpolation to avoid syntax errors
     due to multiline output in f-strings, e.g. `f'[frozen\! { var_to_multiline } \/]'` will not break the inner blocks indentation.
-    
+
     ::: note.warn
         This function is different from the Python-side `frozen` and is used specifically for freezing content within the extended Markdown context.
     """
@@ -262,17 +267,17 @@ class cmnt_esc:
     _store = {} # stores escaped comments here from formatting.
     _COMMENT_RE = re.compile(r'<!--.*?-->', re.DOTALL | re.MULTILINE)
     _TOKEN_RE = re.compile(r"<!-- ESC-[0-9]+-CMT -->") # 16 hex digits key
-            
+
     @classmethod
     def escape(cls, text):
         def _mask(m):
-            # keep key as comment to avoid issues if can't be replaced 
+            # keep key as comment to avoid issues if can't be replaced
             key = f'<!-- ESC-{next(COUNTER)}-CMT -->'
             cls._store[key] = m.group(0)
             return key
-        
+
         return cls._COMMENT_RE.sub(_mask, text)
-    
+
     @classmethod
     def restore(cls, text):
         def _unmask(m):
@@ -282,7 +287,7 @@ class cmnt_esc:
             return cls._store.pop(key)  # Remove used key from the store to free memory
 
         return cls._TOKEN_RE.sub(_unmask, text)
-    
+
 
 PLUS_RE = re.compile(r'^\+\+(?:\s*$|\s)', re.MULTILINE) # This is used to split by ++ on its own line,
 DOTS_RE = re.compile(r'(?<!\S)\.\.(?!\S)') # Count only standalone ".." tokens (surrounded by whitespace or string boundaries)
@@ -307,6 +312,9 @@ CITE_RE = re.compile(r'''
     \[\s*(?P<body>(?:@[A-Za-z][\w\-]*!?[\s,;]*)+)\s*/?\]  # One or more keys; EVERY key must start with '@'. Forgive a stray '/' before ']'
 ''', re.VERBOSE)
 
+# One paragraph. Body stops at its own </p> so a following sibling <p> is a new match, not part of this body.
+PTAG_RE = re.compile(r'<p\b[^>]*>(?P<body>(?:(?!</p\b).)*)</p>', flags=re.DOTALL)
+
 _head_modes = {
     "alert":  {"bc":"block-red",    "title": "Alert",    "icon": "fa-bolt",            "color": "hsl(from var(--fg3-color) 0 s calc(l * 0.95))",},
     "ask":    {"bc":"block-orange", "title": "Question", "icon": "fa-question-circle", "color": "hsl(from var(--fg3-color) 20 s calc(l * 1.05))",},
@@ -321,8 +329,58 @@ _head_modes = {
 }
 
 def strip_ptags(content):
-    "Strip <p> and </p> tags from the start and end of the content, if present."
-    return re.sub(r"^<p>\s*|\s*</p>$", "", content) # clean up internal spaces as well, but no stripping outside if no p tags
+    "Strip <p> and </p> tags from one or more sibling paragraphs, keeping internal spaces."
+    parts, pos = [], 0
+    for match in PTAG_RE.finditer(content):
+        gap = content[pos:match.start()]
+        if gap.strip():
+            return content  # text outside the paragraphs: leave the whole string alone
+        if parts:
+            parts.append(gap)  # whitespace between siblings, unchanged
+        parts.append(match.group('body'))
+        pos = match.end()
+    if not parts or content[pos:].strip():
+        return content  # no paragraphs, or trailing text after the last </p>
+    return ''.join(parts)
+
+# Document roots are omitted: nesting <html>/<body> inside a slide breaks the page.
+_HTML_TAGS = frozenset("""
+a abbr address area article aside audio b bdi bdo blockquote br button canvas caption
+cite code col colgroup data datalist dd del details dfn dialog div dl dt em embed
+fieldset figcaption figure footer form h1 h2 h3 h4 h5 h6 header hgroup hr i iframe
+img input ins kbd label legend li link main map mark menu meta meter nav noscript
+object ol optgroup option output p picture pre progress q rp rt ruby s samp script
+search section select slot small source span strong style sub summary sup table
+tbody td template textarea tfoot th thead time title tr track u ul var video wbr
+center
+""".split())
+_VOID_TAGS = frozenset({"area", "br", "col", "embed", "hr", "img", "input", "link", "meta", "param", "source", "track", "wbr"})
+_RAW_HTML_TAGS = frozenset({"script", "style", "textarea", "title"}) # markdown would rewrite their text
+
+def _unwrap_outer_tag(content, tag):
+    "Drop one balanced outer <tag> when it wraps the whole string. Nested copies stay."
+    opened = re.match(rf'<{tag}\b[^>]*>', content, flags=re.IGNORECASE)
+    if not opened:
+        return content
+    open_re = re.compile(rf'<{tag}\b[^>]*>', flags=re.IGNORECASE)
+    close_re = re.compile(rf'</{tag}\s*>', flags=re.IGNORECASE)
+    depth, pos = 1, opened.end()
+    while depth and pos < len(content):
+        nxt_open = open_re.search(content, pos)
+        nxt_close = close_re.search(content, pos)
+        if not nxt_close:
+            return content
+        if nxt_open and nxt_open.start() < nxt_close.start():
+            depth += 1
+            pos = nxt_open.end()
+            continue
+        depth -= 1
+        if depth == 0:
+            if content[nxt_close.end():].strip():
+                return content  # a sibling follows; this tag is not the whole string
+            return content[opened.end():nxt_close.start()]
+        pos = nxt_close.end()
+    return content
 
 class XMarkdown(Markdown):
     def __init__(self):
@@ -331,29 +389,29 @@ class XMarkdown(Markdown):
         self._mvars = {} # internal markdown variables preferred over external variables
         self._returns = True
         self._nesting_depth = 0 # checks if using _parse in nested manner
-    
+
     @property
     def _wr(self):
         if not hasattr(self, '_wr_imported'):
             from . import writer # avoid cyclic, but import once
             self._wr_imported = writer
         return self._wr_imported
-    
+
     @property
     def _slides(self):
         return get_slides_instance() # always get the current slides instance, not cached
-    
+
     @property
     def _running_md_slide(self): # checks if parsing under purely markdown slide
         return self._slides and self._slides.this and self._slides.this._markdown
-    
+
     def user_ns(self):
         "Top level namespace or set by user from `xmd.pack`."
         if hasattr(XmdPack, '_bound_vars'):
             return XmdPack._bound_vars
 
         if self._running_md_slide:
-            return { 
+            return {
                 **self._slides._nb_vars, # Top level notebook scope variables
                 **self._slides.this._md_vars, # by Slide
             } # slide specific variables based on scope
@@ -367,11 +425,11 @@ class XMarkdown(Markdown):
         if not isinstance(xmd, str):
             issue = error("TypeError",f"Expected a string for markdown content, got {type(xmd)} instead.")
             return issue.value if returns else display(issue) # return value or display
-        
+
         # resolve loading files first, before any processing
         _, xmd = _load_files(xmd)
         xmd = self._intercept_frozen(xmd) # intercept frozen content after loading files
-        
+
         # Mask HTML comments before any splitting so their content (:::, ++, ```) is not treated as markers.
         # Python-Markdown passes <!--...--> through unchanged, so short placeholders survive convert().
         xmd = cmnt_esc.escape(char_esc.escape(xmd))  # Escape characters as well before processing
@@ -382,26 +440,26 @@ class XMarkdown(Markdown):
         if len(re.findall(r'^```', xmd, flags = re.MULTILINE)) % 2:
             issue = error("ValueError",f"Some blocks started with ```, but never closed, in markdown:\n{xmd}")
             return issue.value if returns else display(issue) # return value or display
-        
+
         blocks = []
         for i, text in enumerate(textwrap.dedent(xmd).split("\n```")): # \n``` only split top level, nested handleed later
             if i % 2 == 0:
                 blocks.extend(self._split_blocks_with_dedent(text))  # split by :::
             elif len(parts := text.split('\n', 1)) == 2 and parts[1].strip():
                 blocks.append(("block", parts))  # ``` blocks, avoid empty blocks
-        
+
         outputs = []
         for typ, obj in blocks:
             if typ == "block":
-                outputs.extend(self._parse_block(*obj))  
+                outputs.extend(self._parse_block(*obj))
                 continue # vars are substituted already inside, obj = (header, data)
 
             for part in _split_parts(obj, delimited=True):
                 if not isinstance(part, str):
                     outputs.append(part) # Delimiter
                     continue
-                
-                out = self.convert(part) 
+
+                out = self.convert(part)
                 if isinstance(out, list):
                     outputs.extend(out)
                 elif out: # Some syntax like section on its own line can leave empty block after conversion
@@ -419,7 +477,7 @@ class XMarkdown(Markdown):
                 else:
                     content += self._wr._fmt_html(out) # Rich content from python execution and Writer
             content = char_esc.restore(cmnt_esc.restore(content))
-            
+
             if tag is not None:
                 content = strip_ptags(content) # strip <p> tags if tag is specified, for inline content
                 if name:= tag.strip(): # empty tag returns bare content
@@ -427,7 +485,7 @@ class XMarkdown(Markdown):
             return content
         else:
             return display(*outputs)
-    
+
     def _intercept_frozen(self, source:str) -> str:
         "Nothing should pass through, even variables and frozen nested call itself."
         source = source.replace('[frozen!!', '[frozen!') # single arg raw function style even if user sets !!
@@ -446,10 +504,10 @@ class XMarkdown(Markdown):
             else:
                 line_no = source[:start].count("\n") + 1
                 raise SyntaxError(f"Line {line_no}: Unclosed '[frozen!' block.")
-                
+
         return source
 
-            
+
     def _parse_params(self, param_string):
         """Parse parameter string with simple regex."""
         RE_PARAM = re.compile(
@@ -461,7 +519,7 @@ class XMarkdown(Markdown):
         for match in RE_PARAM.finditer(param_string.lstrip(': ')): # remove leading : and space
             # The value is captured in one of three groups
             value = match.group(3) or match.group(4) or match.group(5)
-            if value == "/": 
+            if value == "/":
                 post_slash = True
                 continue # skip slashed, it is not a value
             if key := match.group(1):
@@ -477,58 +535,58 @@ class XMarkdown(Markdown):
                 else:
                     value = (value.replace('.',' ') if args else value).strip() # remove . from classes except from directive name
                     node_attrs.update({value: None}) if post_slash else args.append(value) # if after /, treat as non-value as void attributes such as open
-                    
-        sizes = numbers if numbers else None # making None is important for columns and stack 
+
+        sizes = numbers if numbers else None # making None is important for columns and stack
         # flatten node_attrs to a string, but not css properties
         node_attrs = ' '.join(f'{k}="{v}"' if v is not None else k for k, v in node_attrs.items())
-        
+
         if args:
             typ, mode = [v.strip() for v in args[0].split('.',1)] if '.' in args[0] else (args[0], '')
             if typ == "multicol": typ = "columns" # backward-compatible alias
             return typ, mode, sizes, ' '.join(args[1:]), kwargs, node_attrs # block type, mode, sizes, className, css_props, node_attrs
         return '', '', sizes, '', kwargs, node_attrs
-    
+
     def _parse_args(self, param_str, content=None):
         "Parse inline function arguments and keyword arguments from a string using ast.literal_eval."
         # Must avoid using eval() for security reasons. ast.literal_eval is safe for literals.
         if not param_str or not param_str.strip():
             return () if content is None else (content,), {}
 
-        call_node = ast.parse(f"dummy({param_str})").body[0].value
+        call_node = ast.parse(f"dummy({param_str})").body[0].value # type:ignore
         args, kwargs = [], {}
-        
+
         for arg in call_node.args:
             arg = ast.literal_eval(arg)
             if isinstance(arg, str):
                 arg = self._resolve_vars(arg)  # Resolve variables in string arguments
             args.append(arg)
-        
+
         for kw in call_node.keywords:
             karg = ast.literal_eval(kw.value)
             if isinstance(karg, str):
                 karg = self._resolve_vars(karg)  # Resolve variables in string keyword arguments
             kwargs[kw.arg] = karg
-        
+
         # We are not resolving vars in content yet here
         if content is not None:
-            args = [content, *args] 
-    
+            args = [content, *args]
+
         return tuple(args), kwargs
 
     def _split_blocks_with_dedent(self, text):
-        """Split ::: blocks, ending them when dedentation occurs. 
+        """Split ::: blocks, ending them when dedentation occurs.
         DON'T TRY TO BE OVERSMART WITH COMPLAEX REGEX AS THIS CODE
         IS MORE EFFICENT THAN REGEX AND CLEAR. I TRIED THAT BEFORE WITH FAILURES.
         """
         if not re.search(r'^:::', text, flags=re.MULTILINE):
             return [("raw", text)] if text.strip() else [] # but keep text as it is
-        
+
         blocks = []
         parts = re.split(r'^:::',text, flags=re.MULTILINE)
         # parts[0] is raw text, parts[1:] are blocks
         if parts and parts[0].strip():
             blocks.append(("raw", parts[0]))
-            
+
         for part in parts[1:]:
             lines = part.splitlines(keepends=True)
             header = '::: ' + lines[0].strip() # first line is always header
@@ -544,20 +602,20 @@ class XMarkdown(Markdown):
                     else:
                         still_block = False # no more block body
                         text_chunk += line # text chunk, not part of block
-            
+
             header = char_esc.escape(header)  # Escape characters in header before splitting
             if DOTS_RE.search(header): # if header has .. then it is a block with same line content
                 header, rest_line = DOTS_RE.split(header, maxsplit=1) # split at first .., rest is block body
                 if not block_body.strip(): # if block body is empty but header has pipe, then it is inline block
                     block_body = rest_line.strip() # treat rest of line as block body
             header = char_esc.restore(header)  # Restore characters in header after splitting
-            
+
             if block_body.strip(): # block comes first, only if not empty
                 blocks.append(("block", (header, block_body)))
             if text_chunk.strip(): # text chunk comes after block
                 blocks.append(("raw", text_chunk)) # keep text as it is
-        return blocks       
-    
+        return blocks
+
     def _parse_nested(self, xmd, returns=True, tag=None):
         old_returns = self._returns
         self._nesting_depth += 1 # increase nesting depth
@@ -573,15 +631,15 @@ class XMarkdown(Markdown):
         content = re.sub(r"(?<![\`\\])\<md-([\w]+)/\>", self._handle_var(error('SyntaxError', r'The `&lt;md-var/&gt;` syntax is deprecated. Use `%{md-var}` instead.')), content)
         content = re.sub(r"(?<![\`\\])\[md-([\w]+)/\](?!\S)", r"%{md-\1}" + self._handle_var(warn('Use variable syntax %{md-name} instead of [md-name/] for `md-name` blocks!')), content) # avoid `\ and end must
         content = re.sub(r"(?<![\`\\])\[\#([\w\-]+)/\](?!\S)", r"[uid!\1/]" + self._handle_var(warn('Use `uid` function instead of `[#target/]` for jump links!')), content)
-        content = re.sub(r'(?: )?[\^\_]\`([^\`]*?)\`',error('SyntaxError', r'Legacy syntax _\`...\`, ^\`...\` is deprecated. Use `sub/sup` functions instead.').value, content) 
+        content = re.sub(r'(?: )?[\^\_]\`([^\`]*?)\`',error('SyntaxError', r'Legacy syntax _\`...\`, ^\`...\` is deprecated. Use `sub/sup` functions instead.').value, content)
         content = re.sub(r"\+\+\[isolate\]", error("SyntaxError", "The '[isolate]' option after ++ is deprecated. Use 'columns.paused' directive followed by a '++' instead.").value, content)
-        
+
         # legacy nesting with 2+ slashes
         if re.search(r"\`(?P<slashes>/{2,})(.*?)(?P=slashes)\`", content, flags=re.DOTALL | re.MULTILINE):
             content = self._handle_var(error("SyntaxError",
                 "Nested `// //` syntax is deprecated. New format [func! ... /] automatically support nesting."
             )) + "\n" + content
-        
+
         # legacy functions syntax
         legacy_funcs = rf"(?<![\`\.])\b({('|'.join(_XMD_FUNCS))})(\[.*?\])?\`([^\`]*)\`"
         if match := re.search(legacy_funcs, content, flags=re.DOTALL | re.MULTILINE):
@@ -589,10 +647,10 @@ class XMarkdown(Markdown):
                 f'Legacy inline function syntax {match.group()} is deprecated. '
                 f'Use [{match.group(1)}! ... /] format for flexible automatic nesting, see slides.xmd.funcs for details.'
             )) + "\n" + content
-        
+
         # legacy citations
-        content = re.sub(r"(?<![\`\.])\bcite\`(.*?)\`;?", 
-            lambda m: self._handle_var(error('SyntaxError',f'Use [@key], [@key2!, @key3] etc. {m.group()} syntax is deprecated.')), 
+        content = re.sub(r"(?<![\`\.])\bcite\`(.*?)\`;?",
+            lambda m: self._handle_var(error('SyntaxError',f'Use [@key], [@key2!, @key3] etc. {m.group()} syntax is deprecated.')),
             content, flags=re.DOTALL
         )
         return content
@@ -601,9 +659,9 @@ class XMarkdown(Markdown):
         "Returns list of parsed block or columns or code, input is without ``` but includes langauge name."
         typ, mode, widths, _class, css_props, attrs = self._parse_params(header)
         data = textwrap.dedent(data) # ensure clean data for each block
-        
+
         if typ == "citations": # avoid using citations block
-            return [error("ValueError", f"Use '--- citations ---' syntax at the end of the synced markdown file instead of a citations block.")]
+            return [error("ValueError", "Use '--- citations ---' syntax at the end of the synced markdown file instead of a citations block.")]
         elif typ == "display":
             with self.active_parser(), capture_content() as cap:
                 self._wr.write(data, css_class=_class, **css_props)
@@ -611,7 +669,7 @@ class XMarkdown(Markdown):
         elif typ == "group":
             return [error("RuntimeError", "'group' markdown block is deprecated. Use 'steps' instead.")]
         elif typ == "columns" and mode in ("", "paused"): # handle columns with display mode
-            return self._parse_columns(data, widths, _class, css_props, mode=mode) # simple columns will be handled inline 
+            return self._parse_columns(data, widths, _class, css_props, mode=mode) # simple columns will be handled inline
         elif "md-" in typ:
             return self._parse_md_src(data, header)
         elif typ == "table":
@@ -628,30 +686,30 @@ class XMarkdown(Markdown):
             try:
                 name = " " if typ.lower() == "text" else None
                 out.data = _highlight(data, language=typ, name=name, css_class=_class) # intercept code highlight
-            except:
+            except Exception:
                 out.data = super().convert(f'```{header}\n{data}\n```') # Let other extensions parse block
-            
+
             return [out,] # list is required
-    
+
     def _ignore_incremental(self, data):
         # Just ignore, don't ask user change their content if they can switch mode to paused or inline
         return PLUS_RE.sub('', data) # remove ++ lines, but keep content
-    
+
     def _handle_inline_cols(self, data):
         "Check if columns are on a single line and split them by | separator to make them multi-line for proper parsing."
         if (line := data.strip()) and re.fullmatch('^.*$', line): # single line columns
             data = re.sub(r'\s+\|\s+', '\n--\n', line) # ensure | is spaced
         return data
-    
+
     def _resolve_note_content(self, tag, mode, props, data):
         "Insert the note header if not in the data!"
         if tag.startswith("note-"):
             data = error("ValueError", f"Invalid note tag '{tag}'. For note blocks, use 'note' or 'note.mode' instead."
                 ).value + "\n" + data
-        
-        if not mode: 
+
+        if not mode:
             mode = "note" # defult itself to make sure it adds a header if missing
-            
+
         if not re.search(r'\[head!', data):
             head, _ = _XMD_FUNCS["head"]
             return head(props.get("head", None), mode=mode).value + "\n" + data
@@ -667,43 +725,49 @@ class XMarkdown(Markdown):
                 return _class
             return f"{_class} {bc}".strip()
         return _class
-        
-        
+
+    def _wrap_html_tag(self, tag, data, _class, css_props, attrs):
+        "Emit one HTML element. Paragraph-only content loses its <p> wrappers before wrapping."
+        opener = f"<{tag} class='{_class}' {_inline_style(css_props)} {attrs}"
+        if tag in _VOID_TAGS:
+            if isinstance(data, str) and data.strip():
+                return error("ValueError", f"HTML tag {tag!r} cannot contain content.")
+            return XTML(f"{opener} />")
+        if tag in _RAW_HTML_TAGS: # keep source text, same idea as pre/raw but under its own tag
+            body = data.value if isinstance(data, XTML) else data
+            return XTML(f"{opener}>\n{body}\n</{tag}>")
+
+        body = data.value if isinstance(data, XTML) else self._parse_nested(data, returns=True)
+        body = strip_ptags(_unwrap_outer_tag(body.strip(), tag))
+        return XTML(f"{opener}>{body}</{tag}>")
+
     def _parse_colon_block(self, header, data):
-        STRICT_TAGS = ("pre","raw") # code is handled separately
-        CAPTURED_TAGS = ("p","details","summary","center","blockquote","ul","ol", "li", "nav", *STRICT_TAGS) # tags that are captured by this parser
-        
         tag, mode, widths, _class, css_props, attrs = self._parse_params(header)
-        
+
         if tag == "note" or tag.startswith("note-"):
             data = self._resolve_note_content(tag, mode, css_props, data)
             _class = self._resolve_note_class(mode, _class)
             tag = "note" # normalize note after resolving its content
-        
+
         if tag == "columns":
             if mode != "inline": # columns with display mode were already handled
                 return [error("ValueError", f"Invalid block type '{tag}' with mode '{mode}'. Supported modes are 'inline' and 'paused' only!")]
-            
+
             css_props = {"display":"flex", **css_props} # add display flex for in notebook formatting
             data = self._handle_inline_cols(data) # handle single line columns with | separator, do before adding warnings
             data = self._ignore_incremental(self._fix_legacy_col_sep(data)) # handle legacy mode and ++ separator
-            
+
             if re.search(r'^\-\-\s*$', data, flags=re.MULTILINE): # make columns by optional -- separator
                 data = XTML('<div>' + '</div>\n<div>'.join(
                     [self._parse_nested(c, returns=True) for c in _stream_chunks(data, sep='--')]
                 ) + '</div>') # wrapping in divs is important otherwise can be so many columns based on parsed content
-        
-        if tag in CAPTURED_TAGS:
-            if tag in STRICT_TAGS: # keep as is from further processing
-                return [XTML(f"<pre class='{_class} raw-text' {_inline_style(css_props)} {attrs}>\n{data}\n</pre>")]
-            
-            # These tags should strip outer p tags for being properly structured as intended by user
-            out = self._parse_nested(data, returns=True)
-            if re.search(r'^<ul|^<ol|^<p|<nav', out): # these tags are difficult ones to style
-                # remove these in case of ul, ol, p in single regex 
-                out = re.sub(r'^<(p|ol|ul|nav)[^>]*>|</(p|ol|ul|nav)>$', '', out)
-            return [XTML(f"<{tag} class='{_class}' {_inline_style(css_props)} {attrs}>{out}</{tag}>")]
-        
+
+        if tag.lower() in ("pre", "raw"): # no markdown; raw is not an HTML tag but shares this wrapper
+            return [XTML(f"<pre class='{_class} raw-text' {_inline_style(css_props)} {attrs}>\n{data}\n</pre>")]
+
+        if (html_tag := tag.lower()) in _HTML_TAGS:
+            return [self._wrap_html_tag(html_tag, data, _class, css_props, attrs)]
+
         style = "" # style for columns if widths are given
         if tag == "columns"  and widths: # columns with inline mode
             klass = f"c-{id(widths)}" # unique class for columns
@@ -713,12 +777,12 @@ class XMarkdown(Markdown):
             style = '\n'.join(f".{klass} > :nth-child({i+1}) {{flex: {w:.3f} {w:.3f} {100*w:.3f}%}}" for i, w in enumerate(widths)) # nth-child selectors
             style += '\n' + f".{klass} > :nth-child({len(widths)}) ~ * {{flex: {min(widths):.3f} {min(widths):.3f} {100*min(widths):.3f}% !important;}}" # rest all columns get min width
             style = f"<style>.{klass} > p:empty {{display:none;}}\n{style}</style>" # empty p tags should not be treated as columns
-            
+
         # treat tag as class if not given at end
         _class = " ".join([tag, _class])
         data = data.value if isinstance(data, XTML) else self._parse_nested(data, returns=True) # -- columns parsed already
         return [XTML(f"<div class='{_class}' {_inline_style(css_props)} {attrs}>{data}</div>{style}")]
-    
+
     def _parse_code(self, data, mode, focus_lines, _class, props, attrs):
         params = inspect.signature(_highlight).parameters.keys()
         kwargs = {k: eval(v) if v in "TrueFalseNone" else v for k, v in props.items() if k in params} # only pass known params
@@ -732,18 +796,18 @@ class XMarkdown(Markdown):
             lines = lines=[int(l) - 1 for l in focus_lines] # convert to 0-based index for python
             if min(lines) < 0:
                 return [error('IndexError',f"Focus lines {focus_lines} in markdown code blocks are 1-based index unlike python!")]
-            out = out.focus(lines) 
-        
+            out = out.focus(lines)
+
         if mode and getattr(out, mode, None):
             out = getattr(out, mode) # get property if available
-            
+
         return [out]
-    
+
     def _parse_table(self, data, widths, _class, props, attrs):
         out = self._parse_nested(data, returns=True) # let table extension handle it
         props["caption-side"] = props.get("caption-side", "top") # default caption side
         repl = f"<table class='{_class}' {_inline_style(props)} {attrs}>\n"
-    
+
         def _caption_repl(m: re.Match):
             if m.group(1): # return first group
                 nonlocal repl
@@ -755,15 +819,15 @@ class XMarkdown(Markdown):
             repl += ('<colgroup>' + ''.join(f"<col style='width:{w}%;'>" for w in widths) + '</colgroup>')
         out = re.sub(r'<table[^>]*>', repl, out, count=1, flags=re.DOTALL)
         return [XTML(out)] # return table as is, it will be parsed by table extension
-        
+
     def _parse_md_src(self, data, header):
-        typ, mode, focus_lines, _class, kwargs, attrs = self._parse_params(header) 
+        typ, mode, focus_lines, _class, kwargs, attrs = self._parse_params(header)
         kwargs["language"] = "markdown" # force markdown language anyhow
         src, = self._parse_code(data, mode, focus_lines, _class, kwargs, attrs) # list of one item
-        
+
         if typ not in ("md-before", "md-after"):  # normal md block
             self._mvars[f'_mdvar_{typ[3:]}'] = src # store variable excluding md- prefix to have available in processing below
-        
+
         outputs = []
         if "before" in typ: outputs.append(src)
         if self._returns: # display context
@@ -774,13 +838,13 @@ class XMarkdown(Markdown):
             outputs.extend(cap.outputs)
         if "after" in typ: outputs.append(src)
         return outputs
-    
+
     def _fix_legacy_col_sep(self, data):
         if re.search(r"^\+\+\+\s*$", data, flags=re.MULTILINE):
             data = re.sub(r"^\+\+\+\s*$", "--", data, flags=re.MULTILINE)  # Change to -- for backward compatibility
             data = "\n".join([error('SyntaxError','Use -- instead of legacy +++ to separate columns.').value, data]) # Prepend error to the data once
         return data
-    
+
     def _parse_columns(self, data, widths, _class, css_props, mode=None):
         data = self._handle_inline_cols(data)  # Handle single line columns with | separator before adding extra warnings
         data = self._fix_legacy_col_sep(data)  # Fix legacy +++ column separators
@@ -802,7 +866,7 @@ class XMarkdown(Markdown):
 
             widths = [float(w) for w in widths]
             widths = [100*w/sum(widths) for w in widths] # allow relative column widths
-        
+
         # Under any display context
         cap_cols = []
         for col in cols:
@@ -814,16 +878,16 @@ class XMarkdown(Markdown):
                         self._parse_nested(row,returns=False)
                     finally:
                         if hasattr(self, '_show_disply_error'): del self._show_disply_error # cleanup
-                        
+
                 rows.append(cap.outputs)
             cap_cols.append(rows)
-            
+
         with self.active_parser(), capture_content() as cap:
             kwargs = {"css_class": _class, "paused": mode == "paused", **css_props}
             self._wr.write(*cap_cols, widths=widths, **kwargs)
-            
+
         return cap.outputs
-    
+
     def _parse_steps(self, data, _class, css_props):
         # pick the parameters from css_props
         loc = css_props.pop('loc', 'left')
@@ -832,44 +896,44 @@ class XMarkdown(Markdown):
             static_index = int(css_props.pop('static_index', -1))
         except ValueError as e:
             return [error("TypeError", str(e))]
-        
+
         objs = list(_stream_chunks(data, '--'))
         if len(objs) < 2:
             return [error("RuntimeError", "At least one -- separator is required for steps block!")]
-        
+
         from .utils import steps # avoid circular import issues
         with self.active_parser(), capture_content() as cap:
             display(steps(objs, loc=loc, interval=interval, static_index=static_index, css_class=_class, **css_props))
         return cap.outputs
-    
+
     def convert(self, text):
         """Replaces variables with placeholder after conversion to respect all other extensions.
         Returns str or list of outputs based on context. To ensure str, use `parse(..., returns=True)`.
         """
-        text = self._handle_syntax_error(text) 
+        text = self._handle_syntax_error(text)
         # Resolve citations before variable substitution to avoid conflicts with citation keys
-        text = _resolve_citations(self, text)  
-        
-        # _resolve_vars internally replace escaped \` and `%{ back to ` and %{ 
+        text = _resolve_citations(self, text)
+
+        # _resolve_vars internally replace escaped \` and `%{ back to ` and %{
         return self._resolve_vars( # reolve vars after conversion, resets escaped characters too
             super().convert(
                 self._sub_vars_funcs(text) # sub vars before conversion
             ))
-    
+
     def _var_info(self, match_str):
-        try: 
+        try:
             obj = self._vars[match_str]
             ctx = self._vars.get(f"{match_str}_ctx", '')
             return f"The object {type(obj).__name__!r}" + (f" (returned by {ctx!r})" if ctx else "")
-        except: 
+        except:
             return self._vars.get(f"{match_str}_ctx", match_str) # fallback to match ctx/group
-    
+
     def _resolve_vars(self, text):
         "Substitute saved variables"
         if re.findall(r'DISPLAYVAR(\d+)DISPLAYVAR', text):
             if self._returns or getattr(self, '_show_disply_error', False):
                 text = re.sub(
-                    r'DISPLAYVAR(\d+)DISPLAYVAR', 
+                    r'DISPLAYVAR(\d+)DISPLAYVAR',
                     lambda m: error(
                         'DisplayError',
                         f'{self._var_info(m.group())} cannot be displayed in current context or nesting level '
@@ -893,28 +957,28 @@ class XMarkdown(Markdown):
 
         out = re.sub(r"PrivateXmdVar(\d+)X", lambda m: self._vars.get(m.group(), m.group()), text)
         return char_esc.restore(cmnt_esc.restore(out)) # restore comments and escaped characters
-  
+
     def _handle_var(self, value, ctx=None): # Put a temporary variable that will be replaced at end of other conversions.
         if value is None: # Avoid None values such as coming from refs
             return '' # empty string
-        
-        if isinstance(value, (str, XTML)): 
-            key = f"PrivateXmdVar{next(COUNTER)}X" # end X to make sure separate it 
+
+        if isinstance(value, (str, XTML)):
+            key = f"PrivateXmdVar{next(COUNTER)}X" # end X to make sure separate it
             # Handle nested funcs output before saving next variable
-            self._vars[key] = self._resolve_vars(value if isinstance(value, str) else value.value) 
+            self._vars[key] = self._resolve_vars(value if isinstance(value, str) else value.value)
         else: # Handles TOC, DOMWidget and Others rich displays
             values = value.outputs if isinstance(value, CapturedIO) else [value] # if captured, get outputs
             keys = []
             for val in values:
                 key = f"DISPLAYVAR{next(COUNTER)}DISPLAYVAR"
                 self._vars[key] = val # Direct value stored
-                keys.append(key) 
+                keys.append(key)
             key = '\n'.join(keys) # join all keys for multiple outputs
-        
+
         if ctx: # for better error message
             self._vars[key + '_ctx'] = ctx
         return key
-    
+
     def _repl_vars(self, content):
         content = re.sub(r"%\{\s*?md-", r"%{_mdvar_", content) # first change md- to be detectable
         # Check for variables first
@@ -922,11 +986,11 @@ class XMarkdown(Markdown):
             user_ns = self.user_ns() # get once, will be called multiple time
             if self._mvars: # update user_ns with internal variables
                 user_ns = {**user_ns, **self._mvars} # can't use update, can be mapping proxy, so merge instead
-            
+
             def handle_match(match):
                 rcvdstr, origstr = match.group(), match.group().replace("%{_mdvar_","%{md-")
                 is_md_var = rcvdstr.startswith("%{_mdvar_")
-                key,*_ = _matched_vars(rcvdstr) 
+                key,*_ = _matched_vars(rcvdstr)
                 if key not in user_ns: # top level var without ., indexing not found
                     err = error('NameError', f'name {key!r} is not defined' if not is_md_var else f'Markdown variable {key.replace("_mdvar_","md-")!r} is not defined')
                     if self._running_md_slide and not is_md_var: # under slide building purely from markdown
@@ -946,14 +1010,14 @@ class XMarkdown(Markdown):
                     return self._handle_var(error('Exception', f'Could not resolve {origstr!r}:\n{e}'))
 
                 if isinstance(value, DOMWidget) or 'nb' in fmt_spec: # Anything with :nb or widget or from escaped display variable
-                    return self._handle_var(value,ctx = origstr) 
+                    return self._handle_var(value,ctx = origstr)
                 return self._handle_var(hfmtr.vformat(f"{{{rcvdstr[2:-1].strip()}}}", (), user_ns)) # clear spaces around variable
 
             content = VARS_RE.sub(handle_match, content) # replace all variables in html_output
         return content
 
     def _sub_vars_funcs(self, html_output):
-        "Substitute variables in html_output given as %{var} and inline functions."  
+        "Substitute variables in html_output given as %{var} and inline functions."
         html_output = self._repl_vars(html_output) # first handle variable substitution
         # Replace macros after variable, keep it nested for accessing inner state, but limit depth to avoid infinite recursion
         with self.active_parser(): # set instance parser to pass variables
@@ -963,16 +1027,16 @@ class XMarkdown(Markdown):
                 html_output = FUNC_RE.sub(self.repl_py_func, html_output)
                 if depth > 16: # prevent infinite loop
                     return self._handle_var(error('RecursionError', f"Too many nested macros (> 16) in '{html_output}'"))
-        return html_output 
-    
+        return html_output
+
     def repl_py_func(self, match):
         fname, bangs, body = match.groups()
         ParamsFirst = bangs == '!!' # single ! means content first, !! means params first
-        
+
         # By default, content None and argvs is str, handle [tag! /] and [tag!! /] empty call autoamtically
         content, argvs = None, body.rstrip() if isinstance(body, str) else "" # avoid losing indenttation, use rstrip
-        
-        if argvs.strip() == '..': 
+
+        if argvs.strip() == '..':
             content, argvs = "", "" # handles [tag! .. /]  and [tag!! .. /] -> tag("")
         else:
             nsep = len(DOTS_RE.findall(argvs))
@@ -982,13 +1046,13 @@ class XMarkdown(Markdown):
                 content, argvs = DOTS_RE.split(argvs, maxsplit=1) # content .. params case
                 if ParamsFirst:
                     argvs, content = content, argvs # swap for [tag!! params .. content /] case
-            elif argvs.strip(): 
+            elif argvs.strip():
                 content, argvs = (None, argvs) if ParamsFirst else (argvs, "") # if no .., its content unless params first (then no content passed)
-        
+
         # Process the function content and arguments, and call the corresponding function
         if fname == "anyTag":
             return self._handle_var(error('Exception', f"anyTag function cannot be called directly, use valid html [tag! node content .. **node_attributes /] instead!"))
-        
+
         # resolve variables in content for certain functions as they take content out of flow
         if content is not None:
             content = textwrap.dedent(content).rstrip() # dedent content for better formatting, but keep leading spaces
@@ -996,44 +1060,44 @@ class XMarkdown(Markdown):
                 content = self._resolve_vars(content) # variables are not accesible outside
             elif fname == "code": # code needs corrected content
                 content = char_esc.restore(cmnt_esc.restore(content), True)
-        
+
         # Must to keep check on internal calls
         if not "anyTag" in _XMD_FUNCS:
             return self._handle_var(error('Exception', f"ipyslides is partially initialized. Cannot parse {match.group(0)!r}"))
-        
+
         func, ctx = _XMD_FUNCS.get(fname, _XMD_FUNCS["anyTag"])
         if 'anyTag' in getattr(func, '__name__', ''): # __name__ is not available on all types of callables
             func = partial(func, fname.strip('_').lower()) # partial function for anyTag with tag name, svg_ goes to svg tag, not svg function
-        
-        # Give user a cleaned parsed content 
+
+        # Give user a cleaned parsed content
         if ctx == "user" and isinstance(content,str):
             content = self._resolve_vars(
                 strip_ptags(super().convert(content))
             ) # resolve variables in user context functions otherwise they will lose scope
-        
+
         try:
             args, kwargs = self._parse_args(argvs, content)
         except Exception as e:
             return self._handle_var(error('Exception', f"Error parsing arguments for '{match.group(0)}': \n{e}\n"))
-        
+
         # make sure inline displays are captured in correct place like matplotlib plots
         with capture_content() as cap:
             try:
                 res =  func(*args, **kwargs)
                 res = res.inline if fname == "code" else res # code function returns SourceCode object, not inline
-            except Exception as e:
+            except Exception:
                 e, text = traceback.format_exc(limit=0).split(':',1) # only get last error for information
                 res = error('Exception', f"Could not parse '{match.group(0)}': \n{error(e,text)}\n"
                     f"<div class='block-yellow'><b>Info:</b><code>{fname}{inspect.signature(func)}</code>"
                     f"<br>received <code>args={args}, kwargs={kwargs}</code></div>")
-        
+
         if fname == "load":
             return res # load function needs to flatten the content
-        
+
         if cap.outputs:
             return self._handle_var(cap) + self._handle_var(res)
         return self._handle_var(res)
-    
+
     @contextmanager
     def active_parser(self):
         XMarkdown._active_parser = self._parse_nested # keep instance parser to pass variables
@@ -1042,16 +1106,16 @@ class XMarkdown(Markdown):
         finally:
             if hasattr(XMarkdown, '_active_parser'):
                 del XMarkdown._active_parser
-    
+
 
 def _matched_vars(text):
-    matches = [var 
+    matches = [var
         for slash, var, rest in re.findall(
             r"([\\]*?)%\{\s*([a-zA-Z_][\w\d_]*)(.*?)\s*\}", # avoid \%{ escape, [\w\d_]* means zero or more word, to allow single letter
             text, flags = re.DOTALL,
         ) if not any([slash, var == 'md' and rest.startswith('-')]) # skip md- prefixed variables and slashed escapes
     ]
-    return tuple(matches)  
+    return tuple(matches)
 
 @dataclass(frozen=True)
 class XmdPack:
@@ -1062,7 +1126,7 @@ class XmdPack:
     content: str
     vars: Mapping[str, object] = field(default_factory=dict)
     _rel_depth: int = 0 # above stack of this class
-    
+
     def __post_init__(self):
         req_vars = _matched_vars(self.content)
         scoped_vars = { # only pick needed vars if user pass smething like locals
@@ -1083,8 +1147,8 @@ class XmdPack:
             finally:
                 del frame  # Prevent reference cycles
         # Reset final vars to be immutable MappingProxyType
-        object.__setattr__(self, 'vars', MappingProxyType(scoped_vars)) 
-    
+        object.__setattr__(self, 'vars', MappingProxyType(scoped_vars))
+
     def parse(self, returns:bool=False, tag:str=None) -> Optional[str]:
         XmdPack._bound_vars = self.vars # set bound vars for parsing
         try:
@@ -1092,10 +1156,10 @@ class XmdPack:
         finally:
             if hasattr(XmdPack, '_bound_vars'):
                 del XmdPack._bound_vars # cleanup after parsing
-    
+
     def __format__(self, spec):
         return f'{self.parse(returns=True):{spec}}'
-    
+
     def __repr__(self):
         keys = ', '.join(map(repr, self.vars.keys())) # only show keys for brevity
         return f"{self.__class__.__name__}(content={self.content!r}, vars=[{keys}])"
@@ -1111,23 +1175,23 @@ class _XMDMeta(type):
         "Extended markdown syntax information."
         from ._base._syntax import xmd_syntax # circular import
         return _parse_as_steps(xmd_syntax)
-    
+
     @property
     def esc_chars(self) -> tuple[str]:
         "List of characters that are escaped in extended markdown."
         return tuple(char_esc._chars)
-    
+
     @property
     def funcs(self):
         "List of available inline functions for extended markdown."
         from .utils import html, doc, details, tag, XTML
-        
+
         info = html("", [r"""
         **Inline Python Functions**{.text-big}
-        
+
         Call pattern for inline functions is shown in table below. `*args` and `**kwargs` are arguments given as Python literals.
         The content does not require quotes and must maintain its own indentation and line breaks.
-        
+
         | Mode          | Markdown Call                              | Python Call                        |
         |:--------------|:-------------------------------------------|:-----------------------------------|
         | Empty Call    | `[func\! \/] / [func\!! \/]`               | `func()`                           |
@@ -1136,14 +1200,14 @@ class _XMDMeta(type):
         | Content First | `[func\! Content .. *args, **kwargs \/]`   | `func("Content", *args, **kwargs)` |
         | Params First  | `[func\!! *args, **kwargs \.. Content \/]` | `func("Content", *args, **kwargs)` |
         | Params Only   | `[func\!! *args, **kwargs \/]`             | `func(*args, **kwargs)`            |
-    
+
         - You can override a registered function by pure html tag by appending ` _ ` to the tag. For example, ` svg_ ` will be html tag that overrides the ` svg ` function.
         - User can register their own functions using [code! xmd.register /] function, which will be listed here.
         - If you need a literal `..` in content, escape it with backslash like `\\..`. Similarly, to avoid parsing a function call, escape the first `!` as `\\!` and ending `/` as `\\/`. No need to escape `[` and `]`.
         """])
-        
+
         dtls = html("div", "\n".join([
-            details(doc(fn), 
+            details(doc(fn),
                 summary=f"{key}" + (tag("external", "blue", pill=True).value if ctx == "user" else ""),
                 name="funcs-accordian", # to open exclusively
                 background="var(--bg2-color)",
@@ -1151,29 +1215,29 @@ class _XMDMeta(type):
             ).value
             for key, (fn, ctx) in sorted(_XMD_FUNCS.items(), key=lambda x: x[0])
         ]), css_class="details-grid", style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5em;") # style for in notebook
-        
+
         return XTML(info.value + dtls.value)
-    
+
     def __dir__(cls): # tab completion still sucks with meta programming!
         return sorted(list(super().__dir__()) + ["esc_chars", "extensions", "funcs", "pack", "register", "syntax"])
-    
+
     @staticmethod
     def pack(content:str, **vars): # export xmd in docs and demo to show this
-        """Pack markdown content and variables for later parsing. This is useful for picking variables without 
+        """Pack markdown content and variables for later parsing. This is useful for picking variables without
         polluting the global namespace as well as inside python scripts where notebook's scope is not available.
-        
+
         - content (str): The markdown content to pack.
         - vars (dict): The variables to be used in the markdown content. Missing variables will be resolved from local scope.
-        
+
         Returns a `XmdPack` object that can be parsed later using the `parse` method or passed to `write` and utility functions.
         """
         return XmdPack(content, vars=vars, _rel_depth=1) # +1 for this function call
-    
+
     @classmethod
     def gather(cls, content:str, **vars): # export xmd in docs and demo to show this
         warn("`xmd.gather` will be deprecated, use `xmd.pack` instead.").display()
         return cls.pack(content, **vars)
-    
+
     @staticmethod
     def register(name: str, func: callable=None):
         r"""Register a user-defined inline function for extended markdown.
@@ -1185,12 +1249,12 @@ class _XMDMeta(type):
         from functools import wraps
         import matplotlib.pyplot as plt
         from ipyslides import xmd
-        
+
         # Directly register a function with the same signature as plt.plot
         xmd.register("plot", plt.plot)
-        
+
         # Adopt it for modified behavior, e.g., to convert to HTML for proper display in slides
-        @xmd.register("plot") 
+        @xmd.register("plot")
         @wraps(plt.plot) # signature will be adopted, note only *args and *kwargs to avoid conflicts
         def _(*args, **kwargs):
             caption = kwargs.pop("caption", None) # optional caption
@@ -1198,17 +1262,17 @@ class _XMDMeta(type):
             # convert to html to display in proper place even in inline context
             # plt.show() will display in unexpected place if not in a display context
             return slides.plt2html(caption=caption) # convert to html for proper display in slides
-        
-        # Or decorate your own pure function 
+
+        # Or decorate your own pure function
         @xmd.register("myfunc")
         def myfunc(arg1, arg2, kwarg1=True):
             # Your function implementation here
             return f"Processed {arg1} and {arg2} with kwarg1={kwarg1}"
         ```
-        
-        ::: code language="markdown"   
+
+        ::: code language="markdown"
             [plot!! [1,2,3], [4,5,6], caption="This is a plot from markdown!" /]
-        
+
         ::: note
            - If your registered function does not accept content as first argument, skip `..` in the call and start with `!!`, e.g., `[myfunc\!! arg1, arg2, kwarg1=False \/]`.
            - Content is converted to html string and outer `<p>` tags are stripped before passing to the function, so you can wrap it in tags of your choice.
@@ -1218,22 +1282,22 @@ class _XMDMeta(type):
         # although user may think it is, so register is the only way to make it visible in extended markdown.
         if not isinstance(name, str):
             raise TypeError(f"Expected a string for function name, got {type(name)}")
-        
+
         if name in _XMD_FUNCS:
             _, ctx = _XMD_FUNCS[name]
             if ctx != "user":
                 raise ValueError(f"Function name '{name}' is already registered by ipyslides. Please choose a different name.")
-        
+
         def decorator(func):
             if not callable(func):
                 raise TypeError(f"Expected a callable function, got {type(func)}")
             _XMD_FUNCS[name] = (func, "user")
             return func
-        
+
         if func is not None:
             return decorator(func)
         return decorator
-    
+
     @staticmethod
     def unregister(name: str):
         "Unregister a user-defined function."
@@ -1248,13 +1312,13 @@ class _XMDMeta(type):
             raise ValueError(f"Function name '{name}' is registered by ipyslides and cannot be unregistered.")
 
         del _XMD_FUNCS[name]
-        
-    
+
+
 class xmd(metaclass=_XMDMeta):
     r"""
     Extended markdown parser for ipyslides. You can use %%xmd and %xmd cell and line magics in Jupyter Notebook as well.
 
-    Besides the base [Python-Markdown](https://python-markdown.github.io/) syntax, 
+    Besides the base [Python-Markdown](https://python-markdown.github.io/) syntax,
     it supports additional syntax which you can read about by executing following code a notebook cell:
 
     ```python
@@ -1266,12 +1330,12 @@ class xmd(metaclass=_XMDMeta):
 
     You can add extra markdown extensions using `Slides.xmd.extensions` or `ipyslides.xmd.extensions`.
     See [markdown extensions](https://python-markdown.github.io/extensions/) for details.
-    
+
     If you want to return the stripped paragraph content without outer <p> tags, use `xmd(content, True, tag="")` or any valid html tag to enclose content.
-    
-    Use `xmd.pack(content, **vars)` to store content and variables for later parsing. This is useful for picking variables 
+
+    Use `xmd.pack(content, **vars)` to store content and variables for later parsing. This is useful for picking variables
     without polluting the global namespace as well as inside python scripts where notebook's scope is not available.
-    
+
     **Returns**: A string with HTML content if `returns=True` (default), otherwise display rich output objects.
     """
     def __new__(cls, content:str, returns:bool=False, tag=None) -> Optional[str]:
@@ -1283,7 +1347,7 @@ def _parse_as_steps(markdown):
     "Parse markdown chunks splitted by -- and show alternate chunks through a steps widget. First chunk is treated as common header and shown always."
     if not isinstance(markdown, str):
         raise TypeError(f"markdown expects a string, got {markdown!r}")
-    
+
     pages = list(_stream_chunks(markdown, sep='--'))
     with capture_content() as cap:
         if pages: xmd(pages[0])
@@ -1328,13 +1392,13 @@ def _stream_chunks(text, sep='---'):
         if in_block:
             final_chunk += '\n```'  # close unclosed code block in forgiven manner instead of raising error
         yield cmnt_esc.restore(final_chunk)
-        
+
 
 def _split_parts(content, delimited=False):
     "Split content at '++', optionally yielding delimiter objects. '++ ' inline is also supported unlinke strict '++' on a line by itself in _stream_chunks."
     def _part_delim():
         return _delim("PAUSE")
-    
+
     start = 0
     first = True
 
@@ -1379,7 +1443,7 @@ def _load_files(content):
 
         chunks.append(content[last_pos:line_start])
         file, filecontent = loader_func(match)
-        
+
         # Nested loading is not allowed
         nested_err = error("SyntaxError",f"Nested loading of files is not supported in a top loaded file: {file!r}").value
         filecontent = re.sub(r'(?<![\\\`])\[load!.*?/\]', nested_err, filecontent, flags=re.DOTALL)
@@ -1394,8 +1458,8 @@ def _load_files(content):
     if chunks:
         chunks.append(content[last_pos:])
         content = "".join(chunks)
-    
+
     # This error must be hard (and at end to include loaded files) to avoid error content being passed to citations etc.
     if re.search(r"^(\s*)include\`(.*?)\`", content, flags=re.DOTALL | re.MULTILINE):
         raise SyntaxError("Legacy include`file` syntax is deprecated. Use [load! file /] instead.")
-    return files, content    
+    return files, content

@@ -95,7 +95,7 @@ The general block syntax is `::: type-or-classes [args] attributes`.
 - You can optionally continue block header on next multiple adjacent lines with `:` at start of each line. This multiline header is not available in \`\`\` blocks.
 - Theme colors such as `fg1=red bg2=black` upto 3, can be assigned for each block to tweak look and feel of content.
 - Blocks can be escaped by having a space before `:::` at start of line, such as ` ::: block-red` will not be parsed as block.
-- Some block levels HTML tags are handled specially, such as p, pre, ul, ol, blockquote, details, summary, table.
+- An HTML element name (`section`, `ul`, `h2`, `figure`, ...) is emitted as that element. Other names are CSS classes on a `div`. `pre`/`raw` stay unparsed; `note`, `columns`, `code`, and `table` keep their own handling.
 - You can use `::: block` nested inside \`\`\` block at same indentation level but otherwise must be correctly indented.
 - Bullet points are hard to stylize, so use `::: ul/ol` blocks to create lists with custom styles and in side have `::: li` blocks for each item.
   e.g. a per item marker can be added using `::: li list-style="'👉'" .. item text` besides all other CSS styles, or a `data-marker` attribute directly.
@@ -108,7 +108,7 @@ The general block syntax is `::: type-or-classes [args] attributes`.
     |:----------------- |:----------------------------------------------------------------------------------------------------------- |
     | `::: raw/pre`     | Raw text or preformatted text, no markdown parsing. Use `raw` or `pre` as first word in block. |
     | `::: code [focused lines]`  | Code block with syntax highlighting, parameters are passed to highlight function. Use `code.inline` and `code.collapsed` for specific view. |
-    | `::: tag or classes` | tags are block level elements such as `p`, `details`, `summary`, `table`, `center`, etc. |
+    | `::: tag or classes` | An HTML element name is that element (`section`, `ul`, `h2`, `center`, ...). Any other name is a CSS class on a `div`. |
     | `::: columns [widths]` | Create columns with relative widths, e.g. `columns 4 6` for 40% and 60% width. This is display mode (no incremental frames). The columns separator is `--`. |
     | `::: columns.paused [widths]` | Create columns with paused incremental reveal. Use `++` inside columns to split row steps; use `++` before the block to isolate previous content from the first reveal step. The columns separator is `--`. |
     | `::: columns.inline [widths]` | Create inline columns with relative widths, e.g. `columns.inline 4 6` for 40% and 60% width. This block does not support incremental reveal and `--` separator is optional (but superceded if used) because distinct text blocks are automatically considered columns. |
