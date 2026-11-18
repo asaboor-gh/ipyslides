@@ -343,19 +343,8 @@ def strip_ptags(content):
         return content  # no paragraphs, or trailing text after the last </p>
     return ''.join(parts)
 
-# Document roots are omitted: nesting <html>/<body> inside a slide breaks the page.
-_HTML_TAGS = frozenset("""
-a abbr address area article aside audio b bdi bdo blockquote br button canvas caption
-cite code col colgroup data datalist dd del details dfn dialog div dl dt em embed
-fieldset figcaption figure footer form h1 h2 h3 h4 h5 h6 header hgroup hr i iframe
-img input ins kbd label legend li link main map mark menu meta meter nav noscript
-object ol optgroup option output p picture pre progress q rp rt ruby s samp script
-search section select slot small source span strong style sub summary sup table
-tbody td template textarea tfoot th thead time title tr track u ul var video wbr
-center
-""".split())
 _VOID_TAGS = frozenset({"area", "br", "col", "embed", "hr", "img", "input", "link", "meta", "param", "source", "track", "wbr"})
-_RAW_HTML_TAGS = frozenset({"script", "style", "textarea", "title"}) # markdown would rewrite their text
+_RAW_TAGS = frozenset({"script", "style", "textarea", "title"}) # markdown would rewrite their text
 
 def _unwrap_outer_tag(content, tag):
     "Drop one balanced outer <tag> when it wraps the whole string. Nested copies stay."
@@ -533,6 +522,8 @@ class XMarkdown(Markdown):
                 if value.isdigit() or re.match(r'^\d+(\.\d+)?$', value):
                     numbers.append(float(value) if '.' in value else int(value))
                 else:
+                    if not args and value.startswith('.'):
+                        args.append('div') # default to 'div' if the first argument is a class starting with '.'
                     value = (value.replace('.',' ') if args else value).strip() # remove . from classes except from directive name
                     node_attrs.update({value: None}) if post_slash else args.append(value) # if after /, treat as non-value as void attributes such as open
 
@@ -544,7 +535,7 @@ class XMarkdown(Markdown):
             typ, mode = [v.strip() for v in args[0].split('.',1)] if '.' in args[0] else (args[0], '')
             if typ == "multicol": typ = "columns" # backward-compatible alias
             return typ, mode, sizes, ' '.join(args[1:]), kwargs, node_attrs # block type, mode, sizes, className, css_props, node_attrs
-        return '', '', sizes, '', kwargs, node_attrs
+        return 'div', '', sizes, '', kwargs, node_attrs
 
     def _parse_args(self, param_str, content=None):
         "Parse inline function arguments and keyword arguments from a string using ast.literal_eval."
@@ -703,10 +694,6 @@ class XMarkdown(Markdown):
 
     def _resolve_note_content(self, tag, mode, props, data):
         "Insert the note header if not in the data!"
-        if tag.startswith("note-"):
-            data = error("ValueError", f"Invalid note tag '{tag}'. For note blocks, use 'note' or 'note.mode' instead."
-                ).value + "\n" + data
-
         if not mode:
             mode = "note" # defult itself to make sure it adds a header if missing
 
@@ -731,23 +718,25 @@ class XMarkdown(Markdown):
         opener = f"<{tag} class='{_class}' {_inline_style(css_props)} {attrs}"
         if tag in _VOID_TAGS:
             if isinstance(data, str) and data.strip():
-                return error("ValueError", f"HTML tag {tag!r} cannot contain content.")
-            return XTML(f"{opener} />")
-        if tag in _RAW_HTML_TAGS: # keep source text, same idea as pre/raw but under its own tag
+                return error("ValueError", f"HTML self-closing tag {tag!r} cannot be used with block syntax. Use inline function syntax instead.").value
+            return f"{opener} />" # won't reach here but a safegard return
+        if tag in _RAW_TAGS: # keep source text, same idea as pre/raw but under its own tag
             body = data.value if isinstance(data, XTML) else data
-            return XTML(f"{opener}>\n{body}\n</{tag}>")
+            return f"{opener}>\n{body}\n</{tag}>"
 
         body = data.value if isinstance(data, XTML) else self._parse_nested(data, returns=True)
-        body = strip_ptags(_unwrap_outer_tag(body.strip(), tag))
-        return XTML(f"{opener}>{body}</{tag}>")
+        body = _unwrap_outer_tag(strip_ptags(body.strip()), tag)
+        return f"{opener}>{body}</{tag}>"
 
     def _parse_colon_block(self, header, data):
         tag, mode, widths, _class, css_props, attrs = self._parse_params(header)
 
-        if tag == "note" or tag.startswith("note-"):
+        if tag.lower() in ("pre", "raw"): # no markdown; raw is not an HTML tag but shares this wrapper
+            return [XTML(f"<pre class='{_class} raw-text' {_inline_style(css_props)} {attrs}>\n{data}\n</pre>")]
+        
+        if tag == "note":
             data = self._resolve_note_content(tag, mode, css_props, data)
             _class = self._resolve_note_class(mode, _class)
-            tag = "note" # normalize note after resolving its content
 
         if tag == "columns":
             if mode != "inline": # columns with display mode were already handled
@@ -762,12 +751,6 @@ class XMarkdown(Markdown):
                     [self._parse_nested(c, returns=True) for c in _stream_chunks(data, sep='--')]
                 ) + '</div>') # wrapping in divs is important otherwise can be so many columns based on parsed content
 
-        if tag.lower() in ("pre", "raw"): # no markdown; raw is not an HTML tag but shares this wrapper
-            return [XTML(f"<pre class='{_class} raw-text' {_inline_style(css_props)} {attrs}>\n{data}\n</pre>")]
-
-        if (html_tag := tag.lower()) in _HTML_TAGS:
-            return [self._wrap_html_tag(html_tag, data, _class, css_props, attrs)]
-
         style = "" # style for columns if widths are given
         if tag == "columns"  and widths: # columns with inline mode
             klass = f"c-{id(widths)}" # unique class for columns
@@ -779,9 +762,13 @@ class XMarkdown(Markdown):
             style = f"<style>.{klass} > p:empty {{display:none;}}\n{style}</style>" # empty p tags should not be treated as columns
 
         # treat tag as class if not given at end
-        _class = " ".join([tag, _class])
-        data = data.value if isinstance(data, XTML) else self._parse_nested(data, returns=True) # -- columns parsed already
-        return [XTML(f"<div class='{_class}' {_inline_style(css_props)} {attrs}>{data}</div>{style}")]
+        if tag in ("note","columns"):
+            tag, mode, _class = "div", "", " ".join([tag, _class]) # reset typ, mode etc.
+        
+        if mode.strip(): # after note and columns, should be empty mode
+            raise ValueError(f"Invalid mode '{mode}' for the resolved tag '{tag}'")
+            
+        return [XTML(self._wrap_html_tag(tag, data, _class, css_props, attrs) + style)]
 
     def _parse_code(self, data, mode, focus_lines, _class, props, attrs):
         params = inspect.signature(_highlight).parameters.keys()

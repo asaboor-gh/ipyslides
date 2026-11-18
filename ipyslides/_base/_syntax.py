@@ -108,7 +108,7 @@ The general block syntax is `::: type-or-classes [args] attributes`.
     |:----------------- |:----------------------------------------------------------------------------------------------------------- |
     | `::: raw/pre`     | Raw text or preformatted text, no markdown parsing. Use `raw` or `pre` as first word in block. |
     | `::: code [focused lines]`  | Code block with syntax highlighting, parameters are passed to highlight function. Use `code.inline` and `code.collapsed` for specific view. |
-    | `::: tag or classes` | An HTML element name is that element (`section`, `ul`, `h2`, `center`, ...). Any other name is a CSS class on a `div`. |
+    | `::: tag or classes` | An HTML element name is that element (`section`, `ul`, `h2`, `center`, `custom-element`, ...). Any name starting with . is a CSS class on a `div`. |
     | `::: columns [widths]` | Create columns with relative widths, e.g. `columns 4 6` for 40% and 60% width. This is display mode (no incremental frames). The columns separator is `--`. |
     | `::: columns.paused [widths]` | Create columns with paused incremental reveal. Use `++` inside columns to split row steps; use `++` before the block to isolate previous content from the first reveal step. The columns separator is `--`. |
     | `::: columns.inline [widths]` | Create inline columns with relative widths, e.g. `columns.inline 4 6` for 40% and 60% width. This block does not support incremental reveal and `--` separator is optional (but superceded if used) because distinct text blocks are automatically considered columns. |
